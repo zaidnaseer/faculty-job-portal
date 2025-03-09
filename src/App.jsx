@@ -17,7 +17,7 @@ function App() {
         </Routes>
       </main>
       <footer className="bg-dark text-white py-4 text-center">
-        <p>© {new Date().getFullYear()} Faculty Job Portal. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Upadhyaya. All rights reserved.</p>
       </footer>
     </div>
   )

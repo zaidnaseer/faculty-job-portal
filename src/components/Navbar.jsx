@@ -7,7 +7,7 @@ const Navbar = () => {
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="font-bold text-xl text-primary">Faculty Portal</Link>
+          <Link to="/" className="font-bold text-xl text-primary">Upadhyaya</Link>
           
           <div className="flex space-x-4">
             <NavLink to="/vacancies" current={location.pathname}>Vacancies</NavLink>
