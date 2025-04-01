@@ -1,0 +1,110 @@
+export const mockJobs = [
+  {
+    id: 1,
+    title: "Associate Professor of Computer Science",
+    department: "Computer Science",
+    type: "Full-time",
+    location: "New York, NY",
+    postedDate: "Feb 25, 2025",
+    description: "The Department of Computer Science invites applications for an Associate Professor position. The successful candidate will teach undergraduate and graduate courses, conduct research, and participate in departmental activities.",
+    skills: ["AI/ML", "Software Engineering", "Research", "Teaching"],
+    featured: true,
+    applied: false
+  },
+  {
+    id: 2,
+    title: "Assistant Professor of Data Science",
+    department: "Data Science",
+    type: "Full-time",
+    location: "Boston, MA",
+    postedDate: "Feb 27, 2025",
+    description: "The Data Science Department seeks candidates for an Assistant Professor position. The role involves teaching undergraduate and graduate courses in data science, conducting research, and mentoring students.",
+    skills: ["Data Mining", "Statistical Analysis", "Machine Learning", "Python"],
+    featured: true,
+    applied: false
+  },
+  {
+    id: 3,
+    title: "Visiting Professor of Mathematics",
+    department: "Mathematics",
+    type: "Temporary",
+    location: "Chicago, IL",
+    postedDate: "Mar 01, 2025",
+    description: "One-year visiting professor position in the Mathematics Department. Teaching responsibilities include calculus and linear algebra courses. Research opportunities available.",
+    skills: ["Calculus", "Linear Algebra", "Analysis", "Teaching"],
+    featured: false,
+    applied: false
+  },
+  {
+    id: 4,
+    title: "Adjunct Instructor of English",
+    department: "English",
+    type: "Part-time",
+    location: "Online",
+    postedDate: "Mar 03, 2025",
+    description: "Seeking adjunct instructors to teach composition and rhetoric courses online. Experience with virtual learning environments preferred.",
+    skills: ["Composition", "Online Teaching", "Rhetoric", "Literature"],
+    featured: false,
+    applied: false
+  },
+  {
+    id: 5,
+    title: "Full Professor of Physics",
+    department: "Physics",
+    type: "Full-time",
+    location: "Los Angeles, CA",
+    postedDate: "Feb 20, 2025",
+    description: "The Physics Department is seeking a Full Professor with a strong research background in theoretical physics. Will lead research initiatives and teach graduate-level courses.",
+    skills: ["Theoretical Physics", "Quantum Mechanics", "Research Leadership", "Grant Writing"],
+    featured: true,
+    applied: false
+  },
+  {
+    id: 6,
+    title: "Assistant Professor of Biology",
+    department: "Biology",
+    type: "Full-time",
+    location: "Seattle, WA",
+    postedDate: "Mar 05, 2025",
+    description: "Faculty position focused on molecular biology. The successful candidate will establish a research program, teach undergraduate and graduate courses, and mentor students.",
+    skills: ["Molecular Biology", "Cell Biology", "Lab Management", "Teaching"],
+    featured: false,
+    applied: false
+  },
+  {
+    id: 7,
+    title: "Professor of Practice in Business",
+    department: "Business",
+    type: "Full-time",
+    location: "Austin, TX",
+    postedDate: "Mar 02, 2025",
+    description: "Professor of Practice position in the Business School. Looking for candidates with significant industry experience to teach practical business courses and develop industry partnerships.",
+    skills: ["Business Strategy", "Leadership", "Industry Experience", "Entrepreneurship"],
+    featured: false,
+    applied: false
+  },
+  {
+    id: 8,
+    title: "Lecturer in Psychology",
+    department: "Psychology",
+    type: "Full-time",
+    location: "Miami, FL",
+    postedDate: "Feb 28, 2025",
+    description: "Teaching-focused position in the Psychology Department. Primary responsibilities include undergraduate instruction in introductory and specialized psychology courses.",
+    skills: ["Clinical Psychology", "Cognitive Psychology", "Research Methods", "Statistics"],
+    featured: true,
+    applied: false
+  },
+  {
+    id: 9,
+    title: "Research Professor in AI Ethics",
+    department: "Computer Science",
+    type: "Full-time",
+    location: "San Francisco, CA",
+    postedDate: "Mar 06, 2025",
+    description: "Research-focused position specializing in AI ethics and responsible innovation. Will lead interdisciplinary research projects and develop new courses in this emerging field.",
+    skills: ["AI Ethics", "Machine Learning", "Philosophy", "Policy"],
+    featured: false,
+    applied: false
+  }
+];
