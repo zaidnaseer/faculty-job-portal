@@ -11,6 +11,8 @@ import { AuthContext } from "./context/AuthContext";
 import CreateJobPage from "./pages/CreateJobPage";
 import HRDashboard from "./pages/HRDashboard";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
+import LandingPage from "./pages/LandingPage"; // Import the new landing page
+
 const ProtectedRoute = ({ element, allowedRoles }) => {
   const { user } = useContext(AuthContext);
 
@@ -27,12 +29,15 @@ const ProtectedRoute = ({ element, allowedRoles }) => {
 };
 
 function App() {
+  const { user } = useContext(AuthContext); // Get user context
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<LandingPage />} /> {/* New landing page as root */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -68,9 +73,14 @@ function App() {
             element={<ProtectedRoute element={<HRDashboard />} allowedRoles={["hr"]} />}
           />
         
-
-          {/* Redirect to login if no route matches */}
-          <Route path="*" element={<Navigate to="/login" />} />
+          {/* Redirect based on authentication status */}
+          <Route path="*" element={
+            user ? (
+              user.role === "faculty" ? <Navigate to="/vacancies" /> : <Navigate to="/hr" />
+            ) : (
+              <Navigate to="/" />
+            )
+          } />
         </Routes>
       </main>
       <footer className="bg-dark text-white py-4 text-center">
