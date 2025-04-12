@@ -16,6 +16,15 @@ const JobCard = ({ job, userId, featured = false }) => {
     setSaved(!saved);
   };
 
+  const getHumanReadableDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("default", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const applyForJob = async (jobId) => {
     try {
       const response = await fetch(`/api/jobs/apply/${jobId}`, {
@@ -62,7 +71,7 @@ const JobCard = ({ job, userId, featured = false }) => {
         </div>
         <div className="flex items-center">
           <FaCalendarAlt className="mr-2" />
-          <span>Posted: {job.postedDate}</span>
+          <span>Posted: {getHumanReadableDate(job.postedDate)}</span>
         </div>
       </div>
 
