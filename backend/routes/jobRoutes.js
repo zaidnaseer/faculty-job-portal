@@ -65,6 +65,7 @@ router.post("/", protect(["hr"]), async (req, res) => {
     const { title, department, type, location, description, skills, featured } = req.body;
 
     const newJob = new Job({
+      institution: req.user.university, 
       title,
       department,
       type,

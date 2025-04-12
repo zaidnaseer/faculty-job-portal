@@ -1,75 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
-const ResumeEditor = ({ initialResume, userId, isEditable = true }) => {
-  const [resume, setResume] = useState(initialResume || {
-    name: '',
-    title: '',
-    email: '',
-    phone: '',
-    location: '',
-    summary: '',
-    education: [],
-    experience: [],
-    skills: [],
-    publications: '',
-    profileImage: '',
-    introVideo: ''
-  });
+const DisplayResume = () => {
+    const location = useLocation();
+  const navigate = useNavigate();
+  const facultyId =location.state?.facultyId;;
+  const { user } = useContext(AuthContext);
+  const [resume, setResume] = useState(null);
 
-  const handleChange = (e) => {
-    if (isEditable) {
-      const { name, value } = e.target;
-      setResume(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
+  useEffect(() => {
+    const fetchResume = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/resume/${facultyId}`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        const data = await response.json();
+        setResume(data);
+      } catch (err) {
+        console.error("Error fetching resume:", err);
+      }
+    };
 
-  const handleEducationChange = (index, e) => {
-    if (isEditable) {
-      const { name, value } = e.target;
-      const updatedEducation = [...resume.education];
-      updatedEducation[index] = {
-        ...updatedEducation[index],
-        [name]: value
-      };
-      setResume(prev => ({
-        ...prev,
-        education: updatedEducation
-      }));
-    }
-  };
+    if (facultyId) fetchResume();
+  }, [facultyId, user.token]);
 
-  const handleExperienceChange = (index, e) => {
-    if (isEditable) {
-      const { name, value } = e.target;
-      const updatedExperience = [...resume.experience];
-      updatedExperience[index] = {
-        ...updatedExperience[index],
-        [name]: value
-      };
-      setResume(prev => ({
-        ...prev,
-        experience: updatedExperience
-      }));
-    }
-  };
-
-  const handleSkillsChange = (e) => {
-    if (isEditable) {
-      const skillsArray = e.target.value.split(',').map(skill => skill.trim());
-      setResume(prev => ({
-        ...prev,
-        skills: skillsArray
-      }));
-    }
-  };
+  if (!resume) {
+    return <p className="text-center">Loading resume...</p>;
+  }
 
   return (
-    <div className="card">
+    <div className="card p-6 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Faculty Resume</h2>
+        <h2 className="text-2xl font-bold">Applicant Resume</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -143,9 +108,18 @@ const ResumeEditor = ({ initialResume, userId, isEditable = true }) => {
             <p>{resume.publications}</p>
           </div>
         </div>
+        <div className="mt-6">
+        <button
+          onClick={() => window.history.back()} // Go back to the previous page
+          className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
+        >
+          Go Back
+        </button>
       </div>
+      </div>
+      
     </div>
   );
 };
 
-export default ResumeEditor;
+export default DisplayResume;

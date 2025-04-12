@@ -56,7 +56,7 @@ const AddResumePage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/resume", {
+      const response = await fetch("http://localhost:5000/api/faculty/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

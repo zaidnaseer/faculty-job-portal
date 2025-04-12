@@ -6,7 +6,7 @@ const { protect, requireAuth } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // ✅ Get faculty resume (general auth)
-router.get('/:id', protect(['faculty']), async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     console.log("req.params.id", req.params.id);
     const resume = await Resume.findOne({ user: req.params.id });
