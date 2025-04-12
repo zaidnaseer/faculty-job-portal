@@ -50,7 +50,7 @@ const ResumePage = () => {
   // Only redirect if the data is null after it's fetched
   useEffect(() => {
     if (!loading && !facultyData) {
-      navigate("/createResume"); // Redirect to createResume if no data found
+      navigate("/add-resume"); // Redirect to createResume if no data found
     }
   }, [facultyData, loading, navigate]);
 
