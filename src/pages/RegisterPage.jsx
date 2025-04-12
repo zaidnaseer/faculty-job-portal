@@ -86,13 +86,13 @@ const RegisterPage = () => {
         )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md -space-y-px">
+          <div className="rounded-md">
 
           <div className="mb-4">
               <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
                 I am a
               </label>
-              <div className="flex space-x-4">
+              <div className="flex flex-wrap gap-2">
                 <label className="flex items-center p-3 border rounded-md cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50 bg-white">
                   <input
                     type="radio"
