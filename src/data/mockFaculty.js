@@ -12,7 +12,7 @@ export const mockFaculty = [
     appliedDate: "Mar 4, 2025",
     status: "new",
     appliedJobs: [1, 9],
-    profileImage: null, // In a real app, this would be a URL
+    profileImage: null, 
     summary: "Computer Science Professor with 8+ years of experience in AI research and teaching. My work focuses on developing transparent and explainable AI systems that can be understood and trusted by users. I have published over 30 papers in top-tier conferences and journals, and I have secured over $2M in research funding.",
     education: [
       {
@@ -58,7 +58,7 @@ export const mockFaculty = [
       }
     ],
     publications: "Johnson, S., & Smith, J. (2023). Explainable AI for Healthcare Applications. Journal of AI in Medicine, 42(3), 78-92.\n\nJohnson, S., et al. (2022). A Framework for Transparent Machine Learning. Proceedings of the International Conference on Machine Learning (ICML 2022).\n\nJohnson, S. (2021). Teaching AI Ethics to Computer Science Students: Challenges and Opportunities. Journal of Computing Education, 15(2), 45-58.",
-    introVideo: 'assets/sample-intro.mp4' // In a real app, this would be a URL
+    introVideo: 'assets/sample-intro.mp4' 
   },
   {
     id: 2,

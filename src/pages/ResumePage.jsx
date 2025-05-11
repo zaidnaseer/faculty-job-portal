@@ -1,21 +1,50 @@
-import { useState, useEffect } from 'react';
-import ResumeEditor from '../components/ResumeEditor';
-import {mockFaculty} from '../data/mockFaculty';
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import ResumeEditor from "../components/ResumeEditor";
 
 const ResumePage = () => {
+  const { user } = useContext(AuthContext); // Get user data from context
   const [facultyData, setFacultyData] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
-    // Simulate loading faculty data
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      // Assume we're logged in as the first faculty member
-      setFacultyData(mockFaculty[0]);
-      setLoading(false);
-    }, 800);
-  }, []);
+   
+    const fetchFacultyData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token || !user?.id) {
+          console.log("No token or user ID found");
+          return;
+        }
   
+        const response = await fetch(`http://localhost:5000/api/faculty/${user.id}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+  
+        const data = await response.json();
+        console.log("Faculty data:", data);
+        setFacultyData(data);
+      } catch (error) {
+        console.error("Error fetching faculty data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (user?.id) fetchFacultyData();
+    else{
+     
+    }
+  }, [user?.id]);
+
   if (loading) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-screen">
@@ -26,10 +55,14 @@ const ResumePage = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container py-8">
-      <ResumeEditor initialResume={facultyData} />
+      {facultyData ? (
+       <ResumeEditor initialResume={{ ...facultyData}} userId={user?.id}/>
+      ) : (
+        <p className="text-center text-gray-600">No resume data available.</p>
+      )}
     </div>
   );
 };

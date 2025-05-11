@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import Slider from 'react-slick';
 import JobCard from './JobCard';
 import 'slick-carousel/slick/slick.css';
@@ -31,6 +31,10 @@ const FeaturedJobSlider = ({ jobs }) => {
     ]
   };
 
+  // Filter and ensure jobs are unique by job id
+  const featuredJobs = Array.from(new Set(jobs.filter(job => job.featured).map(job => job.id)))
+    .map(id => jobs.find(job => job.id === id));
+
   return (
     <div className="featured-slider py-6">
       <div className="container mx-auto">
@@ -53,7 +57,7 @@ const FeaturedJobSlider = ({ jobs }) => {
         </div>
         
         <Slider ref={sliderRef} {...settings}>
-          {jobs.filter(job => job.featured).map(job => (
+          {featuredJobs.map(job => (
             <div key={job.id} className="px-2 h-full">
               <JobCard job={job} featured={true} />
             </div>
