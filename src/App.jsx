@@ -12,6 +12,7 @@ import CreateJobPage from "./pages/CreateJobPage";
 import HRDashboard from "./pages/HRDashboard";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
 import LandingPage from "./pages/LandingPage"; // Import the new landing page
+import DisplayResume from "./pages/DisplayResume"; // Import the DisplayResume page
 
 const ProtectedRoute = ({ element, allowedRoles }) => {
   const { user } = useContext(AuthContext);
@@ -72,6 +73,8 @@ function App() {
             path="/hr"
             element={<ProtectedRoute element={<HRDashboard />} allowedRoles={["hr"]} />}
           />
+          <Route path="/display-resume" element={<DisplayResume />} />
+
         
           {/* Redirect based on authentication status */}
           <Route path="*" element={

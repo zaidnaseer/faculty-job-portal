@@ -63,7 +63,7 @@ const Navbar = () => {
               <>
                 <NavLink to="/vacancies" current={location.pathname}>Vacancies</NavLink>
                 <NavLink to="/resume" current={location.pathname}>My Resume</NavLink>
-                <NavLink to="/add-resume" current={location.pathname}>Create Resume</NavLink>
+          
                 <NavLink to="/my-applications" current={location.pathname}>Applications</NavLink>
                 <button 
                   onClick={handleLogout} 

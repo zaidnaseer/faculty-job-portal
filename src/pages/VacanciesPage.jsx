@@ -1,4 +1,4 @@
-import { useState, useEffect,useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import FeaturedJobSlider from "../components/FeaturedJobSlider";
 import JobCard from "../components/JobCard";
 import { FaSearch, FaFilter } from "react-icons/fa";
@@ -6,13 +6,14 @@ import { AuthContext } from "../context/AuthContext";
 
 const VacanciesPage = () => {
   const { user } = useContext(AuthContext);
-  
+
   const [jobs, setJobs] = useState([]); // All jobs fetched from the server
   const [searchTerm, setSearchTerm] = useState(""); // Search term for job titles, keywords, etc.
   const [filters, setFilters] = useState({
     type: "all", // Filter for job type
     department: "all", // Filter for department
     location: "all", // Filter for location
+    institution: "all", // Filter for institution
   });
   const [showFilters, setShowFilters] = useState(false); // Toggle for showing filters
   const [loading, setLoading] = useState(true); // Loading state for job listings
@@ -35,12 +36,13 @@ const VacanciesPage = () => {
     fetchJobs();
   }, []);
 
-  // Get unique values for filter dropdowns (for department, location, type)
+  // Get unique values for filter dropdowns (for department, location, type, institution)
   const departments = ["all", ...new Set(jobs.map((job) => job.department))];
   const locations = ["all", ...new Set(jobs.map((job) => job.location))];
   const jobTypes = ["all", ...new Set(jobs.map((job) => job.type))];
+  const institutions = ["all", ...new Set(jobs.map((job) => job.institution).filter(Boolean))];
 
-  // Handle changes in filter selection (job type, department, location)
+  // Handle changes in filter selection (job type, department, location, institution)
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({
@@ -49,20 +51,23 @@ const VacanciesPage = () => {
     }));
   };
 
-  // Filter jobs based on search term and filters (job type, department, location)
+  // Filter jobs based on search term and filters (job type, department, location, institution)
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchTerm.toLowerCase());
+      job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.institution && job.institution.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesType = filters.type === "all" || job.type === filters.type;
     const matchesDepartment =
       filters.department === "all" || job.department === filters.department;
     const matchesLocation =
       filters.location === "all" || job.location === filters.location;
+    const matchesInstitution =
+      filters.institution === "all" || job.institution === filters.institution;
 
-    return matchesSearch && matchesType && matchesDepartment && matchesLocation;
+    return matchesSearch && matchesType && matchesDepartment && matchesLocation && matchesInstitution;
   });
 
   // Separate featured jobs (you can adjust the criteria for featured jobs)
@@ -164,6 +169,25 @@ const VacanciesPage = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Institution Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Institution
+                </label>
+                <select
+                  name="institution"
+                  value={filters.institution}
+                  onChange={handleFilterChange}
+                  className="form-input"
+                >
+                  {institutions.map((institution) => (
+                    <option key={institution} value={institution}>
+                      {institution === "all" ? "All Institutions" : institution}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -193,4 +217,3 @@ const VacanciesPage = () => {
 };
 
 export default VacanciesPage;
- 

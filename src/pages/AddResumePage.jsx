@@ -1,6 +1,8 @@
+import { nav } from "framer-motion/client";
 import { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const AddResumePage = () => {
+  const navigate = useNavigate(); // Hook to navigate to another page
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -56,7 +58,7 @@ const AddResumePage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/faculty/resume", {
+      const response = await fetch("http://localhost:5000/api/faculty/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,6 +72,7 @@ const AddResumePage = () => {
       }
 
       alert("Resume added successfully!");
+      navigate("/resume"); // Redirect to the resume page after successful addition
     } catch (error) {
       console.error("Error adding resume:", error);
     }

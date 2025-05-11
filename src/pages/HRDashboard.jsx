@@ -1,12 +1,13 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedResume, setSelectedResume] = useState(null); // State to hold selected resume data
-  const [loadingResume, setLoadingResume] = useState(false);
+
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -27,21 +28,31 @@ const HRDashboard = () => {
     fetchJobs();
   }, [user]);
 
-  const fetchResume = async (facultyId) => {
-    setLoadingResume(true);
-    try {
-      const response = await fetch(`http://localhost:5000/api/resume/${facultyId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      const data = await response.json();
-      setSelectedResume(data);
-    } catch (error) {
-      console.error("Error fetching resume:", error);
-    } finally {
-      setLoadingResume(false);
-    }
+  const handleViewResume = (facultyId) => {
+    navigate("/display-resume", { state: { facultyId } });
   };
 
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+  
+    try {
+      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+  
+      if (response.ok) {
+        setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
+      } else {
+        console.error("Failed to delete job");
+      }
+    } catch (error) {
+      console.error("Error deleting job:", error);
+    }
+  };
+  
   if (loading) {
     return <p className="text-center text-gray-600">Loading jobs...</p>;
   }
@@ -67,7 +78,7 @@ const HRDashboard = () => {
                     <li key={faculty._id} className="text-sm text-gray-700">
                       {faculty.name} ({faculty.email})
                       <button
-                        onClick={() => fetchResume(faculty._id)}
+                        onClick={() => handleViewResume(faculty._id)} // Use handleViewResume to navigate
                         className="ml-2 text-blue-600 hover:underline"
                       >
                         View Resume
@@ -78,48 +89,15 @@ const HRDashboard = () => {
               ) : (
                 <p className="text-gray-500 text-sm">No applicants yet</p>
               )}
+              <button
+  onClick={() => handleDeleteJob(job._id)}
+  className="mt-3 text-red-600 hover:underline text-sm"
+>
+  Delete Job
+</button>
+
             </div>
           ))}
-        </div>
-      )}
-
-      {selectedResume && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            {loadingResume ? (
-              <p>Loading resume...</p>
-            ) : (
-              <>
-                <h3 className="text-xl font-semibold mb-4">{selectedResume.name}</h3>
-                <p><strong>Email:</strong> {selectedResume.email}</p>
-                <p><strong>Phone:</strong> {selectedResume.phone}</p>
-                <p><strong>Skills:</strong> {selectedResume.skills.join(", ")}</p>
-                <h4 className="font-semibold mt-4">Experience:</h4>
-                <ul>
-                  {selectedResume.experience.map((exp, index) => (
-                    <li key={index} className="text-sm text-gray-700">
-                      <strong>{exp.title}</strong> at {exp.institution} ({exp.start} - {exp.end})
-                      <p>{exp.description}</p>
-                    </li>
-                  ))}
-                </ul>
-                <h4 className="font-semibold mt-4">Education:</h4>
-                <ul>
-                  {selectedResume.education.map((edu, index) => (
-                    <li key={index} className="text-sm text-gray-700">
-                      <strong>{edu.degree}</strong> in {edu.field} from {edu.institution} ({edu.year})
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setSelectedResume(null)}
-                  className="mt-4 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700"
-                >
-                  Close
-                </button>
-              </>
-            )}
-          </div>
         </div>
       )}
     </div>

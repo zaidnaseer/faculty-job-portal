@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
-import { FaRegBookmark, FaBookmark, FaBriefcase, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaRegBookmark,
+  FaBookmark,
+  FaBriefcase,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+} from "react-icons/fa";
 
 const JobCard = ({ job, userId, featured = false }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
 
-  // Check if the current user has already applied for the job
   useEffect(() => {
     if (job.appliedBy && job.appliedBy.includes(userId)) {
-      setApplied(true); // If the userId is found in appliedBy array, set applied to true
+      setApplied(true);
     }
   }, [job.appliedBy, userId]);
 
@@ -38,7 +43,7 @@ const JobCard = ({ job, userId, featured = false }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setApplied(true); // Mark the job as applied
+        setApplied(true);
         alert("Successfully applied for the job");
       } else {
         alert(data.message || "Failed to apply for job");
@@ -50,9 +55,17 @@ const JobCard = ({ job, userId, featured = false }) => {
 
   return (
     <div className={`card h-full flex flex-col ${featured ? "border-l-4 border-primary" : ""}`}>
+      {/* University name */}
+      
+      <div className="bg-blue-900 text-white text-lg font-semibold px-4 py-2 mb-4 text-center tracking-wide uppercase rounded-t">
+          {job.institution}
+        </div>
+
+
+      {/* Job title and save icon */}
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-bold">{job.title}</h3>
+          <h3 className="text-lg font-semibold">{job.title}</h3>
           <p className="text-gray-600">{job.department}</p>
         </div>
         <button onClick={toggleSave} className="text-gray-400 hover:text-primary">
@@ -60,6 +73,7 @@ const JobCard = ({ job, userId, featured = false }) => {
         </button>
       </div>
 
+      {/* Job info */}
       <div className="mt-4 space-y-2 text-sm text-gray-500">
         <div className="flex items-center">
           <FaBriefcase className="mr-2" />
@@ -75,8 +89,10 @@ const JobCard = ({ job, userId, featured = false }) => {
         </div>
       </div>
 
+      {/* Job description */}
       <div className="mt-4 line-clamp-2 text-sm">{job.description}</div>
 
+      {/* Skills and apply button */}
       <div className="mt-auto pt-4">
         <div className="flex gap-2 text-sm">
           {job.skills.slice(0, 3).map((skill, index) => (
