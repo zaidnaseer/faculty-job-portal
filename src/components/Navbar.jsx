@@ -160,3 +160,5 @@ const MobileNavLink = ({ to, children, onClick }) => {
     </Link>
   );
 };
+
+export default Navbar;
