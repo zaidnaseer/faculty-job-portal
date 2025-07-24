@@ -47,7 +47,7 @@ const LandingPage = () => {
             transition={{ duration: 0.8 }}
             className="max-w-3xl mx-auto text-center text-white"
           >
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">Upadhyaya</h1>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">Upaadhyaya</h1>
             <p className="text-xl md:text-2xl mb-10 text-blue-100">
               Connecting exceptional faculty talent with leading academic institutions
             </p>
@@ -102,7 +102,7 @@ const LandingPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-              Why Choose Upadhyaya?
+              Why Choose Upaadhyaya?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               The premier platform designed specifically for academic careers and recruitment
@@ -225,9 +225,6 @@ const LandingPage = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Ready to Advance Your Academic Career?
             </h2>
-            <p className="text-xl mb-8 text-blue-100">
-              Join thousands of faculty members who've found their ideal academic positions through Upadhyaya.
-            </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               <Link to="/register" className="btn bg-white text-blue-700 hover:bg-blue-50 px-8 py-3 rounded-full font-medium text-lg">
                 Create Your Profile
