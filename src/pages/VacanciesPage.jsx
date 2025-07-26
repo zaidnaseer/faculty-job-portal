@@ -8,6 +8,7 @@ const VacanciesPage = () => {
   const { user } = useContext(AuthContext);
 
   const [jobs, setJobs] = useState([]); // All jobs fetched from the server
+  const [appliedJobIds, setAppliedJobIds] = useState([]); // Job IDs the user has applied to
   const [searchTerm, setSearchTerm] = useState(""); // Search term for job titles, keywords, etc.
   const [filters, setFilters] = useState({
     type: "all", // Filter for job type
@@ -18,23 +19,34 @@ const VacanciesPage = () => {
   const [showFilters, setShowFilters] = useState(false); // Toggle for showing filters
   const [loading, setLoading] = useState(true); // Loading state for job listings
 
-  // Fetch jobs when the component mounts
+  // Fetch jobs and user's applications when the component mounts
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/jobs");
         const data = await response.json();
-        setJobs(data); // Set all jobs fetched from the server
+        setJobs(data);
       } catch (error) {
         console.error("Error fetching jobs:", error);
-      } finally {
-        setLoading(false); // Set loading to false after fetch is done
       }
-      console.log(user.id);
     };
 
-    fetchJobs();
-  }, []);
+    const fetchApplications = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/jobs/my-applications`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        const data = await response.json();
+        setAppliedJobIds(data.map(app => app._id));
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+      }
+    };
+
+    Promise.all([fetchJobs(), fetchApplications()]).finally(() => setLoading(false));
+  }, [user.id]);
 
   // Get unique values for filter dropdowns (for department, location, type, institution)
   const departments = ["all", ...new Set(jobs.map((job) => job.department))];
@@ -51,13 +63,14 @@ const VacanciesPage = () => {
     }));
   };
 
-  // Filter jobs based on search term and filters (job type, department, location, institution)
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (job.institution && job.institution.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter jobs based on search term, filters, and remove jobs already applied to
+  const filteredJobs = jobs
+    .filter((job) => {
+      const matchesSearch =
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (job.institution && job.institution.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesType = filters.type === "all" || job.type === filters.type;
     const matchesDepartment =
@@ -67,8 +80,9 @@ const VacanciesPage = () => {
     const matchesInstitution =
       filters.institution === "all" || job.institution === filters.institution;
 
-    return matchesSearch && matchesType && matchesDepartment && matchesLocation && matchesInstitution;
-  });
+      return matchesSearch && matchesType && matchesDepartment && matchesLocation && matchesInstitution;
+    })
+    .filter((job) => !appliedJobIds.includes(job._id)); // Remove jobs already applied to
 
   // Separate featured jobs (you can adjust the criteria for featured jobs)
   const featuredJobs = jobs.slice(0, 5); // Assuming the first 5 jobs are featured
