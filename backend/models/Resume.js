@@ -16,6 +16,7 @@ const resumeSchema = new mongoose.Schema({
     institution: String,
     start: String,
     end: String,
+    current: { type: Boolean, default: false },
     description: String
   }],
   education: [{
@@ -23,7 +24,12 @@ const resumeSchema = new mongoose.Schema({
     institution: String,
     year: String,
     field: String
-  }]
+  }],
+  publications: [{
+    title: String,
+    description: String,
+    link: String,
+  }],
 }, { timestamps: true });
 
 const Resume = mongoose.model('Resume', resumeSchema);

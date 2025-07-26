@@ -50,7 +50,7 @@ router.put('/update/:id', protect(['faculty']), async (req, res) => {
 // ✅ Create new resume (separate route)
 router.post('/add', protect(['faculty']), async (req, res) => {
   try {
-    const { name, email, phone, skills, summary, experience, education } = req.body;
+    const { name, email, phone, skills, summary, experience, education, publications } = req.body;
 
     // ✅ Check if the user already has a resume
   
@@ -68,7 +68,8 @@ router.post('/add', protect(['faculty']), async (req, res) => {
       skills,
       summary,
       experience,
-      education
+      education,
+      publications
     });
 
     await newResume.save();

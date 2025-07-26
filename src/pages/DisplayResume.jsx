@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const DisplayResume = () => {
-    const location = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
-  const facultyId =location.state?.facultyId;;
+  const facultyId = location.state?.facultyId;;
   const { user } = useContext(AuthContext);
   const [resume, setResume] = useState(null);
 
@@ -32,8 +32,16 @@ const DisplayResume = () => {
   }
 
   return (
-    <div className="card p-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="card p-6 max-w-5xl mx-auto m-2">
+      <div className="mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
+        >
+          Go Back
+        </button>
+      </div>
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Applicant Resume</h2>
       </div>
 
@@ -105,19 +113,33 @@ const DisplayResume = () => {
           {/* Publications */}
           <div>
             <h3 className="text-lg font-bold border-b pb-2 mb-3">Publications</h3>
-            <p>{resume.publications}</p>
+            {resume.publications.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {resume.publications.map((pub, index) => (
+                  <div key={index} className="bg-white shadow rounded-lg p-4 flex flex-col h-full">
+                    <span className="font-semibold text-base mb-2">{pub.title}</span>
+                    {pub.description && (
+                      <span className="text-gray-700 mb-2">{pub.description}</span>
+                    )}
+                    {pub.link && (
+                      <a
+                        href={pub.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline mt-auto"
+                      >
+                        Visit
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No publications added.</p>
+            )}
           </div>
         </div>
-        <div className="mt-6">
-        <button
-          onClick={() => window.history.back()} // Go back to the previous page
-          className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
-        >
-          Go Back
-        </button>
       </div>
-      </div>
-      
     </div>
   );
 };

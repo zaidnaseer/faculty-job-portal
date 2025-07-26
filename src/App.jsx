@@ -10,6 +10,7 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import CreateJobPage from "./pages/CreateJobPage";
 import HRDashboard from "./pages/HRDashboard";
+import JobApplicantsPage from "./pages/JobApplicantsPage";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
 import LandingPage from "./pages/LandingPage"; // Import the new landing page
 import DisplayResume from "./pages/DisplayResume"; // Import the DisplayResume page
@@ -72,6 +73,11 @@ function App() {
           <Route
             path="/hr"
             element={<ProtectedRoute element={<HRDashboard />} allowedRoles={["hr"]} />}
+          />
+
+          <Route
+            path="/job-applicants/:jobId"
+            element={<ProtectedRoute element={<JobApplicantsPage />} allowedRoles={["hr"]} />}
           />
           <Route path="/display-resume" element={<DisplayResume />} />
 

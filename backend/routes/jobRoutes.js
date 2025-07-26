@@ -58,9 +58,20 @@ router.get("/JOBS/:id", async (req, res) => {
   }
 });
 
+// Get applicants for a specific job (for HR dashboard)
+router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.jobId).populate("appliedBy", "name email");
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    res.json({ applicants: job.appliedBy, jobTitle: job.title });
+  } catch (error) {
+    console.error("Error fetching applicants:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // ✅ Create a new job (by HR)
 router.post("/", protect(["hr"]), async (req, res) => {
- 
   try {
     const { title, department, type, location, description, skills, featured } = req.body;
 
