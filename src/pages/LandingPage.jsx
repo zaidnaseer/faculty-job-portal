@@ -47,7 +47,7 @@ const LandingPage = () => {
             transition={{ duration: 0.8 }}
             className="max-w-3xl mx-auto text-center text-white"
           >
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">Upaadhyaya</h1>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">Upaadhyay</h1>
             <p className="text-xl md:text-2xl mb-10 text-blue-100">
               Connecting exceptional faculty talent with leading academic institutions
             </p>
@@ -102,7 +102,7 @@ const LandingPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-              Why Choose Upaadhyaya?
+              Why Choose Upaadhyay?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               The premier platform designed specifically for academic careers and recruitment

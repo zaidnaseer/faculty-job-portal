@@ -38,7 +38,7 @@ const Navbar = () => {
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="font-bold text-2xl text-primary">Upaadhyaya</Link>
+          <Link to="/" className="font-bold text-2xl text-primary">Upaadhyay</Link>
           
           {/* Mobile menu button */}
           <div className="md:hidden">

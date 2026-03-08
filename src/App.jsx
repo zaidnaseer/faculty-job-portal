@@ -93,7 +93,7 @@ function App() {
         </Routes>
       </main>
       <footer className="bg-dark text-white py-4 text-center">
-        <p>© {new Date().getFullYear()} Upaadhyaya. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Upaadhyay. All rights reserved.</p>
       </footer>
     </div>
   );
