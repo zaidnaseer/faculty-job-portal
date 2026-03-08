@@ -105,7 +105,7 @@ const RegisterPage = () => {
                   />
                   <span className="ml-2 flex items-center">
                     <FaUserTie className="h-5 w-5 text-blue-600 mr-2" />
-                    <span>Faculty</span>
+                    <span>Job Seeker</span>
                   </span>
                 </label>
                 
@@ -120,7 +120,7 @@ const RegisterPage = () => {
                   />
                   <span className="ml-2 flex items-center">
                     <FaUniversity className="h-5 w-5 text-blue-600 mr-2" />
-                    <span>Institution HR</span>
+                    <span>Employer</span>
                   </span>
                 </label>
               </div>
