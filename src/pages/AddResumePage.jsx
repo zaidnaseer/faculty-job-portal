@@ -1,8 +1,8 @@
-import { nav } from "framer-motion/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 const AddResumePage = () => {
-  const navigate = useNavigate(); // Hook to navigate to another page
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -78,7 +78,6 @@ const AddResumePage = () => {
     }
   };
 
-  // Skill handlers
   const handleSkillInputChange = (e) => setNewSkill(e.target.value);
   const handleAddSkill = () => {
     if (newSkill.trim()) {
@@ -90,7 +89,6 @@ const AddResumePage = () => {
     setFormData(prev => ({ ...prev, skills: prev.skills.filter((_, i) => i !== index) }));
   };
 
-  // Publication handlers
   const handlePublicationInputChange = (e) => {
     const { name, value } = e.target;
     setNewPublication((prev) => ({ ...prev, [name]: value }));
@@ -108,7 +106,6 @@ const AddResumePage = () => {
     setFormData(prev => ({ ...prev, publications: prev.publications.filter((_, i) => i !== index) }));
   };
 
-  // Experience handlers
   const handleExperienceInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setNewExperience(prev => ({
@@ -127,239 +124,337 @@ const AddResumePage = () => {
   };
 
   return (
-    <div className="container py-8">
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Add Resume</h2>
-
-        {/* Basic Info */}
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          placeholder="Full Name"
-          onChange={handleChange}
-          className="border p-2 w-full mb-2"
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          placeholder="Email"
-          onChange={handleChange}
-          className="border p-2 w-full mb-2"
-          required
-        />
-        <input
-          type="tel"
-          name="phone"
-          value={formData.phone}
-          placeholder="Phone"
-          onChange={handleChange}
-          className="border p-2 w-full mb-2"
-          required
-        />
-        <textarea
-          name="summary"
-          value={formData.summary}
-          placeholder="Professional Summary"
-          onChange={handleChange}
-          className="border p-2 w-full mb-2"
-          rows="3"
-        />
-
-        {/* Skills */}
-        <h3 className="font-bold mt-4">Skills</h3>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={newSkill}
-            onChange={handleSkillInputChange}
-            className="border p-2 flex-1"
-            placeholder="Add a skill"
-          />
-          <button type="button" onClick={handleAddSkill} className="bg-blue-500 text-white px-4 py-2">Add Skill</button>
-        </div>
-        <div className="flex flex-wrap gap-1 mb-4">
-          {formData.skills.map((skill, index) => (
-            <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs flex items-center">
-              {skill}
-              <button type="button" onClick={() => handleRemoveSkill(index)} className="ml-1 text-red-500">&times;</button>
-            </span>
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">Create Your Resume</h1>
+          <p className="text-gray-600">Fill in your professional details to build your profile</p>
         </div>
 
-        {/* Experience */}
-        <h3 className="font-bold mt-4">Experience</h3>
-        <div className="mb-4 border p-2 rounded">
-          <input
-            type="text"
-            name="title"
-            value={newExperience.title}
-            placeholder="Job Title"
-            onChange={handleExperienceInputChange}
-            className="border p-2 w-full mb-2"
-          />
-          <input
-            type="text"
-            name="institution"
-            value={newExperience.institution}
-            placeholder="Company/Institution"
-            onChange={handleExperienceInputChange}
-            className="border p-2 w-full mb-2"
-          />
-          <div className="flex gap-2 mb-2">
-            <div className="flex-1">
-              <label className="block text-xs mb-1">Start Date</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">1</span>
+              Personal Information
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
               <input
-                type="month"
-                name="start"
-                value={newExperience.start}
-                onChange={handleExperienceInputChange}
-                className="border p-2 w-full"
+                type="text"
+                name="name"
+                value={formData.name}
+                placeholder="Full Name"
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                placeholder="Email Address"
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                required
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-xs mb-1">End Date</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              placeholder="Phone Number"
+              onChange={handleChange}
+              className="border border-gray-300 rounded-lg p-3 w-full mt-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+              required
+            />
+            <textarea
+              name="summary"
+              value={formData.summary}
+              placeholder="Professional Summary - Tell us about yourself and your career highlights"
+              onChange={handleChange}
+              className="border border-gray-300 rounded-lg p-3 w-full mt-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+              rows="4"
+            />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">2</span>
+              Skills & Expertise
+            </h2>
+            <div className="flex gap-2 mb-4">
               <input
-                type="month"
-                name="end"
-                value={newExperience.end}
-                onChange={handleExperienceInputChange}
-                className="border p-2 w-full"
-                disabled={newExperience.current}
+                type="text"
+                value={newSkill}
+                onChange={handleSkillInputChange}
+                className="border border-gray-300 rounded-lg p-3 flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                placeholder="Enter a skill (e.g., React, Python, Leadership)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
               />
+              <button 
+                type="button" 
+                onClick={handleAddSkill} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                Add
+              </button>
             </div>
-          </div>
-          <div className="mb-2">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                name="current"
-                checked={newExperience.current}
-                onChange={handleExperienceInputChange}
-                className="mr-2"
-              />
-              I currently work here
-            </label>
-          </div>
-          <textarea
-            name="description"
-            value={newExperience.description}
-            placeholder="Job Description"
-            onChange={handleExperienceInputChange}
-            className="border p-2 w-full mb-2"
-            rows="2"
-          />
-          <button type="button" onClick={handleAddExperience} className="bg-blue-500 text-white px-4 py-2 w-full mb-2">Add Experience</button>
-        </div>
-        {formData.experience.map((exp, index) => (
-          <div key={index} className="mb-4 border p-2 rounded flex justify-between items-center">
-            <div>
-              <div className="font-semibold">{exp.title}</div>
-              <div className="text-gray-700">
-                {exp.institution} (
-                {exp.start ? new Date(exp.start + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : ''}
-                {' - '}
-                {exp.current ? 'Present' : (exp.end ? new Date(exp.end + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : '')}
-                )
+            {formData.skills.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.skills.map((skill, index) => (
+                  <span key={index} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm flex items-center shadow-sm hover:shadow-md transition-shadow">
+                    {skill}
+                    <button type="button" onClick={() => handleRemoveSkill(index)} className="ml-2 hover:bg-white hover:text-blue-600 rounded-full w-5 h-5 flex items-center justify-center transition-colors">&times;</button>
+                  </span>
+                ))}
               </div>
-              {exp.description && <div className="text-gray-600 text-sm mt-1">{exp.description}</div>}
-            </div>
-            <button type="button" onClick={() => handleRemoveExperience(index)} className="text-red-500 ml-2">Remove</button>
+            )}
           </div>
-        ))}
-        {/* Publications */}
-        <h3 className="font-bold mt-4">Publications</h3>
-        <div className="flex flex-col md:flex-row gap-2 mb-2">
-          <input
-            type="text"
-            name="title"
-            value={newPublication.title}
-            onChange={handlePublicationInputChange}
-            className="border p-2 flex-1"
-            placeholder="Publication Title"
-          />
-          <input
-            type="text"
-            name="description"
-            value={newPublication.description}
-            onChange={handlePublicationInputChange}
-            className="border p-2 flex-1"
-            placeholder="Key Details of Your Publication"
-          />
-          <input
-            type="text"
-            name="link"
-            value={newPublication.link}
-            onChange={handlePublicationInputChange}
-            className="border p-2 flex-1"
-            placeholder="Link (optional)"
-          />
-          <button type="button" onClick={handleAddPublication} className="bg-blue-500 text-white px-4 py-2">Add Publication</button>
-        </div>
-        <ul className="list-disc pl-5 mb-4">
-          {formData.publications.map((pub, index) => (
-            <li key={index} className="flex flex-col md:flex-row md:items-center justify-between mb-2">
-              <div>
-                <span className="font-semibold">{pub.title}</span>
-                {pub.description && <span className="ml-2 text-gray-700">- {pub.description}</span>}
-                {pub.link && (
-                  <a href={pub.link} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 underline">[Link]</a>
-                )}
+
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">3</span>
+              Work Experience
+            </h2>
+            <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <input
+                  type="text"
+                  name="title"
+                  value={newExperience.title}
+                  placeholder="Job Title"
+                  onChange={handleExperienceInputChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
+                <input
+                  type="text"
+                  name="institution"
+                  value={newExperience.institution}
+                  placeholder="Company/Institution"
+                  onChange={handleExperienceInputChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
               </div>
-              <button type="button" onClick={() => handleRemovePublication(index)} className="text-red-500 ml-2">Remove</button>
-            </li>
-          ))}
-        </ul>
-
-        {/* Education */}
-        <h3 className="font-bold mt-4">Education</h3>
-        {formData.education.map((edu, index) => (
-          <div key={index} className="mb-4 border p-2">
-            <input
-              type="text"
-              name="degree"
-              value={edu.degree}
-              placeholder="Degree"
-              onChange={(e) => handleEducationChange(index, e)}
-              className="border p-2 w-full mb-2"
-            />
-            <input
-              type="text"
-              name="institution"
-              value={edu.institution}
-              placeholder="Institution"
-              onChange={(e) => handleEducationChange(index, e)}
-              className="border p-2 w-full mb-2"
-            />
-            <input
-              type="text"
-              name="year"
-              value={edu.year}
-              placeholder="Year"
-              onChange={(e) => handleEducationChange(index, e)}
-              className="border p-2 w-full mb-2"
-            />
-            <input
-              type="text"
-              name="field"
-              value={edu.field}
-              placeholder="Field of Study"
-              onChange={(e) => handleEducationChange(index, e)}
-              className="border p-2 w-full mb-2"
-            />
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="month"
+                    name="start"
+                    value={newExperience.start}
+                    onChange={handleExperienceInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="month"
+                    name="end"
+                    value={newExperience.end}
+                    onChange={handleExperienceInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+                    disabled={newExperience.current}
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="current"
+                    checked={newExperience.current}
+                    onChange={handleExperienceInputChange}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-gray-700">I currently work here</span>
+                </label>
+              </div>
+              <textarea
+                name="description"
+                value={newExperience.description}
+                placeholder="Describe your responsibilities and achievements..."
+                onChange={handleExperienceInputChange}
+                className="border border-gray-300 rounded-lg p-3 w-full mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+                rows="3"
+              />
+              <button 
+                type="button" 
+                onClick={handleAddExperience} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                + Add Experience
+              </button>
+            </div>
+            {formData.experience.length > 0 && (
+              <div className="space-y-3">
+                {formData.experience.map((exp, index) => (
+                  <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-lg">{exp.title}</h4>
+                        <p className="text-blue-600 font-medium">{exp.institution}</p>
+                        <p className="text-gray-500 text-sm mt-1">
+                          {exp.start ? new Date(exp.start + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : ''}
+                          {' - '}
+                          {exp.current ? 'Present' : (exp.end ? new Date(exp.end + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : '')}
+                        </p>
+                        {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveExperience(index)} 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
-        <button type="button" onClick={addEducation} className="bg-gray-500 text-white px-4 py-2 w-full mb-2">
-          + Add Education
-        </button>
 
-        {/* Submit */}
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 w-full">
-          Save Resume
-        </button>
-      </form>
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">4</span>
+              Publications & Research
+            </h2>
+            <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+              <div className="grid gap-4 mb-4">
+                <input
+                  type="text"
+                  name="title"
+                  value={newPublication.title}
+                  onChange={handlePublicationInputChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  placeholder="Publication Title"
+                />
+                <input
+                  type="text"
+                  name="description"
+                  value={newPublication.description}
+                  onChange={handlePublicationInputChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  placeholder="Key Details of Your Publication"
+                />
+                <input
+                  type="url"
+                  name="link"
+                  value={newPublication.link}
+                  onChange={handlePublicationInputChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  placeholder="Link (optional)"
+                />
+              </div>
+              <button 
+                type="button" 
+                onClick={handleAddPublication} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                + Add Publication
+              </button>
+            </div>
+            {formData.publications.length > 0 && (
+              <div className="space-y-3">
+                {formData.publications.map((pub, index) => (
+                  <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800">{pub.title}</h4>
+                        {pub.description && <p className="text-gray-600 text-sm mt-1">{pub.description}</p>}
+                        {pub.link && (
+                          <a href={pub.link} target="_blank" rel=" noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            View Publication
+                            <svg className="w-4 h-4 ml-1"fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+                              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemovePublication(index)} 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+              <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">5</span>
+              Education
+            </h2>
+            <div className="space-y-4">
+              {formData.education.map((edu, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="degree"
+                      value={edu.degree}
+                      placeholder="Degree (e.g., Bachelor of Science)"
+                      onChange={(e) => handleEducationChange(index, e)}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    />
+                    <input
+                      type="text"
+                      name="field"
+                      value={edu.field}
+                      placeholder="Field of Study"
+                      onChange={(e) => handleEducationChange(index, e)}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    />
+                    <input
+                      type="text"
+                      name="institution"
+                      value={edu.institution}
+                      placeholder="Institution Name"
+                      onChange={(e) => handleEducationChange(index, e)}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    />
+                    <input
+                      type="text"
+                      name="year"
+                      value={edu.year}
+                      placeholder="Year (e.g., 2020)"
+                      onChange={(e) => handleEducationChange(index, e)}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button 
+              type="button" 
+              onClick={addEducation} 
+              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg w-full mt-4 font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+            >
+              + Add Another Education
+            </button>
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-8 text-center">
+            <button 
+              type="submit" 
+              className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 rounded-lg font-bold text-lg w-full md:w-auto md:min-w-[300px] transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              Save Resume
+            </button>
+            <p className="text-blue-100 text-sm mt-4">Click to save your resume and create your profile</p>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
