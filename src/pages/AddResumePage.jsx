@@ -20,30 +20,12 @@ const AddResumePage = () => {
   const [newExperience, setNewExperience] = useState({ title: "", institution: "", start: "", end: "", description: "", current: false });
   const [resumeFile, setResumeFile] = useState(null);
 
-const handleResumeUpload = async (e) => {
-
-  const file = e.target.files[0]
-
-  const formDataUpload = new FormData()
-  formDataUpload.append("resume", file)
-
-  const res = await fetch("http://localhost:5000/api/parser/resume", {
-    method: "POST",
-    body: formDataUpload
-  })
-
-  const data = await res.json()
-
-  setFormData(prev => ({
-  ...prev,
-  email: data.email || "",
-  phone: data.phone || "",
-  summary: data.summary || "",
-  skills: data.skills || [],
-  education: (data.education || []).map(e => ({ degree: e })),
-  publications: (data.publications || []).map(p => ({ title: p }))
-}))
-}
+const handleResumeUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setResumeFile(file);
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,18 +65,33 @@ const handleResumeUpload = async (e) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const resumeData = {
-      ...formData,
-    };
+    
     try {
+      const formDataToSend = new FormData();
+      
+      // Add all form fields
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('summary', formData.summary);
+      formDataToSend.append('skills', JSON.stringify(formData.skills));
+      formDataToSend.append('experience', JSON.stringify(formData.experience));
+      formDataToSend.append('education', JSON.stringify(formData.education));
+      formDataToSend.append('publications', JSON.stringify(formData.publications));
+      
+      // Add resume file if uploaded
+      if (resumeFile) {
+        formDataToSend.append('resume', resumeFile);
+      }
+      
       const response = await fetch("http://localhost:5000/api/faculty/add", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(resumeData),
+        body: formDataToSend,
       });
+      
       if (!response.ok) {
         throw new Error("Failed to add resume");
       }
@@ -159,21 +156,33 @@ const handleResumeUpload = async (e) => {
           <p className="text-gray-600">Fill in your professional details to build your profile</p>
         </div>
 
-        <div className="mb-6">
- 
-          <div className="mb-6">
-
-            <label className="font-semibold">
-            Upload Resume (PDF)
-            </label>
-
-            <input
-            type="file"
-            accept=".pdf"
-            onChange={handleResumeUpload}
-            className="border p-2 w-full"
-            />
-
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 md:p-8 mb-6 border border-blue-400">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-shrink-0">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-xl font-bold text-white mb-2">Upload Resume</h3>
+              <p className="text-blue-100 text-sm mb-4">Upload your resume (PDF) to include with your profile {resumeFile && <span className="inline-block ml-2 px-3 py-1 bg-green-500 text-white rounded-full text-xs">✓ {resumeFile.name}</span>}</p>
+              <label className="relative inline-flex items-center cursor-pointer group">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleResumeUpload}
+                  className="hidden"
+                />
+                <div className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Choose PDF File
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 
