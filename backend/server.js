@@ -8,11 +8,14 @@ const { MongoClient } = require("mongodb");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
 const resumeRoutes = require("./routes/resumeRoutes");
+const parserRoutes = require("./routes/parserRoutes")
 app.use(express.json());
 app.use(cors( {origin: "http://localhost:5173"} ));
 
 
 
+
+app.use("/api/parser", parserRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/faculty", facultyRoutes);

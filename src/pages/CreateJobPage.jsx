@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import RippleBackground from "../components/RippleBackground";
 
 const CreateJobPage = () => {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ const CreateJobPage = () => {
   };
 
   return (
+    <RippleBackground>
     <div className="container py-8">
       <h2 className="text-2xl font-bold mb-6">Create New Job</h2>
 
@@ -175,6 +177,7 @@ const CreateJobPage = () => {
         </div>
       </form>
     </div>
+    </RippleBackground>
   );
 };
 

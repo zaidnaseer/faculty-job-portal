@@ -62,7 +62,7 @@ const Navbar = () => {
               // Faculty Navigation Links
               <>
                 <NavLink to="/vacancies" current={location.pathname}>Vacancies</NavLink>
-                <NavLink to="/resume" current={location.pathname}>My Resume</NavLink>
+                <NavLink to="/resume" current={location.pathname}>Profile</NavLink>
           
                 <NavLink to="/my-applications" current={location.pathname}>Applications</NavLink>
                 <button 

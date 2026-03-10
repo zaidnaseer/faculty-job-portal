@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import RippleBackground from "../components/RippleBackground";
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -58,6 +59,7 @@ const HRDashboard = () => {
   }
 
   return (
+    <RippleBackground>
     <div className="container py-8">
       <h2 className="text-3xl font-bold mb-8 text-center text-blue-800">HR Dashboard</h2>
 
@@ -108,6 +110,7 @@ const HRDashboard = () => {
         </div>
       )}
     </div>
+    </RippleBackground>
   );
 };
 

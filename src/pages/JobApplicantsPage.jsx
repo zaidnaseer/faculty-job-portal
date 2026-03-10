@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import RippleBackground from "../components/RippleBackground";
 
 const JobApplicantsPage = () => {
     const { jobId } = useParams();
@@ -30,6 +31,7 @@ const JobApplicantsPage = () => {
     }, [jobId, user]);
 
     return (
+        <RippleBackground>
         <div className="container py-8">
             <button
                 className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
@@ -64,6 +66,7 @@ const JobApplicantsPage = () => {
                 </ul>
             )}
         </div>
+        </RippleBackground>
     );
 };
 
