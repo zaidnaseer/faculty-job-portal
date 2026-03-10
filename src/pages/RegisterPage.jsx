@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity } from "react-icons/fa";
+import RippleBackground from "../components/RippleBackground";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -54,7 +55,8 @@ const RegisterPage = () => {
   };
   
   return (
-    <div className="min-h-screen py-12 flex items-center justify-center bg-gray-50">
+    <RippleBackground>
+    <div className="min-h-screen py-12 flex items-center justify-center bg-gray-0">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -252,6 +254,7 @@ const RegisterPage = () => {
         </div>
       </motion.div>
     </div>
+    </RippleBackground>
   );
 };
 

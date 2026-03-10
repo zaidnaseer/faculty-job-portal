@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
+import ResumePage from "./ResumePage";
+import RippleBackground from "../components/RippleBackground";
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -40,7 +43,7 @@ const Login = () => {
       
       if (data.role === "faculty") {
         console.log("Faculty login",data.token);
-        navigate("/vacancies"); // Redirect faculty to vacancies page
+        navigate("/Resume"); // Redirect faculty to vacancies page
       } else if (data.role === "hr") {
         navigate("/hr"); // Redirect HR to HR page
       } else{
@@ -56,7 +59,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen py-12 flex items-center justify-center bg-gray-50">
+    <RippleBackground>
+    <div className="min-h-screen py-12 flex items-center justify-center bg-gray-0">
+      
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -180,6 +185,7 @@ const Login = () => {
         </motion.div>
       </div>
     </div>
+  </RippleBackground>
   );
 };
 

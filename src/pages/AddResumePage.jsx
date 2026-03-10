@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import RippleBackground from "../components/RippleBackground";
 
 const AddResumePage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,32 @@ const AddResumePage = () => {
   const [newSkill, setNewSkill] = useState("");
   const [newPublication, setNewPublication] = useState({ title: '', description: '', link: '' });
   const [newExperience, setNewExperience] = useState({ title: "", institution: "", start: "", end: "", description: "", current: false });
+  const [resumeFile, setResumeFile] = useState(null);
+
+const handleResumeUpload = async (e) => {
+
+  const file = e.target.files[0]
+
+  const formDataUpload = new FormData()
+  formDataUpload.append("resume", file)
+
+  const res = await fetch("http://localhost:5000/api/parser/resume", {
+    method: "POST",
+    body: formDataUpload
+  })
+
+  const data = await res.json()
+
+  setFormData(prev => ({
+  ...prev,
+  email: data.email || "",
+  phone: data.phone || "",
+  summary: data.summary || "",
+  skills: data.skills || [],
+  education: (data.education || []).map(e => ({ degree: e })),
+  publications: (data.publications || []).map(p => ({ title: p }))
+}))
+}
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,11 +151,30 @@ const AddResumePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
+    <RippleBackground>
+    <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Create Your Resume</h1>
           <p className="text-gray-600">Fill in your professional details to build your profile</p>
+        </div>
+
+        <div className="mb-6">
+ 
+          <div className="mb-6">
+
+            <label className="font-semibold">
+            Upload Resume (PDF)
+            </label>
+
+            <input
+            type="file"
+            accept=".pdf"
+            onChange={handleResumeUpload}
+            className="border p-2 w-full"
+            />
+
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -456,6 +502,7 @@ const AddResumePage = () => {
         </form>
       </div>
     </div>
+    </RippleBackground>
   );
 };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import JobCard from "../components/JobCard";
+import RippleBackground from "../components/RippleBackground";
 
 const MyApplicationsPage = () => {
   const { user } = useContext(AuthContext);
@@ -41,6 +42,7 @@ const MyApplicationsPage = () => {
   }
 
   return (
+    <RippleBackground>
     <div className="container py-8">
       <h2 className="text-2xl font-bold mb-6">My Applications</h2>
 
@@ -56,6 +58,7 @@ const MyApplicationsPage = () => {
         </div>
       )}
     </div>
+     </RippleBackground>
   );
 };
 
