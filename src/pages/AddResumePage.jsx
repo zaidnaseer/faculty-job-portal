@@ -11,18 +11,38 @@ const AddResumePage = () => {
     skills: [],
     summary: "",
     experience: [],
-    education: [{ degree: "", institution: "", year: "", field: "" }],
+    education: [],
     publications: [],
   });
 
   const [newSkill, setNewSkill] = useState("");
   const [newPublication, setNewPublication] = useState({ title: '', description: '', link: '' });
   const [newExperience, setNewExperience] = useState({ title: "", institution: "", start: "", end: "", description: "", current: false });
+  const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "", field: "" });
   const [resumeFile, setResumeFile] = useState(null);
+  const [fileError, setFileError] = useState("");
 
 const handleResumeUpload = (e) => {
   const file = e.target.files[0];
+  setFileError("");
+  
   if (file) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf', 'text/rtf'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError('Invalid file type. Only PDF, Word (.doc, .docx), TXT, and RTF documents are allowed.');
+      e.target.value = '';
+      return;
+    }
+    
+    // Validate file size (5MB = 5 * 1024 * 1024 bytes)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setFileError('File size exceeds 5MB limit. Please choose a smaller file.');
+      e.target.value = '';
+      return;
+    }
+    
     setResumeFile(file);
   }
 };
@@ -61,6 +81,22 @@ const handleResumeUpload = (e) => {
       ...prev,
       education: [...prev.education, { degree: "", institution: "", year: "", field: "" }]
     }));
+  };
+
+  const handleEducationInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewEducation(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddEducation = () => {
+    if (newEducation.degree && newEducation.institution) {
+      setFormData(prev => ({ ...prev, education: [...prev.education, newEducation] }));
+      setNewEducation({ degree: "", institution: "", year: "", field: "" });
+    }
+  };
+
+  const handleRemoveEducation = (index) => {
+    setFormData(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== index) }));
   };
 
   const handleSubmit = async (e) => {
@@ -167,11 +203,14 @@ const handleResumeUpload = (e) => {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-xl font-bold text-white mb-2">Upload Resume</h3>
-              <p className="text-blue-100 text-sm mb-4">Upload your resume (PDF) to include with your profile {resumeFile && <span className="inline-block ml-2 px-3 py-1 bg-green-500 text-white rounded-full text-xs">✓ {resumeFile.name}</span>}</p>
+              <p className="text-blue-100 text-sm mb-2">Upload your resume to include with your profile</p>
+              <p className="text-blue-200 text-xs mb-4">Accepted formats: PDF, DOC, DOCX, TXT, RTF | Max size: 5MB</p>
+              {resumeFile && <span className="inline-block mb-4 px-3 py-1 bg-green-500 text-white rounded-full text-xs">✓ {resumeFile.name} ({(resumeFile.size / 1024).toFixed(1)} KB)</span>}
+              {fileError && <p className="text-red-200 bg-red-500/30 px-3 py-2 rounded-lg text-xs mb-4">{fileError}</p>}
               <label className="relative inline-flex items-center cursor-pointer group">
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.doc,.docx,.txt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/rtf,text/rtf"
                   onChange={handleResumeUpload}
                   className="hidden"
                 />
@@ -450,53 +489,73 @@ const handleResumeUpload = (e) => {
               <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">5</span>
               Education
             </h2>
-            <div className="space-y-4">
-              {formData.education.map((edu, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="degree"
-                      value={edu.degree}
-                      placeholder="Degree (e.g., Bachelor of Science)"
-                      onChange={(e) => handleEducationChange(index, e)}
-                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    />
-                    <input
-                      type="text"
-                      name="field"
-                      value={edu.field}
-                      placeholder="Field of Study"
-                      onChange={(e) => handleEducationChange(index, e)}
-                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    />
-                    <input
-                      type="text"
-                      name="institution"
-                      value={edu.institution}
-                      placeholder="Institution Name"
-                      onChange={(e) => handleEducationChange(index, e)}
-                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    />
-                    <input
-                      type="text"
-                      name="year"
-                      value={edu.year}
-                      placeholder="Year (e.g., 2020)"
-                      onChange={(e) => handleEducationChange(index, e)}
-                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    />
-                  </div>
-                </div>
-              ))}
+            <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="degree"
+                  value={newEducation.degree}
+                  onChange={handleEducationInputChange}
+                  placeholder="Degree (e.g., Bachelor of Science)"
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
+                <input
+                  type="text"
+                  name="field"
+                  value={newEducation.field}
+                  onChange={handleEducationInputChange}
+                  placeholder="Field of Study"
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
+                <input
+                  type="text"
+                  name="institution"
+                  value={newEducation.institution}
+                  onChange={handleEducationInputChange}
+                  placeholder="Institution Name"
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
+                <input
+                  type="text"
+                  name="year"
+                  value={newEducation.year}
+                  onChange={handleEducationInputChange}
+                  placeholder="Year (e.g., 2020)"
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                />
+              </div>
+              <button 
+                type="button" 
+                onClick={handleAddEducation} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full mt-4 font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                + Add Education
+              </button>
             </div>
-            <button 
-              type="button" 
-              onClick={addEducation} 
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg w-full mt-4 font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-            >
-              + Add Another Education
-            </button>
+            {formData.education.length > 0 && (
+              <div className="space-y-3">
+                {formData.education.map((edu, index) => (
+                  <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-lg">{edu.degree}{edu.field && ` in ${edu.field}`}</h4>
+                        <p className="text-blue-600 font-medium">{edu.institution}</p>
+                        {edu.year && <p className="text-gray-500 text-sm mt-1">{edu.year}</p>}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveEducation(index)} 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-8 text-center">

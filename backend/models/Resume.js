@@ -30,6 +30,12 @@ const resumeSchema = new mongoose.Schema({
     description: String,
     link: String,
   }],
+  resumeFile: {
+    data: Buffer,
+    contentType: String,
+    filename: String,
+    size: Number
+  }
 }, { timestamps: true });
 
 const Resume = mongoose.model('Resume', resumeSchema);
