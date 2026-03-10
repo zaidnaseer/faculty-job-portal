@@ -3,6 +3,7 @@ import FeaturedJobSlider from "../components/FeaturedJobSlider";
 import JobCard from "../components/JobCard";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { AuthContext } from "../context/AuthContext";
+import RippleBackground from "../components/RippleBackground";
 
 const VacanciesPage = () => {
   const { user } = useContext(AuthContext);
@@ -102,6 +103,7 @@ const VacanciesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Pass only featured jobs to the FeaturedJobSlider */}
+      <RippleBackground>
       <FeaturedJobSlider jobs={featuredJobs} />
 
       <div className="container py-8">
@@ -226,6 +228,7 @@ const VacanciesPage = () => {
           </div>
         )}
       </div>
+      </RippleBackground>
     </div>
   );
 };

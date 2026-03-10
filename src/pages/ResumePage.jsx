@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ResumeEditor from "../components/ResumeEditor";
+import RippleBackground from "../components/RippleBackground";
 
 const ResumePage = () => {
   const { user } = useContext(AuthContext); // Get user data from context
@@ -66,6 +67,7 @@ const ResumePage = () => {
   }
 
   return (
+     <RippleBackground>
     <div className="container py-8">
       {facultyData ? (
         <ResumeEditor initialResume={{ ...facultyData }} userId={user?.id} />
@@ -73,6 +75,7 @@ const ResumePage = () => {
         <p className="text-center text-gray-600">No resume data available.</p>
       )}
     </div>
+    </RippleBackground>
   );
 };
 
