@@ -1,6 +1,8 @@
 import { nav } from "framer-motion/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import RippleBackground from "../components/RippleBackground";
+
 const AddResumePage = () => {
   const navigate = useNavigate(); // Hook to navigate to another page
   const [formData, setFormData] = useState({
@@ -17,6 +19,32 @@ const AddResumePage = () => {
   const [newSkill, setNewSkill] = useState("");
   const [newPublication, setNewPublication] = useState({ title: '', description: '', link: '' });
   const [newExperience, setNewExperience] = useState({ title: "", institution: "", start: "", end: "", description: "", current: false });
+  const [resumeFile, setResumeFile] = useState(null);
+
+const handleResumeUpload = async (e) => {
+
+  const file = e.target.files[0]
+
+  const formDataUpload = new FormData()
+  formDataUpload.append("resume", file)
+
+  const res = await fetch("http://localhost:5000/api/parser/resume", {
+    method: "POST",
+    body: formDataUpload
+  })
+
+  const data = await res.json()
+
+  setFormData(prev => ({
+  ...prev,
+  email: data.email || "",
+  phone: data.phone || "",
+  summary: data.summary || "",
+  skills: data.skills || [],
+  education: (data.education || []).map(e => ({ degree: e })),
+  publications: (data.publications || []).map(p => ({ title: p }))
+}))
+}
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -127,9 +155,27 @@ const AddResumePage = () => {
   };
 
   return (
+    <RippleBackground>
     <div className="container py-8">
       <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Add Resume</h2>
+        <h2 className="text-2xl font-bold mb-4">Add Pofile Info</h2>
+        <div className="mb-6">
+ 
+  <div className="mb-6">
+
+<label className="font-semibold">
+Upload Resume (PDF)
+</label>
+
+<input
+type="file"
+accept=".pdf"
+onChange={handleResumeUpload}
+className="border p-2 w-full"
+/>
+
+</div>
+</div>
 
         {/* Basic Info */}
         <input
@@ -357,10 +403,11 @@ const AddResumePage = () => {
 
         {/* Submit */}
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 w-full">
-          Save Resume
+          Save Profile
         </button>
       </form>
     </div>
+    </RippleBackground>
   );
 };
 

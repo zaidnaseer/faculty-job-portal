@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import RippleBackground from '../components/RippleBackground';
 
 const DisplayResume = () => {
   const location = useLocation();
@@ -32,6 +33,7 @@ const DisplayResume = () => {
   }
 
   return (
+    <RippleBackground>
     <div className="card p-6 max-w-5xl mx-auto m-2">
       <div className="mb-4">
         <button
@@ -141,6 +143,7 @@ const DisplayResume = () => {
         </div>
       </div>
     </div>
+    </RippleBackground>
   );
 };
 
