@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
-import ResumePage from "./ResumePage";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
 
@@ -31,19 +32,27 @@ const Login = () => {
 
     try {
       const { email, password } = formData;
+      const firebaseCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      const idToken = await firebaseCredential.user.getIdToken();
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ idToken }),
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
       console.log("LoginData",data);
       await login(data.user, data.token);
       
       if (data.role === "faculty") {
         console.log("Faculty login",data.token);
-        navigate("/Resume"); // Redirect faculty to vacancies page
+        navigate("/resume"); // Redirect faculty to resume page
       } else if (data.role === "hr") {
         navigate("/hr"); // Redirect HR to HR page
       } else{
@@ -51,7 +60,7 @@ const Login = () => {
         console.error("Invalid role:", data.role);
       }
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials or report if error persists.");
+      setError(err.message || "Failed to sign in. Please check your credentials or report if error persists.");
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);

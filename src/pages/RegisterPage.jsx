@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity } from "react-icons/fa";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
 const RegisterPage = () => {
@@ -27,12 +29,23 @@ const RegisterPage = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const { email, password, name, role, university } = formData;
+      const firebaseCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(firebaseCredential.user, { displayName: name });
+
+      const idToken = await firebaseCredential.user.getIdToken();
+
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          idToken,
+          name,
+          role,
+          university,
+        }),
       });
       
       const data = await response.json();
@@ -47,7 +60,7 @@ const RegisterPage = () => {
       }, 2000);
       
     } catch (err) {
-      setError("An error occurred during registration");
+      setError(err.message || "An error occurred during registration");
       console.error("Registration error:", err);
     } finally {
       setIsLoading(false);
