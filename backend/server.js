@@ -9,7 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const app = express();
 const resumeRoutes = require("./routes/resumeRoutes");
 app.use(express.json());
-app.use(cors( {origin: process.env.FRONTEND_URL, credentials: True} ));
+app.use(cors( {origin: process.env.FRONTEND_URL, credentials: true} ));
 
 
 
