@@ -6,6 +6,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const ResumePage = () => {
   const { user } = useContext(AuthContext); // Get user data from context
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [facultyData, setFacultyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate(); // Hook to navigate to another page
@@ -19,7 +20,7 @@ const ResumePage = () => {
           return;
         }
         console.log("User ID:", user.id); // Log the user ID for debugging
-        const response = await fetch(`http://localhost:5000/api/faculty/${user.id}`, {
+        const response = await fetch(`${backendUrl}/api/faculty/${user.id}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -46,7 +47,7 @@ const ResumePage = () => {
     } else {
       console.log("No user ID available");
     }
-  }, [user?.id]);
+  }, [user?.id, backendUrl]);
 
   // Only redirect if the data is null after it's fetched
   useEffect(() => {

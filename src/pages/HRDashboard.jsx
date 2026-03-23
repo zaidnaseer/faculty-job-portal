@@ -5,6 +5,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +14,7 @@ const HRDashboard = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/jobs/my-jobs", {
+        const response = await fetch(`${backendUrl}/api/jobs/my-jobs`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
 
@@ -27,7 +28,7 @@ const HRDashboard = () => {
     };
 
     fetchJobs();
-  }, [user]);
+  }, [user, backendUrl]);
 
   const handleViewResume = (facultyId) => {
     navigate("/display-resume", { state: { facultyId } });
@@ -37,7 +38,7 @@ const HRDashboard = () => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+      const response = await fetch(`${backendUrl}/api/jobs/${jobId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${user.token}`,

@@ -8,12 +8,13 @@ const DisplayResume = () => {
   const navigate = useNavigate();
   const facultyId = location.state?.facultyId;;
   const { user } = useContext(AuthContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [resume, setResume] = useState(null);
 
   useEffect(() => {
     const fetchResume = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/resume/${facultyId}`, {
+        const response = await fetch(`${backendUrl}/api/resume/${facultyId}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
@@ -26,7 +27,7 @@ const DisplayResume = () => {
     };
 
     if (facultyId) fetchResume();
-  }, [facultyId, user.token]);
+  }, [facultyId, user.token, backendUrl]);
 
   if (!resume) {
     return <p className="text-center">Loading resume...</p>;

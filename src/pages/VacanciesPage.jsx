@@ -7,6 +7,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const VacanciesPage = () => {
   const { user } = useContext(AuthContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [jobs, setJobs] = useState([]); // All jobs fetched from the server
   const [appliedJobIds, setAppliedJobIds] = useState([]); // Job IDs the user has applied to
@@ -24,7 +25,7 @@ const VacanciesPage = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/jobs");
+        const response = await fetch(`${backendUrl}/api/jobs`);
         const data = await response.json();
         setJobs(data);
       } catch (error) {
@@ -34,7 +35,7 @@ const VacanciesPage = () => {
 
     const fetchApplications = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/jobs/my-applications`, {
+        const response = await fetch(`${backendUrl}/api/jobs/my-applications`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
@@ -47,7 +48,7 @@ const VacanciesPage = () => {
     };
 
     Promise.all([fetchJobs(), fetchApplications()]).finally(() => setLoading(false));
-  }, [user.id]);
+  }, [user.id, user.token, backendUrl]);
 
   // Get unique values for filter dropdowns (for department, location, type, institution)
   const departments = ["all", ...new Set(jobs.map((job) => job.department))];

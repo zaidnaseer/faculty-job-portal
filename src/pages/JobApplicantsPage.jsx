@@ -6,6 +6,7 @@ import RippleBackground from "../components/RippleBackground";
 const JobApplicantsPage = () => {
     const { jobId } = useParams();
     const { user } = useContext(AuthContext);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const [applicants, setApplicants] = useState([]);
     const [jobTitle, setJobTitle] = useState("");
     const [loading, setLoading] = useState(true);
@@ -14,7 +15,7 @@ const JobApplicantsPage = () => {
     useEffect(() => {
         const fetchApplicants = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/jobs/${jobId}/applicants`, {
+                const response = await fetch(`${backendUrl}/api/jobs/${jobId}/applicants`, {
                     headers: { Authorization: `Bearer ${user.token}` },
                 });
                 if (!response.ok) throw new Error("Failed to fetch applicants");
@@ -28,7 +29,7 @@ const JobApplicantsPage = () => {
             }
         };
         fetchApplicants();
-    }, [jobId, user]);
+    }, [jobId, user, backendUrl]);
 
     return (
         <RippleBackground>

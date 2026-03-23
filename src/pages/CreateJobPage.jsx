@@ -4,6 +4,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const CreateJobPage = () => {
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({
     title: "",
     department: "",
@@ -35,7 +36,7 @@ const CreateJobPage = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Authorization token not found");
 
-      const response = await fetch("http://localhost:5000/api/jobs", {
+      const response = await fetch(`${backendUrl}/api/jobs`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

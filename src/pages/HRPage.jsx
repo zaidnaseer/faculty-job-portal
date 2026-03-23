@@ -3,6 +3,7 @@ import FacultyCard from '../components/FacultyCard';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 
 const HRPage = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     job: 'all',
@@ -18,8 +19,8 @@ const HRPage = () => {
     const fetchData = async () => {
       try {
         const [facultyRes, jobsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/faculty'),
-          fetch('http://localhost:5000/api/jobs')
+          fetch(`${backendUrl}/api/faculty`),
+          fetch(`${backendUrl}/api/jobs`)
         ]);
 
         const facultyData = await facultyRes.json();
@@ -41,7 +42,7 @@ const HRPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [backendUrl]);
 
   const statuses = ['all', 'new', 'reviewed', 'interviewing', 'offered', 'rejected'];
 

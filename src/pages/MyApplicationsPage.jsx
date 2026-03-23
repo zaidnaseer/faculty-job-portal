@@ -5,6 +5,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const MyApplicationsPage = () => {
   const { user } = useContext(AuthContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +13,7 @@ const MyApplicationsPage = () => {
   useEffect(() => {
     const fetchAppliedJobs = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/jobs/my-applications", {
+        const response = await fetch(`${backendUrl}/api/jobs/my-applications`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
@@ -28,7 +29,7 @@ const MyApplicationsPage = () => {
     };
 
     fetchAppliedJobs();
-  }, [user]);
+  }, [user, backendUrl]);
 
   if (loading) {
     return (

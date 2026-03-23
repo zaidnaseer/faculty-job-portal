@@ -22,6 +22,8 @@ import RippleBackground from "../components/RippleBackground";
 
 const ResumeEditor = ({ initialResume, userId }) => {
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 const [resume, setResume] = useState(initialResume || {
 name: "",
 title: "",
@@ -125,7 +127,7 @@ try {
 
 const token = localStorage.getItem("token");
 
-const response = await fetch(`http://localhost:5000/api/faculty/update/${resume._id}`, {
+const response = await fetch(`${backendUrl}/api/faculty/update/${resume._id}`, {
 method: "PUT",
 headers: {
 Authorization: `Bearer ${token}`,

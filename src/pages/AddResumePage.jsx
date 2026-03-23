@@ -4,6 +4,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const AddResumePage = () => {
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -120,7 +121,7 @@ const handleResumeUpload = (e) => {
         formDataToSend.append('resume', resumeFile);
       }
       
-      const response = await fetch("http://localhost:5000/api/faculty/add", {
+      const response = await fetch(`${backendUrl}/api/faculty/add`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
