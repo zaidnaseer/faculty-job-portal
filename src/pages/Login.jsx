@@ -2,8 +2,8 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
-import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { FaUser, FaLock, FaSignInAlt, FaGoogle } from "react-icons/fa";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
@@ -23,6 +23,43 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      const firebaseCredential = await signInWithPopup(auth, googleProvider);
+      const idToken = await firebaseCredential.user.getIdToken();
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      await login(data.user, data.token);
+
+      if (data.role === "faculty") {
+        navigate("/resume");
+      } else if (data.role === "hr") {
+        navigate("/hr");
+      } else {
+        setError("Invalid role. Please contact support.");
+      }
+    } catch (err) {
+      setError(err.message || "Google sign-in failed. Please try again.");
+      console.error("Google sign-in error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -175,6 +212,27 @@ const Login = () => {
                 <FaSignInAlt className={`h-5 w-5 ${isLoading ? "text-blue-300" : "text-blue-500"} group-hover:text-blue-400`} />
               </span>
               {isLoading ? "Signing in..." : "Sign in"}
+            </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+            >
+              <FaGoogle className="w-5 h-5" />
+              Sign in with Google
             </button>
           </div>
         </motion.form>

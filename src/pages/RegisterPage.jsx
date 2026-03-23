@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity } from "react-icons/fa";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity, FaGoogle } from "react-icons/fa";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
@@ -21,6 +21,59 @@ const RegisterPage = () => {
   
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      const firebaseCredential = await signInWithPopup(auth, googleProvider);
+      const googleUser = firebaseCredential.user;
+      const idToken = await googleUser.getIdToken();
+
+      const name = googleUser.displayName || "";
+      const role = formData.role;
+      const university = formData.university;
+
+      if (!role) {
+        throw new Error("Please select a role");
+      }
+
+      if (role === "hr" && !university) {
+        throw new Error("Please enter your institution name");
+      }
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idToken,
+          name,
+          role,
+          university,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err) {
+      setError(err.message || "Google sign-up failed. Please try again.");
+      console.error("Google sign-up error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -140,6 +193,58 @@ const RegisterPage = () => {
                 </label>
               </div>
             </div>
+
+            {formData.role === "hr" && (
+              <div className="mb-10">
+                <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
+                  University / Institution Name
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <FaUniversity />
+                  </span>
+                  <input
+                    id="university"
+                    name="university"
+                    type="text"
+                    required={formData.role === "hr"}
+                    value={formData.university}
+                    onChange={handleChange}
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your institution name"
+                  />
+                </div>
+                <div className="relative mt-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <div>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  disabled={isLoading || success}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                >
+                  <FaGoogle className="w-5 h-5" />
+                  Sign up with Google
+                </button>
+              </div>
+
+              <div className="relative mt-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+                </div>
+              </div>
+            </div>
+
             <div className="mb-4">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 Full Name
@@ -207,29 +312,6 @@ const RegisterPage = () => {
               <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
             </div>
           </div>
-          {formData.role === "hr" && (
-  <div className="mb-4">
-    <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
-      University / Institution Name
-    </label>
-    <div className="relative">
-      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-        <FaUniversity />
-      </span>
-      <input
-        id="university"
-        name="university"
-        type="text"
-        required={formData.role === "hr"}
-        value={formData.university}
-        onChange={handleChange}
-        className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        placeholder="Enter your institution name"
-      />
-    </div>
-  </div>
-)}
-          
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
