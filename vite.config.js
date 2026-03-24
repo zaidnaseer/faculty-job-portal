@@ -6,9 +6,6 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 export default defineConfig({
   plugins: [react(), cloudflare()],
   server: {
-    headers: {
-      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000', // Backend URL
