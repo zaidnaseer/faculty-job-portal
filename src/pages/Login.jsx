@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaSignInAlt, FaGoogle } from "react-icons/fa";
-import { signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
@@ -18,37 +18,48 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const completeAppLogin = async (firebaseUser) => {
+    const idToken = await firebaseUser.getIdToken();
+
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Login failed");
+    }
+
+    await login(data.user, data.token);
+
+    const role = data.user?.role || data.role;
+    if (role === "faculty") {
+      navigate("/resume");
+    } else if (role === "hr") {
+      navigate("/hr");
+    } else {
+      throw new Error("Invalid role. Please contact support.");
+    }
+  };
+
   useEffect(() => {
     const processGoogleRedirect = async () => {
+      const hasPendingGoogleRedirect = sessionStorage.getItem("googleRedirectPending") === "true";
+      if (!hasPendingGoogleRedirect) {
+        return;
+      }
+
       setIsLoading(true);
       try {
+        sessionStorage.removeItem("googleRedirectPending");
         const firebaseCredential = await getRedirectResult(auth);
         if (!firebaseCredential) {
-          return;
+          throw new Error("Google sign-in could not be completed. Please try again.");
         }
 
-        const idToken = await firebaseCredential.user.getIdToken();
-
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Login failed");
-        }
-
-        await login(data.user, data.token);
-
-        if (data.role === "faculty") {
-          navigate("/resume");
-        } else if (data.role === "hr") {
-          navigate("/hr");
-        } else {
-          setError("Invalid role. Please contact support.");
-        }
+        await completeAppLogin(firebaseCredential.user);
       } catch (err) {
         setError(err.message || "Google sign-in failed. Please try again.");
         console.error("Google redirect sign-in error:", err);
@@ -73,10 +84,26 @@ const Login = () => {
 
     try {
       const googleProvider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, googleProvider);
+      const firebaseCredential = await signInWithPopup(auth, googleProvider);
+      // TODO: Remove this, kept for testing purpose only
+      console.log(firebaseCredential);
+      await completeAppLogin(firebaseCredential.user);
     } catch (err) {
-      setError(err.message || "Google sign-in failed. Please try again.");
-      console.error("Google sign-in error:", err);
+      // Some browsers/environments block popups; fallback to redirect flow.
+      if (err?.code === "auth/popup-blocked" || err?.code === "auth/cancelled-popup-request") {
+        try {
+          const googleProvider = new GoogleAuthProvider();
+          sessionStorage.setItem("googleRedirectPending", "true");
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          setError(redirectErr.message || "Google sign-in failed. Please try again.");
+          console.error("Google redirect fallback error:", redirectErr);
+        }
+      } else {
+        setError(err.message || "Google sign-in failed. Please try again.");
+        console.error("Google sign-in error:", err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -90,32 +117,7 @@ const Login = () => {
     try {
       const { email, password } = formData;
       const firebaseCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      const idToken = await firebaseCredential.user.getIdToken();
-
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      console.log("LoginData", data);
-      await login(data.user, data.token);
-
-      if (data.role === "faculty") {
-        console.log("Faculty login", data.token);
-        navigate("/resume"); // Redirect faculty to resume page
-      } else if (data.role === "hr") {
-        navigate("/hr"); // Redirect HR to HR page
-      } else {
-        setError("Invalid role. Please contact support.");
-        console.error("Invalid role:", data.role);
-      }
+      await completeAppLogin(firebaseCredential.user);
     } catch (err) {
       setError(err.message || "Failed to sign in. Please check your credentials or report if error persists.");
       console.error("Login error:", err);
