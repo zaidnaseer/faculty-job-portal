@@ -1,27 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const mongoose = require('mongoose');
 const admin = require('../utils/firebaseAdmin');
 
 const router = express.Router();
-
-const connectDB = async () => {
-  try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI, {
-        dbName: "userDB" // Use the specified database
-      });
-      console.log(`MongoDB connected to userDB`);
-    }
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  }
-};
-
-// 👉 Ensure the connection is established before using the User model
-connectDB();
 
 router.post('/register', async (req, res) => {
   const { idToken, name, role, university } = req.body;
