@@ -19,6 +19,7 @@ const RegisterPage = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const completeAppRegistration = useCallback(async (firebaseUser, signupData = {}) => {
     const role = signupData?.role || "faculty";
@@ -98,7 +99,7 @@ const RegisterPage = () => {
 
   const handleGoogleSignUp = async () => {
     setError("");
-    setIsLoading(true);
+    setIsGoogleLoading(true);
 
     try {
       const googleProvider = new GoogleAuthProvider();
@@ -143,7 +144,7 @@ const RegisterPage = () => {
         console.error("Google sign-up error:", err);
       }
     } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -263,11 +264,11 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={handleGoogleSignUp}
-                    disabled={isLoading}
+                    disabled={isGoogleLoading || isLoading}
                     className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
                   >
                     <FaGoogle className="w-5 h-5" />
-                    {isLoading ? "Redirecting to Google..." : "Sign up with Google"}
+                    {isGoogleLoading ? "Redirecting to Google..." : "Sign up with Google"}
                   </button>
                 </div>
 
