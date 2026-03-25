@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity, FaGoogle } from "react-icons/fa";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
+import { AuthContext } from "../context/AuthContext";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,7 +18,6 @@ const RegisterPage = () => {
     university: ""
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const completeAppRegistration = useCallback(async (firebaseUser, signupData = {}) => {
@@ -49,11 +50,17 @@ const RegisterPage = () => {
       throw new Error(data.message || "Registration failed");
     }
 
-    setSuccess(true);
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
-  }, [navigate]);
+    await login(data.user, data.token);
+
+    const userRole = data.user?.role || data.role;
+    if (userRole === "faculty") {
+      navigate("/resume");
+    } else if (userRole === "hr") {
+      navigate("/hr");
+    } else {
+      throw new Error("Invalid role. Please contact support.");
+    }
+  }, [login, navigate]);
 
   useEffect(() => {
     const processGoogleRedirect = async () => {
@@ -116,10 +123,8 @@ const RegisterPage = () => {
     } catch (err) {
       if (err?.code === "auth/popup-closed-by-user") {
         setError("Google sign-up was canceled. Please try again.");
-        return;
       }
-
-      if (
+      else if (
         err?.code === "auth/popup-blocked" ||
         err?.code === "auth/cancelled-popup-request" ||
         err?.code === "auth/operation-not-supported-in-this-environment"
@@ -182,16 +187,6 @@ const RegisterPage = () => {
               className="bg-red-50 text-red-800 p-4 rounded-md text-sm"
             >
               {error}
-            </motion.div>
-          )}
-
-          {success && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-green-50 text-green-800 p-4 rounded-md text-sm"
-            >
-              Registration successful! Redirecting to login...
             </motion.div>
           )}
 
@@ -268,7 +263,7 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={handleGoogleSignUp}
-                    disabled={isLoading || success}
+                    disabled={isLoading}
                     className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
                   >
                     <FaGoogle className="w-5 h-5" />
@@ -358,8 +353,8 @@ const RegisterPage = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={isLoading || success}
-                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-white font-medium ${isLoading || success ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-white font-medium ${isLoading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
                   } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150`}
               >
                 {isLoading ? (
@@ -370,8 +365,6 @@ const RegisterPage = () => {
                     </svg>
                     Creating account...
                   </span>
-                ) : success ? (
-                  "Account created!"
                 ) : (
                   "Create Account"
                 )}
