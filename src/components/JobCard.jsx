@@ -7,7 +7,7 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 
-const JobCard = ({ job, userId, featured = false }) => {
+const JobCard = ({ job, userId }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
 
@@ -54,12 +54,12 @@ const JobCard = ({ job, userId, featured = false }) => {
   };
 
   return (
-    <div className={`card h-full flex flex-col ${featured ? "border-l-4 border-primary" : ""}`}>
+    <div className="card h-full flex flex-col">
       {/* University name */}
-      
+
       <div className="bg-blue-900 text-white text-lg font-semibold px-4 py-2 mb-4 text-center tracking-wide uppercase rounded-t">
-          {job.institution}
-        </div>
+        {job.institution}
+      </div>
 
 
       {/* Job title and save icon */}

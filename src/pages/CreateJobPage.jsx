@@ -12,7 +12,6 @@ const CreateJobPage = () => {
     location: "",
     description: "",
     skills: "",
-    featured: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -65,119 +64,107 @@ const CreateJobPage = () => {
 
   return (
     <RippleBackground>
-    <div className="container py-8">
-      <h2 className="text-2xl font-bold mb-6">Create New Job</h2>
+      <div className="container py-8">
+        <h2 className="text-2xl font-bold mb-6">Create New Job</h2>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
-        {/* Job Title */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Job Title</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="form-input w-full"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
+          {/* Job Title */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Job Title</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              className="form-input w-full"
+            />
+          </div>
 
-        {/* Department */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Department</label>
-          <input
-            type="text"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            required
-            className="form-input w-full"
-          />
-        </div>
+          {/* Department */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Department</label>
+            <input
+              type="text"
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              required
+              className="form-input w-full"
+            />
+          </div>
 
-        {/* Type */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Type</label>
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="form-input w-full"
-            required
-          >
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Internship">Internship</option>
-          </select>
-        </div>
+          {/* Type */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Type</label>
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              className="form-input w-full"
+              required
+            >
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+            </select>
+          </div>
 
-        {/* Location */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Location</label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            required
-            className="form-input w-full"
-          />
-        </div>
+          {/* Location */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Location</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              required
+              className="form-input w-full"
+            />
+          </div>
 
-        {/* Description */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows="4"
-            required
-            className="form-input w-full"
-          />
-        </div>
+          {/* Description */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="4"
+              required
+              className="form-input w-full"
+            />
+          </div>
 
-        {/* Skills */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Skills (comma separated)</label>
-          <input
-            type="text"
-            name="skills"
-            value={formData.skills}
-            onChange={handleChange}
-            className="form-input w-full"
-          />
-        </div>
+          {/* Skills */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Skills (comma separated)</label>
+            <input
+              type="text"
+              name="skills"
+              value={formData.skills}
+              onChange={handleChange}
+              className="form-input w-full"
+            />
+          </div>
 
-        {/* Featured */}
-        <div className="mb-4 flex items-center">
-          <input
-            type="checkbox"
-            name="featured"
-            checked={formData.featured}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label className="text-sm font-medium text-gray-700">Featured Job</label>
-        </div>
+          {/* Error and Success Message */}
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
 
-        {/* Error and Success Message */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-
-        {/* Submit Button */}
-        <div>
-          <button
-            type="submit"
-            className={`btn btn-primary w-full ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Create Job"}
-          </button>
-        </div>
-      </form>
-    </div>
+          {/* Submit Button */}
+          <div>
+            <button
+              type="submit"
+              className={`btn btn-primary w-full ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Create Job"}
+            </button>
+          </div>
+        </form>
+      </div>
     </RippleBackground>
   );
 };

@@ -73,68 +73,68 @@ router.post('/register', async (req, res) => {
 });
 
 
-  router.post('/login', async (req, res) => {
-    const { idToken } = req.body;
+router.post('/login', async (req, res) => {
+  const { idToken } = req.body;
 
-    try {
-      if (!idToken) {
-        return res.status(400).json({ message: 'Firebase ID token is required' });
-      }
+  try {
+    if (!idToken) {
+      return res.status(400).json({ message: 'Firebase ID token is required' });
+    }
 
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      const firebaseUid = decodedToken.uid;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const firebaseUid = decodedToken.uid;
 
-      const user = await User.findOne({ firebaseUid });
+    const user = await User.findOne({ firebaseUid });
 
-      if (!user) {
-        return res.status(404).json({ message: 'No profile found. Please complete registration first.' });
-      }
+    if (!user) {
+      return res.status(404).json({ message: 'No profile found. Please complete registration first.' });
+    }
 
-      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30h' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30h' });
 
-      res.json({
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        role: user.role,
+    res.json({
+      token,
+      user: {
+        id: user._id,
         name: user.name,
-        id: user._id
-      });
-    } catch (error) {
-      console.error('Error logging in:', error);
-      if (error.code === 'auth/id-token-expired' || error.code === 'auth/argument-error') {
-        return res.status(401).json({ message: 'Invalid or expired Firebase token' });
-      }
-      res.status(500).json({ message: 'Server error' });
+        email: user.email,
+        role: user.role,
+      },
+      role: user.role,
+      name: user.name,
+      id: user._id
+    });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    if (error.code === 'auth/id-token-expired' || error.code === 'auth/argument-error') {
+      return res.status(401).json({ message: 'Invalid or expired Firebase token' });
     }
-  });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-  router.get("/user", async (req, res) => {
-    const token = req.headers.authorization?.split(" ")[1];
-  
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+router.get("/user", async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-  
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select("-password");
-  
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(401).json({ message: "Invalid token" });
-    }
-  });
-  
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(401).json({ message: "Invalid token" });
+  }
+});
+
 
 
 module.exports = router;

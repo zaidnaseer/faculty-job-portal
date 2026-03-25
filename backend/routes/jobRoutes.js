@@ -34,7 +34,7 @@ router.get("/my-jobs", protect(['hr']), async (req, res) => {
 
 // ✅ Get all jobs
 router.get("/", async (req, res) => {
-  
+
   try {
     const jobs = await Job.find().populate("postedBy", "name email").populate("appliedBy", "name email");
     res.status(200).json(jobs);
@@ -73,17 +73,16 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
 // ✅ Create a new job (by HR)
 router.post("/", protect(["hr"]), async (req, res) => {
   try {
-    const { title, department, type, location, description, skills, featured } = req.body;
+    const { title, department, type, location, description, skills } = req.body;
 
     const newJob = new Job({
-      institution: req.user.university, 
+      institution: req.user.university,
       title,
       department,
       type,
       location,
       description,
       skills,
-      featured,
       postedBy: req.user._id, // Logged-in HR ID from JWT
     });
 

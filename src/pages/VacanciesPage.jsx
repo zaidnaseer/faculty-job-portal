@@ -1,5 +1,4 @@
 import { useState, useEffect, useContext } from "react";
-import FeaturedJobSlider from "../components/FeaturedJobSlider";
 import JobCard from "../components/JobCard";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { AuthContext } from "../context/AuthContext";
@@ -74,20 +73,17 @@ const VacanciesPage = () => {
         job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (job.institution && job.institution.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesType = filters.type === "all" || job.type === filters.type;
-    const matchesDepartment =
-      filters.department === "all" || job.department === filters.department;
-    const matchesLocation =
-      filters.location === "all" || job.location === filters.location;
-    const matchesInstitution =
-      filters.institution === "all" || job.institution === filters.institution;
+      const matchesType = filters.type === "all" || job.type === filters.type;
+      const matchesDepartment =
+        filters.department === "all" || job.department === filters.department;
+      const matchesLocation =
+        filters.location === "all" || job.location === filters.location;
+      const matchesInstitution =
+        filters.institution === "all" || job.institution === filters.institution;
 
       return matchesSearch && matchesType && matchesDepartment && matchesLocation && matchesInstitution;
     })
     .filter((job) => !appliedJobIds.includes(job._id)); // Remove jobs already applied to
-
-  // Separate featured jobs (you can adjust the criteria for featured jobs)
-  const featuredJobs = jobs.slice(0, 5); // Assuming the first 5 jobs are featured
 
   // Show loading spinner while jobs are being fetched
   if (loading) {
@@ -103,132 +99,129 @@ const VacanciesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Pass only featured jobs to the FeaturedJobSlider */}
       <RippleBackground>
-      <FeaturedJobSlider jobs={featuredJobs} />
+        <div className="container py-8">
+          <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-grow">
+                <input
+                  type="text"
+                  placeholder="Search for job titles, keywords..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-input pl-10 w-full"
+                />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
 
-      <div className="container py-8">
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-              <input
-                type="text"
-                placeholder="Search for job titles, keywords..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-input pl-10 w-full"
-              />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="btn btn-outline md:w-auto flex items-center justify-center gap-2"
+              >
+                <FaFilter />
+                <span>Filters</span>
+              </button>
             </div>
 
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-outline md:w-auto flex items-center justify-center gap-2"
-            >
-              <FaFilter />
-              <span>Filters</span>
-            </button>
+            {/* Filters Section */}
+            {showFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Type
+                  </label>
+                  <select
+                    name="type"
+                    value={filters.type}
+                    onChange={handleFilterChange}
+                    className="form-input"
+                  >
+                    {jobTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type === "all" ? "All Types" : type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Department
+                  </label>
+                  <select
+                    name="department"
+                    value={filters.department}
+                    onChange={handleFilterChange}
+                    className="form-input"
+                  >
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept === "all" ? "All Departments" : dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <select
+                    name="location"
+                    value={filters.location}
+                    onChange={handleFilterChange}
+                    className="form-input"
+                  >
+                    {locations.map((location) => (
+                      <option key={location} value={location}>
+                        {location === "all" ? "All Locations" : location}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Institution Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Institution
+                  </label>
+                  <select
+                    name="institution"
+                    value={filters.institution}
+                    onChange={handleFilterChange}
+                    className="form-input"
+                  >
+                    {institutions.map((institution) => (
+                      <option key={institution} value={institution}>
+                        {institution === "all" ? "All Institutions" : institution}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Filters Section */}
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Job Type
-                </label>
-                <select
-                  name="type"
-                  value={filters.type}
-                  onChange={handleFilterChange}
-                  className="form-input"
-                >
-                  {jobTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type === "all" ? "All Types" : type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <h2 className="text-2xl font-bold mb-6">Available Positions</h2>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department
-                </label>
-                <select
-                  name="department"
-                  value={filters.department}
-                  onChange={handleFilterChange}
-                  className="form-input"
-                >
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept === "all" ? "All Departments" : dept}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
-                <select
-                  name="location"
-                  value={filters.location}
-                  onChange={handleFilterChange}
-                  className="form-input"
-                >
-                  {locations.map((location) => (
-                    <option key={location} value={location}>
-                      {location === "all" ? "All Locations" : location}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Institution Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Institution
-                </label>
-                <select
-                  name="institution"
-                  value={filters.institution}
-                  onChange={handleFilterChange}
-                  className="form-input"
-                >
-                  {institutions.map((institution) => (
-                    <option key={institution} value={institution}>
-                      {institution === "all" ? "All Institutions" : institution}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {filteredJobs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredJobs.map((job) => (
+                <JobCard key={job.id} job={job} userId={user.id} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <h3 className="text-xl font-medium text-gray-700 mb-2">
+                No matching positions found
+              </h3>
+              <p className="text-gray-500">
+                Try adjusting your search terms or filters to find more
+                opportunities.
+              </p>
             </div>
           )}
         </div>
-
-        <h2 className="text-2xl font-bold mb-6">Available Positions</h2>
-
-        {filteredJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} userId={user.id} />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <h3 className="text-xl font-medium text-gray-700 mb-2">
-              No matching positions found
-            </h3>
-            <p className="text-gray-500">
-              Try adjusting your search terms or filters to find more
-              opportunities.
-            </p>
-          </div>
-        )}
-      </div>
       </RippleBackground>
     </div>
   );

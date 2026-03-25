@@ -9,8 +9,7 @@ const jobsData = [
     type: "Full-time",
     location: "Seattle, WA",
     description: "Faculty position focused on molecular biology. The successful candidate will establish a research program, teach undergraduate and graduate courses, and mentor students.",
-    skills: ["Molecular Biology", "Cell Biology", "Lab Management", "Teaching"],
-    featured: false
+    skills: ["Molecular Biology", "Cell Biology", "Lab Management", "Teaching"]
   },
   {
     institution: "Capital Business University",
@@ -19,8 +18,7 @@ const jobsData = [
     type: "Full-time",
     location: "Austin, TX",
     description: "Professor of Practice position in the Business School. Looking for candidates with significant industry experience to teach practical business courses and develop industry partnerships.",
-    skills: ["Business Strategy", "Leadership", "Industry Experience", "Entrepreneurship"],
-    featured: false
+    skills: ["Business Strategy", "Leadership", "Industry Experience", "Entrepreneurship"]
   },
   {
     institution: "South Florida Institute",
@@ -29,8 +27,7 @@ const jobsData = [
     type: "Full-time",
     location: "Miami, FL",
     description: "Teaching-focused position in the Psychology Department. Primary responsibilities include undergraduate instruction in introductory and specialized psychology courses.",
-    skills: ["Clinical Psychology", "Cognitive Psychology", "Research Methods", "Statistics"],
-    featured: true
+    skills: ["Clinical Psychology", "Cognitive Psychology", "Research Methods", "Statistics"]
   },
   {
     institution: "Bay Area Tech University",
@@ -39,8 +36,7 @@ const jobsData = [
     type: "Full-time",
     location: "San Francisco, CA",
     description: "Research-focused position specializing in AI ethics and responsible innovation. Will lead interdisciplinary research projects and develop new courses in this emerging field.",
-    skills: ["AI Ethics", "Machine Learning", "Philosophy", "Policy"],
-    featured: false
+    skills: ["AI Ethics", "Machine Learning", "Philosophy", "Policy"]
   }
 ];
 
