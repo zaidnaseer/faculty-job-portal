@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
@@ -18,10 +18,10 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const completeAppLogin = async (firebaseUser) => {
+  const completeAppLogin = useCallback(async (firebaseUser) => {
     const idToken = await firebaseUser.getIdToken();
 
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
@@ -42,7 +42,7 @@ const Login = () => {
     } else {
       throw new Error("Invalid role. Please contact support.");
     }
-  };
+  }, [login, navigate]);
 
   useEffect(() => {
     const processGoogleRedirect = async () => {
@@ -53,13 +53,13 @@ const Login = () => {
 
       setIsLoading(true);
       try {
-        sessionStorage.removeItem("googleRedirectPending");
         const firebaseCredential = await getRedirectResult(auth);
         if (!firebaseCredential) {
           throw new Error("Google sign-in could not be completed. Please try again.");
         }
 
         await completeAppLogin(firebaseCredential.user);
+        sessionStorage.removeItem("googleRedirectPending");
       } catch (err) {
         setError(err.message || "Google sign-in failed. Please try again.");
         console.error("Google redirect sign-in error:", err);
@@ -69,7 +69,7 @@ const Login = () => {
     };
 
     processGoogleRedirect();
-  }, [login, navigate]);
+  }, [completeAppLogin]);
 
   const handleChange = (e) => {
     setFormData({
@@ -85,12 +85,19 @@ const Login = () => {
     try {
       const googleProvider = new GoogleAuthProvider();
       const firebaseCredential = await signInWithPopup(auth, googleProvider);
-      // TODO: Remove this, kept for testing purpose only
-      console.log(firebaseCredential);
       await completeAppLogin(firebaseCredential.user);
     } catch (err) {
+      if (err?.code === "auth/popup-closed-by-user") {
+        setError("Google sign-in was canceled. Please try again.");
+        return;
+      }
+
       // Some browsers/environments block popups; fallback to redirect flow.
-      if (err?.code === "auth/popup-blocked" || err?.code === "auth/cancelled-popup-request") {
+      if (
+        err?.code === "auth/popup-blocked" ||
+        err?.code === "auth/cancelled-popup-request" ||
+        err?.code === "auth/operation-not-supported-in-this-environment"
+      ) {
         try {
           const googleProvider = new GoogleAuthProvider();
           sessionStorage.setItem("googleRedirectPending", "true");

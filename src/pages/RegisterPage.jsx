@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity, FaGoogle } from "react-icons/fa";
-import { createUserWithEmailAndPassword, updateProfile, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
@@ -19,52 +19,61 @@ const RegisterPage = () => {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const completeAppRegistration = useCallback(async (firebaseUser, signupData = {}) => {
+    const role = signupData?.role || "faculty";
+    const university = signupData?.university || "";
+    const name = signupData?.name || firebaseUser.displayName || "";
+
+    if (role === "hr" && !university) {
+      throw new Error("Please enter your institution name before Google sign-up");
+    }
+
+    const idToken = await firebaseUser.getIdToken();
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        idToken,
+        name,
+        role,
+        university,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Registration failed");
+    }
+
+    setSuccess(true);
+    setTimeout(() => {
+      navigate("/login");
+    }, 2000);
+  }, [navigate]);
+
   useEffect(() => {
     const processGoogleRedirect = async () => {
+      const hasPendingGoogleRedirect = sessionStorage.getItem("googleSignupRedirectPending") === "true";
+      if (!hasPendingGoogleRedirect) {
+        return;
+      }
+
       setIsLoading(true);
       try {
         const firebaseCredential = await getRedirectResult(auth);
         if (!firebaseCredential) {
-          return;
+          throw new Error("Google sign-up could not be completed. Please try again.");
         }
 
         const storedData = sessionStorage.getItem("googleSignupData");
         const signupData = storedData ? JSON.parse(storedData) : null;
+        await completeAppRegistration(firebaseCredential.user, signupData || {});
         sessionStorage.removeItem("googleSignupData");
-
-        const role = signupData?.role || "faculty";
-        const university = signupData?.university || "";
-        const googleUser = firebaseCredential.user;
-        const idToken = await googleUser.getIdToken();
-        const name = googleUser.displayName || "";
-
-        if (role === "hr" && !university) {
-          throw new Error("Please enter your institution name before Google sign-up");
-        }
-
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            idToken,
-            name,
-            role,
-            university,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Registration failed");
-        }
-
-        setSuccess(true);
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+        sessionStorage.removeItem("googleSignupRedirectPending");
       } catch (err) {
         setError(err.message || "Google sign-up failed. Please try again.");
         console.error("Google redirect sign-up error:", err);
@@ -74,7 +83,7 @@ const RegisterPage = () => {
     };
 
     processGoogleRedirect();
-  }, [navigate]);
+  }, [completeAppRegistration]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -102,10 +111,32 @@ const RegisterPage = () => {
         JSON.stringify({ role, university })
       );
 
-      await signInWithRedirect(auth, googleProvider);
+      const firebaseCredential = await signInWithPopup(auth, googleProvider);
+      await completeAppRegistration(firebaseCredential.user, { role, university });
     } catch (err) {
-      setError(err.message || "Google sign-up failed. Please try again.");
-      console.error("Google sign-up error:", err);
+      if (err?.code === "auth/popup-closed-by-user") {
+        setError("Google sign-up was canceled. Please try again.");
+        return;
+      }
+
+      if (
+        err?.code === "auth/popup-blocked" ||
+        err?.code === "auth/cancelled-popup-request" ||
+        err?.code === "auth/operation-not-supported-in-this-environment"
+      ) {
+        try {
+          const googleProvider = new GoogleAuthProvider();
+          sessionStorage.setItem("googleSignupRedirectPending", "true");
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          setError(redirectErr.message || "Google sign-up failed. Please try again.");
+          console.error("Google redirect fallback error:", redirectErr);
+        }
+      } else {
+        setError(err.message || "Google sign-up failed. Please try again.");
+        console.error("Google sign-up error:", err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -120,32 +151,7 @@ const RegisterPage = () => {
       const { email, password, name, role, university } = formData;
       const firebaseCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(firebaseCredential.user, { displayName: name });
-
-      const idToken = await firebaseCredential.user.getIdToken();
-
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken,
-          name,
-          role,
-          university,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      await completeAppRegistration(firebaseCredential.user, { name, role, university });
 
     } catch (err) {
       setError(err.message || "An error occurred during registration");
