@@ -191,6 +191,9 @@ const handleResumeUpload = (e) => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Create Your Profile</h1>
           <p className="text-gray-600">Fill in your professional details to build your profile</p>
+          <p className="text-sm text-gray-500 mt-2">
+            <span className="text-red-500 font-semibold">*</span> indicates required fields
+          </p>
         </div>
 
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 md:p-8 mb-6 border border-blue-400">
@@ -219,7 +222,7 @@ const handleResumeUpload = (e) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                   </svg>
-                  Choose PDF File
+                  Choose Resume File
                 </div>
               </label>
             </div>
@@ -233,42 +236,63 @@ const handleResumeUpload = (e) => {
               Personal Information
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  placeholder="John Doe"
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  placeholder="john.doe@email.com"
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  required
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+                <span className="text-red-500 ml-1">*</span>
+              </label>
               <input
-                type="text"
-                name="name"
-                value={formData.name}
-                placeholder="Full Name"
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                placeholder="Email Address"
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                placeholder="+1 555 123 4567"
                 onChange={handleChange}
                 className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 required
               />
             </div>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              placeholder="Phone Number"
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg p-3 w-full mt-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-              required
-            />
-            <textarea
-              name="summary"
-              value={formData.summary}
-              placeholder="Professional Summary - Tell us about yourself and your career highlights"
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg p-3 w-full mt-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-              rows="4"
-            />
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
+              <textarea
+                name="summary"
+                value={formData.summary}
+                placeholder="Experienced faculty member with 8+ years of teaching and research expertise"
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+                rows="4"
+              />
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
@@ -277,18 +301,21 @@ const handleResumeUpload = (e) => {
               Skills & Expertise
             </h2>
             <div className="flex gap-2 mb-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Skill</label>
               <input
                 type="text"
                 value={newSkill}
                 onChange={handleSkillInputChange}
-                className="border border-gray-300 rounded-lg p-3 flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                placeholder="Enter a skill (e.g., React, Python, Leadership)"
+                className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                placeholder="e.g., React, Python, Leadership"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
               />
+              </div>
               <button 
                 type="button" 
                 onClick={handleAddSkill} 
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md self-end"
               >
                 Add
               </button>
@@ -312,22 +339,34 @@ const handleResumeUpload = (e) => {
             </h2>
             <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
               <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <input
-                  type="text"
-                  name="title"
-                  value={newExperience.title}
-                  placeholder="Job Title"
-                  onChange={handleExperienceInputChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <input
-                  type="text"
-                  name="institution"
-                  value={newExperience.institution}
-                  placeholder="Company/Institution"
-                  onChange={handleExperienceInputChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Title
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={newExperience.title}
+                    placeholder="Assistant Professor"
+                    onChange={handleExperienceInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company/Institution
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="institution"
+                    value={newExperience.institution}
+                    placeholder="ABC University"
+                    onChange={handleExperienceInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
               </div>
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -367,7 +406,7 @@ const handleResumeUpload = (e) => {
               <textarea
                 name="description"
                 value={newExperience.description}
-                placeholder="Describe your responsibilities and achievements..."
+                placeholder="Led curriculum design, published 3 papers, and mentored 40+ students"
                 onChange={handleExperienceInputChange}
                 className="border border-gray-300 rounded-lg p-3 w-full mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
                 rows="3"
@@ -418,30 +457,45 @@ const handleResumeUpload = (e) => {
             </h2>
             <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
               <div className="grid gap-4 mb-4">
-                <input
-                  type="text"
-                  name="title"
-                  value={newPublication.title}
-                  onChange={handlePublicationInputChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  placeholder="Publication Title"
-                />
-                <input
-                  type="text"
-                  name="description"
-                  value={newPublication.description}
-                  onChange={handlePublicationInputChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  placeholder="Key Details of Your Publication"
-                />
-                <input
-                  type="url"
-                  name="link"
-                  value={newPublication.link}
-                  onChange={handlePublicationInputChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  placeholder="Link (optional)"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Publication Title
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={newPublication.title}
+                    onChange={handlePublicationInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    placeholder="AI in Higher Education"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Key Details
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="description"
+                    value={newPublication.description}
+                    onChange={handlePublicationInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    placeholder="Published in IEEE, 2025"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Publication Link</label>
+                  <input
+                    type="url"
+                    name="link"
+                    value={newPublication.link}
+                    onChange={handlePublicationInputChange}
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    placeholder="https://example.com/publication"
+                  />
+                </div>
               </div>
               <button 
                 type="button" 
@@ -492,38 +546,56 @@ const handleResumeUpload = (e) => {
             </h2>
             <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
               <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="degree"
-                  value={newEducation.degree}
-                  onChange={handleEducationInputChange}
-                  placeholder="Degree (e.g., Bachelor of Science)"
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <input
-                  type="text"
-                  name="field"
-                  value={newEducation.field}
-                  onChange={handleEducationInputChange}
-                  placeholder="Field of Study"
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <input
-                  type="text"
-                  name="institution"
-                  value={newEducation.institution}
-                  onChange={handleEducationInputChange}
-                  placeholder="Institution Name"
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <input
-                  type="text"
-                  name="year"
-                  value={newEducation.year}
-                  onChange={handleEducationInputChange}
-                  placeholder="Year (e.g., 2020)"
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Degree
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="degree"
+                    value={newEducation.degree}
+                    onChange={handleEducationInputChange}
+                    placeholder="Bachelor of Science"
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Field of Study</label>
+                  <input
+                    type="text"
+                    name="field"
+                    value={newEducation.field}
+                    onChange={handleEducationInputChange}
+                    placeholder="Computer Science"
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Institution Name
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="institution"
+                    value={newEducation.institution}
+                    onChange={handleEducationInputChange}
+                    placeholder="XYZ University"
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <input
+                    type="text"
+                    name="year"
+                    value={newEducation.year}
+                    onChange={handleEducationInputChange}
+                    placeholder="2024"
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  />
+                </div>
               </div>
               <button 
                 type="button" 
