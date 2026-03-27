@@ -106,12 +106,12 @@ const AddResumePage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add resume");
+        throw new Error("Failed to create profile");
       }
-      alert("Resume added successfully!");
+      alert("Profile created successfully!");
       navigate("/resume");
     } catch (error) {
-      console.error("Error adding resume:", error);
+      console.error("Error adding profile:", error);
     }
   };
 
