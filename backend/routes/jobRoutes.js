@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Job = require("../models/Job");
+const Profile = require("../models/Profile");
 const { requireAuth, protect } = require("../middleware/authMiddleware");
 
 
@@ -96,6 +97,13 @@ router.post("/", protect(["hr"]), async (req, res) => {
 // ✅ Apply for a job (by Faculty)
 router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
   try {
+    const profile = await Profile.findOne({ user: req.user._id });
+    if (!profile) {
+      return res.status(400).json({
+        message: "You cannot apply to a job without creating a profile.",
+      });
+    }
+
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });

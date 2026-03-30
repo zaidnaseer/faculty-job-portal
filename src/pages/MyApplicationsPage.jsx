@@ -93,66 +93,66 @@ const MyApplicationsPage = () => {
 
   return (
     <RippleBackground>
-    <div className="container py-8">
-      <h2 className="text-2xl font-bold mb-6">My Applications</h2>
+      <div className="container py-8">
+        <h2 className="text-2xl font-bold mb-6">My Applications</h2>
 
-      {appliedJobs.length === 0 ? (
-        <div className="text-center">
-          <p className="text-gray-600">You haven't applied for any jobs yet.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {appliedJobs.map((job) => (
-            <JobCard
-              key={job._id}
-              job={job}
-              userId={user.id}
-              showWithdraw={true}
-              onWithdraw={openWithdrawModal}
-              isWithdrawing={withdrawingJobId === job._id}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+        {appliedJobs.length === 0 ? (
+          <div className="text-center">
+            <p className="text-gray-600">You haven't applied for any jobs yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {appliedJobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
+                userId={user.id}
+                showWithdraw={true}
+                onWithdraw={openWithdrawModal}
+                isWithdrawing={withdrawingJobId === job._id}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-    {showWithdrawModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-        <div
-          className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="withdraw-modal-title"
-        >
-          <h3 id="withdraw-modal-title" className="text-lg font-semibold text-gray-900">
-            Withdraw application?
-          </h3>
-          <p className="mt-2 text-sm text-gray-600">
-            Are you sure you want to withdraw your application? This action cannot be undone.
-          </p>
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdraw-modal-title"
+          >
+            <h3 id="withdraw-modal-title" className="text-lg font-semibold text-gray-900">
+              Withdraw application?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Are you sure you want to withdraw your application? This action cannot be undone.
+            </p>
 
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={closeWithdrawModal}
-              disabled={Boolean(withdrawingJobId)}
-              className="btn btn-outline"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={confirmWithdraw}
-              disabled={Boolean(withdrawingJobId)}
-              className="btn bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 disabled:bg-red-300 disabled:border-red-300"
-            >
-              {withdrawingJobId ? "Withdrawing..." : "Yes, withdraw"}
-            </button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeWithdrawModal}
+                disabled={Boolean(withdrawingJobId)}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmWithdraw}
+                disabled={Boolean(withdrawingJobId)}
+                className="btn bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 disabled:bg-red-300 disabled:border-red-300"
+              >
+                {withdrawingJobId ? "Withdrawing..." : "Yes, withdraw"}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-     </RippleBackground>
+      )}
+    </RippleBackground>
   );
 };
 
