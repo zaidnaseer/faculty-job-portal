@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   firebaseUid: { type: String, unique: true, sparse: true },
   role: { type: String, required: true }, // faculty or hr
   university: { type: String }, // ✅ Only applicable for HR users
-  resumeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Resume' } // ✅ Link to resume
 });
 
 const User = mongoose.model('User', userSchema);

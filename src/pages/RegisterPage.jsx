@@ -55,7 +55,7 @@ const RegisterPage = () => {
 
     const userRole = data.user?.role || data.role;
     if (userRole === "faculty") {
-      navigate("/resume");
+      navigate("/profile");
     } else if (userRole === "hr") {
       navigate("/hr");
     } else {

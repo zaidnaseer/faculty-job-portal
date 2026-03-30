@@ -17,14 +17,14 @@ import {
     Camera,
 } from "lucide-react";
 
-const EditableResume = ({
-    resume,
-    setResume,
+const EditableProfile = ({
+    profile,
+    setProfile,
     isEditing,
     setIsEditing,
     onSave,
     canEdit,
-    pageTitle = "Resume",
+    pageTitle = "Profile",
     showBackButton = false,
     onBack,
 }) => {
@@ -41,12 +41,12 @@ const EditableResume = ({
 
     const hasText = (value) => typeof value === "string" && value.trim().length > 0;
 
-    const updateResumeField = (name, value) => {
-        setResume((prev) => ({ ...prev, [name]: value }));
+    const updateProfileField = (name, value) => {
+        setProfile((prev) => ({ ...prev, [name]: value }));
     };
 
     const updateListItem = (listName, index, field, value) => {
-        setResume((prev) => {
+        setProfile((prev) => {
             const list = Array.isArray(prev[listName]) ? [...prev[listName]] : [];
             list[index] = { ...list[index], [field]: value };
             return { ...prev, [listName]: list };
@@ -54,7 +54,7 @@ const EditableResume = ({
     };
 
     const removeListItem = (listName, index) => {
-        setResume((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             [listName]: (Array.isArray(prev[listName]) ? prev[listName] : []).filter((_, i) => i !== index),
         }));
@@ -65,7 +65,7 @@ const EditableResume = ({
             return;
         }
 
-        setResume((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             skills: [...(Array.isArray(prev.skills) ? prev.skills : []), newSkill.trim()],
         }));
@@ -77,7 +77,7 @@ const EditableResume = ({
             return;
         }
 
-        setResume((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             education: [...(Array.isArray(prev.education) ? prev.education : []), newEducation],
         }));
@@ -90,7 +90,7 @@ const EditableResume = ({
             return;
         }
 
-        setResume((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             experience: [...(Array.isArray(prev.experience) ? prev.experience : []), newExperience],
         }));
@@ -103,7 +103,7 @@ const EditableResume = ({
             return;
         }
 
-        setResume((prev) => ({
+        setProfile((prev) => ({
             ...prev,
             publications: [...(Array.isArray(prev.publications) ? prev.publications : []), newPublication],
         }));
@@ -161,22 +161,22 @@ const EditableResume = ({
                 <div className={`flex flex-col md:flex-row gap-6 -mt-20`}>
                     <div className="w-full md:w-1/3 bg-white rounded-xl shadow p-6 text-center">
                         <img
-                            src={resume?.profileImage || "/assets/default-profile.jpg"}
-                            alt={hasText(resume?.name) ? resume.name : "Profile"}
+                            src={profile?.profileImage || "/assets/default-profile.jpg"}
+                            alt={hasText(profile?.name) ? profile.name : "Profile"}
                             className="w-32 h-32 rounded-full mx-auto border-4 border-white object-cover"
                         />
 
                         {isEditing ? (
                             <div className="space-y-2 mt-4 text-left">
                                 <input
-                                    value={resume?.name || ""}
-                                    onChange={(e) => updateResumeField("name", e.target.value)}
+                                    value={profile?.name || ""}
+                                    onChange={(e) => updateProfileField("name", e.target.value)}
                                     className="border p-2 w-full rounded"
                                     placeholder="Full name"
                                 />
                                 <input
-                                    value={resume?.title || ""}
-                                    onChange={(e) => updateResumeField("title", e.target.value)}
+                                    value={profile?.title || ""}
+                                    onChange={(e) => updateProfileField("title", e.target.value)}
                                     className="border p-2 w-full rounded"
                                     placeholder="Title"
                                 />
@@ -184,9 +184,9 @@ const EditableResume = ({
                         ) : (
                             <>
                                 <h2 className="text-xl font-bold mt-4">
-                                    {hasText(resume?.name) ? resume.name : "Name not added"}
+                                    {hasText(profile?.name) ? profile.name : "Name not added"}
                                 </h2>
-                                <p className="text-gray-600">{hasText(resume?.title) ? resume.title : "Title not added"}</p>
+                                <p className="text-gray-600">{hasText(profile?.title) ? profile.title : "Title not added"}</p>
                             </>
                         )}
 
@@ -201,13 +201,13 @@ const EditableResume = ({
                                 <Mail size={16} />
                                 {isEditing ? (
                                     <input
-                                        value={resume?.email || ""}
-                                        onChange={(e) => updateResumeField("email", e.target.value)}
+                                        value={profile?.email || ""}
+                                        onChange={(e) => updateProfileField("email", e.target.value)}
                                         className="border p-2 w-full rounded"
                                         placeholder="Email"
                                     />
                                 ) : (
-                                    <span>{hasText(resume?.email) ? resume.email : "Email not added"}</span>
+                                    <span>{hasText(profile?.email) ? profile.email : "Email not added"}</span>
                                 )}
                             </div>
 
@@ -215,13 +215,13 @@ const EditableResume = ({
                                 <Phone size={16} />
                                 {isEditing ? (
                                     <input
-                                        value={resume?.phone || ""}
-                                        onChange={(e) => updateResumeField("phone", e.target.value)}
+                                        value={profile?.phone || ""}
+                                        onChange={(e) => updateProfileField("phone", e.target.value)}
                                         className="border p-2 w-full rounded"
                                         placeholder="Phone"
                                     />
                                 ) : (
-                                    <span>{hasText(resume?.phone) ? resume.phone : "Phone not added"}</span>
+                                    <span>{hasText(profile?.phone) ? profile.phone : "Phone not added"}</span>
                                 )}
                             </div>
 
@@ -229,13 +229,13 @@ const EditableResume = ({
                                 <MapPin size={16} />
                                 {isEditing ? (
                                     <input
-                                        value={resume?.location || ""}
-                                        onChange={(e) => updateResumeField("location", e.target.value)}
+                                        value={profile?.location || ""}
+                                        onChange={(e) => updateProfileField("location", e.target.value)}
                                         className="border p-2 w-full rounded"
                                         placeholder="Location"
                                     />
                                 ) : (
-                                    <span>{hasText(resume?.location) ? resume.location : "Location not added"}</span>
+                                    <span>{hasText(profile?.location) ? profile.location : "Location not added"}</span>
                                 )}
                             </div>
                         </div>
@@ -264,8 +264,8 @@ const EditableResume = ({
                             )}
 
                             <div className="flex flex-wrap gap-2">
-                                {Array.isArray(resume?.skills) && resume.skills.length > 0 ? (
-                                    resume.skills.map((skill, index) => (
+                                {Array.isArray(profile?.skills) && profile.skills.length > 0 ? (
+                                    profile.skills.map((skill, index) => (
                                         <span
                                             key={index}
                                             className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs flex items-center gap-1"
@@ -294,14 +294,14 @@ const EditableResume = ({
 
                             {isEditing ? (
                                 <textarea
-                                    value={resume?.summary || ""}
-                                    onChange={(e) => updateResumeField("summary", e.target.value)}
+                                    value={profile?.summary || ""}
+                                    onChange={(e) => updateProfileField("summary", e.target.value)}
                                     className="w-full border p-3 rounded"
                                     placeholder="Write a short summary"
                                 />
                             ) : (
                                 <p className="text-gray-700">
-                                    {hasText(resume?.summary) ? resume.summary : "No summary added yet."}
+                                    {hasText(profile?.summary) ? profile.summary : "No summary added yet."}
                                 </p>
                             )}
                         </div>
@@ -338,8 +338,8 @@ const EditableResume = ({
                                 </div>
                             )}
 
-                            {Array.isArray(resume?.education) && resume.education.length > 0 ? (
-                                resume.education.map((edu, index) => (
+                            {Array.isArray(profile?.education) && profile.education.length > 0 ? (
+                                profile.education.map((edu, index) => (
                                     <div key={index} className="border-l-4 border-indigo-500 pl-4 mb-4 flex justify-between gap-2">
                                         {isEditing ? (
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
@@ -431,8 +431,8 @@ const EditableResume = ({
                                 </div>
                             )}
 
-                            {Array.isArray(resume?.experience) && resume.experience.length > 0 ? (
-                                resume.experience.map((exp, index) => (
+                            {Array.isArray(profile?.experience) && profile.experience.length > 0 ? (
+                                profile.experience.map((exp, index) => (
                                     <div key={index} className="border-l-4 border-indigo-500 pl-4 mb-4 flex justify-between gap-2">
                                         {isEditing ? (
                                             <div className="space-y-2 w-full">
@@ -527,8 +527,8 @@ const EditableResume = ({
                                 </div>
                             )}
 
-                            {Array.isArray(resume?.publications) && resume.publications.length > 0 ? (
-                                resume.publications.map((pub, index) => (
+                            {Array.isArray(profile?.publications) && profile.publications.length > 0 ? (
+                                profile.publications.map((pub, index) => (
                                     <div key={index} className="border p-4 rounded mb-3 flex justify-between gap-2">
                                         {isEditing ? (
                                             <div className="space-y-2 w-full">
@@ -590,4 +590,4 @@ const EditableResume = ({
     );
 };
 
-export default EditableResume;
+export default EditableProfile;

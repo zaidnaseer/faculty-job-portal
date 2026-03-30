@@ -1,12 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VacanciesPage from "./pages/VacanciesPage";
-import ApplicantResumePage from "./pages/ApplicantResumePage";
-import HrResumePage from "./pages/HrResumePage";
+import ApplicantProfilePage from "./pages/ApplicantProfilePage";
+import HrProfilePage from "./pages/HrProfilePage";
 import HRPage from "./pages/HRPage";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
-import AddResumePage from "./pages/AddResumePage";
+import AddProfilePage from "./pages/AddProfilePage";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 import CreateJobPage from "./pages/CreateJobPage";
@@ -49,12 +49,12 @@ function App() {
             element={<ProtectedRoute element={<VacanciesPage />} allowedRoles={["faculty"]} />}
           />
           <Route
-            path="/resume"
-            element={<ProtectedRoute element={<ApplicantResumePage />} allowedRoles={["faculty"]} />}
+            path="/profile"
+            element={<ProtectedRoute element={<ApplicantProfilePage />} allowedRoles={["faculty"]} />}
           />
           <Route
-            path="/add-resume"
-            element={<ProtectedRoute element={<AddResumePage />} allowedRoles={["faculty"]} />}
+            path="/add-profile"
+            element={<ProtectedRoute element={<AddProfilePage />} allowedRoles={["faculty"]} />}
           />
           <Route
             path="/my-applications"
@@ -80,8 +80,8 @@ function App() {
             element={<ProtectedRoute element={<JobApplicantsPage />} allowedRoles={["hr"]} />}
           />
           <Route
-            path="/display-resume"
-            element={<ProtectedRoute element={<HrResumePage />} allowedRoles={["hr"]} />}
+            path="/display-profile"
+            element={<ProtectedRoute element={<HrProfilePage />} allowedRoles={["hr"]} />}
           />
 
 

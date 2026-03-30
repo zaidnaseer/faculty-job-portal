@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const resumeSchema = new mongoose.Schema({
+const profileSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId, // 
     ref: 'User', // Reference the User model
@@ -38,6 +38,6 @@ const resumeSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-const Resume = mongoose.model('Resume', resumeSchema);
+const Profile = mongoose.model('Profile', profileSchema);
 
-module.exports = Resume;
+module.exports = Profile;

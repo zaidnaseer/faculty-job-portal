@@ -62,7 +62,7 @@ const Navbar = () => {
               // Faculty Navigation Links
               <>
                 <NavLink to="/vacancies" current={location.pathname}>Vacancies</NavLink>
-                <NavLink to="/resume" current={location.pathname}>Profile</NavLink>
+                <NavLink to="/profile" current={location.pathname}>Profile</NavLink>
           
                 <NavLink to="/my-applications" current={location.pathname}>Applications</NavLink>
                 <button 
@@ -101,7 +101,7 @@ const Navbar = () => {
               // Faculty Navigation Links
               <div className="flex flex-col space-y-2">
                 <MobileNavLink to="/vacancies" onClick={toggleMobileMenu}>Vacancies</MobileNavLink>
-                <MobileNavLink to="/resume" onClick={toggleMobileMenu}>My Resume</MobileNavLink>
+                <MobileNavLink to="/profile" onClick={toggleMobileMenu}>My Profile</MobileNavLink>
                 <MobileNavLink to="/my-applications" onClick={toggleMobileMenu}>Applications</MobileNavLink>
                 <button 
                   onClick={() => {

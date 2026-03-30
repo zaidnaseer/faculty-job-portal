@@ -2,9 +2,9 @@ import { useEffect, useState, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import RippleBackground from '../components/RippleBackground';
-import EditableResume from '../components/EditableResume';
+import EditableProfile from '../components/EditableProfile';
 
-const HrResumePage = () => {
+const HrProfilePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const facultyIdFromState = location.state?.facultyId;
@@ -12,17 +12,17 @@ const HrResumePage = () => {
   const facultyId = facultyIdFromState || facultyIdFromQuery;
   const { user } = useContext(AuthContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const [resume, setResume] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchResume = async () => {
+    const fetchProfile = async () => {
       if (!facultyId) {
         if (isMounted) {
-          setError('No faculty selected. Please open a resume from the applicants list.');
+          setError('No faculty selected. Please open a profile from the applicants list.');
           setLoading(false);
         }
         return;
@@ -48,14 +48,14 @@ const HrResumePage = () => {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`${backendUrl}/api/resume/${facultyId}`, {
+        const response = await fetch(`${backendUrl}/api/profile/${facultyId}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
         });
 
         if (!response.ok) {
-          let message = 'Failed to load resume.';
+          let message = 'Failed to load profile.';
           try {
             const errorData = await response.json();
             message = errorData.message || message;
@@ -67,12 +67,12 @@ const HrResumePage = () => {
 
         const data = await response.json();
         if (isMounted) {
-          setResume(data);
+          setProfile(data);
         }
       } catch (err) {
-        console.error("Error fetching resume:", err);
+        console.error("Error fetching profile:", err);
         if (isMounted) {
-          setError(err.message || 'Failed to load resume.');
+          setError(err.message || 'Failed to load profile.');
         }
       } finally {
         if (isMounted) {
@@ -81,7 +81,7 @@ const HrResumePage = () => {
       }
     };
 
-    fetchResume();
+    fetchProfile();
 
     return () => {
       isMounted = false;
@@ -89,7 +89,7 @@ const HrResumePage = () => {
   }, [facultyId, user?.token, backendUrl]);
 
   if (loading) {
-    return <p className="text-center">Loading resume...</p>;
+    return <p className="text-center">Loading profile...</p>;
   }
 
   if (error) {
@@ -108,21 +108,21 @@ const HrResumePage = () => {
     );
   }
 
-  if (!resume) {
-    return <p className="text-center">Resume not found.</p>;
+  if (!profile) {
+    return <p className="text-center">Profile not found.</p>;
   }
 
   return (
     <RippleBackground>
       <div className="container py-8">
-        <EditableResume
-          resume={resume}
-          setResume={setResume}
+        <EditableProfile
+          profile={profile}
+          setProfile={setProfile}
           isEditing={false}
           setIsEditing={() => { }}
           onSave={() => { }}
           canEdit={false}
-          pageTitle="Applicant Resume"
+          pageTitle="Applicant Profile"
           showBackButton
           onBack={() => navigate(-1)}
         />
@@ -131,4 +131,4 @@ const HrResumePage = () => {
   );
 };
 
-export default HrResumePage;
+export default HrProfilePage;

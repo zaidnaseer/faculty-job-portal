@@ -30,8 +30,8 @@ const HRDashboard = () => {
     fetchJobs();
   }, [user, backendUrl]);
 
-  const handleViewResume = (facultyId) => {
-    navigate("/display-resume", { state: { facultyId } });
+  const handleViewProfile = (facultyId) => {
+    navigate("/display-profile", { state: { facultyId } });
   };
 
   const handleDeleteJob = async (jobId) => {

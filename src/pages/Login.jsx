@@ -36,7 +36,7 @@ const Login = () => {
 
     const role = data.user?.role || data.role;
     if (role === "faculty") {
-      navigate("/resume");
+      navigate("/profile");
     } else if (role === "hr") {
       navigate("/hr");
     } else {

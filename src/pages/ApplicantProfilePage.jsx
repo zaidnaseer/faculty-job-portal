@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import EditableResume from "../components/EditableResume";
+import EditableProfile from "../components/EditableProfile";
 import RippleBackground from "../components/RippleBackground";
 
-const normalizeResume = (data) => ({
+const normalizeProfile = (data) => ({
   ...data,
   education: Array.isArray(data?.education) ? data.education : [],
   experience: Array.isArray(data?.experience) ? data.experience : [],
@@ -12,9 +12,9 @@ const normalizeResume = (data) => ({
   publications: Array.isArray(data?.publications) ? data.publications : [],
 });
 
-const cloneResume = (data) => JSON.parse(JSON.stringify(data));
+const cloneProfile = (data) => JSON.parse(JSON.stringify(data));
 
-const ApplicantResumePage = () => {
+const ApplicantProfilePage = () => {
   const { user } = useContext(AuthContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const location = useLocation();
@@ -25,8 +25,8 @@ const ApplicantResumePage = () => {
   const facultyId = facultyIdFromState || facultyIdFromQuery;
   const isHrFlow = user?.role === "hr";
 
-  const [resume, setResume] = useState(null);
-  const [originalResume, setOriginalResume] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [originalProfile, setOriginalProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,7 +34,7 @@ const ApplicantResumePage = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchResume = async () => {
+    const fetchProfile = async () => {
       setLoading(true);
       setError("");
 
@@ -51,10 +51,10 @@ const ApplicantResumePage = () => {
 
         if (isHrFlow) {
           if (!facultyId) {
-            throw new Error("No faculty selected. Please open a resume from the applicants list.");
+            throw new Error("No faculty selected. Please open a profile from the applicants list.");
           }
 
-          response = await fetch(`${backendUrl}/api/resume/${facultyId}`, {
+          response = await fetch(`${backendUrl}/api/profile/${facultyId}`, {
             headers: {
               Authorization: `Bearer ${user.token}`,
             },
@@ -76,11 +76,11 @@ const ApplicantResumePage = () => {
 
         if (!response.ok) {
           if (!isHrFlow && response.status === 404) {
-            navigate("/add-resume");
+            navigate("/add-profile");
             return;
           }
 
-          let message = "Failed to load resume.";
+          let message = "Failed to load profile.";
           try {
             const errorData = await response.json();
             message = errorData.message || message;
@@ -92,16 +92,16 @@ const ApplicantResumePage = () => {
         }
 
         const data = await response.json();
-        const normalized = normalizeResume(data);
+        const normalized = normalizeProfile(data);
 
         if (isMounted) {
-          setResume(normalized);
-          setOriginalResume(cloneResume(normalized));
+          setProfile(normalized);
+          setOriginalProfile(cloneProfile(normalized));
         }
       } catch (fetchError) {
         if (isMounted) {
-          setError(fetchError.message || "Failed to load resume.");
-          setResume(null);
+          setError(fetchError.message || "Failed to load profile.");
+          setProfile(null);
         }
       } finally {
         if (isMounted) {
@@ -110,7 +110,7 @@ const ApplicantResumePage = () => {
       }
     };
 
-    fetchResume();
+    fetchProfile();
 
     return () => {
       isMounted = false;
@@ -118,14 +118,14 @@ const ApplicantResumePage = () => {
   }, [backendUrl, facultyId, isHrFlow, navigate, user]);
 
   const handleCancel = () => {
-    if (originalResume) {
-      setResume(cloneResume(originalResume));
+    if (originalProfile) {
+      setProfile(cloneProfile(originalProfile));
     }
     setIsEditing(false);
   };
 
   const handleSave = async () => {
-    if (isHrFlow || !resume?._id) {
+    if (isHrFlow || !profile?._id) {
       return;
     }
 
@@ -135,13 +135,13 @@ const ApplicantResumePage = () => {
         throw new Error("Session expired. Please log in again.");
       }
 
-      const response = await fetch(`${backendUrl}/api/faculty/update/${resume._id}`, {
+      const response = await fetch(`${backendUrl}/api/faculty/update/${profile._id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(resume),
+        body: JSON.stringify(profile),
       });
 
       if (!response.ok) {
@@ -156,11 +156,11 @@ const ApplicantResumePage = () => {
       }
 
       const updated = await response.json();
-      const normalized = normalizeResume(updated);
-      setResume(normalized);
-      setOriginalResume(cloneResume(normalized));
+      const normalized = normalizeProfile(updated);
+      setProfile(normalized);
+      setOriginalProfile(cloneProfile(normalized));
       setIsEditing(false);
-      alert("Resume updated successfully");
+      alert("Profile updated successfully");
     } catch (saveError) {
       alert(saveError.message || "Update failed");
     }
@@ -171,7 +171,7 @@ const ApplicantResumePage = () => {
       <div className="container py-8 flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading resume...</p>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
     );
@@ -193,16 +193,16 @@ const ApplicantResumePage = () => {
     );
   }
 
-  if (!resume) {
-    return <p className="text-center">Resume not found.</p>;
+  if (!profile) {
+    return <p className="text-center">Profile not found.</p>;
   }
 
   return (
     <RippleBackground>
       <div className="container py-8">
-        <EditableResume
-          resume={resume}
-          setResume={setResume}
+        <EditableProfile
+          profile={profile}
+          setProfile={setProfile}
           isEditing={isEditing}
           setIsEditing={(nextValue) => {
             if (!nextValue) {
@@ -213,7 +213,7 @@ const ApplicantResumePage = () => {
           }}
           onSave={handleSave}
           canEdit={!isHrFlow}
-          pageTitle={isHrFlow ? "Applicant Resume" : "About"}
+          pageTitle={isHrFlow ? "Applicant Profile" : "About"}
           showBackButton={isHrFlow}
           onBack={() => navigate(-1)}
         />
@@ -222,4 +222,4 @@ const ApplicantResumePage = () => {
   );
 };
 
-export default ApplicantResumePage;
+export default ApplicantProfilePage;

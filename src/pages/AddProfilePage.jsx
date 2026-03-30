@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RippleBackground from "../components/RippleBackground";
 
-const AddResumePage = () => {
+const AddProfilePage = () => {
   const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({
@@ -109,7 +109,7 @@ const AddResumePage = () => {
         throw new Error("Failed to create profile");
       }
       alert("Profile created successfully!");
-      navigate("/resume");
+      navigate("/profile");
     } catch (error) {
       console.error("Error adding profile:", error);
     }
@@ -699,7 +699,7 @@ const AddResumePage = () => {
                 type="submit"
                 className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 rounded-lg font-bold text-lg w-full md:w-auto md:min-w-[300px] transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                Save Resume
+                Save Profile
               </button>
               <p className="text-blue-100 text-sm mt-4">Click to save your resume and create your profile</p>
             </div>
@@ -710,4 +710,4 @@ const AddResumePage = () => {
   );
 };
 
-export default AddResumePage;
+export default AddProfilePage;

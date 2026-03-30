@@ -6,7 +6,7 @@ const facultyRoutes = require("./routes/facultyRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
-const resumeRoutes = require("./routes/resumeRoutes");
+const profileRoutes = require("./routes/profileRoutes");
 app.use(express.json());
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "")
   .split(",")
@@ -38,7 +38,7 @@ app.get("/health", (_req, res) => {
 
 
 app.use("/api/auth", authRoutes);
-app.use("/api/resume", resumeRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/jobs", jobRoutes);
 const PORT = process.env.PORT || 5000;

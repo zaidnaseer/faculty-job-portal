@@ -53,10 +53,10 @@ const FacultyCard = ({ faculty }) => {
       
       <div className="flex-shrink-0 flex flex-col gap-2">
         <Link 
-          to={`/hr/resume/${faculty.id}`} 
+          to={`/hr/profile/${faculty.id}`} 
           className="btn btn-primary text-center whitespace-nowrap"
         >
-          View Resume
+          View Profile
         </Link>
         <button className="btn btn-outline text-center whitespace-nowrap">
           Schedule Interview
