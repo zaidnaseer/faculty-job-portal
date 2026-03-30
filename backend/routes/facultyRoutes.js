@@ -84,7 +84,7 @@ router.post('/add', protect(['faculty']), upload.single('resume'), async (req, r
 
     // ✅ Check if the user already has a resume
   
-    const existingResume = await Resume.findOne({ user: req.user.id });
+    const existingResume = await Resume.findOne({ email: email });
     if (existingResume) {
       return res.status(400).json({ message: 'Resume already exists' });
     }
