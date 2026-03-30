@@ -112,6 +112,26 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
   }
 });
 
+// Withdraw application for a job (by Faculty)
+router.delete("/withdraw/:id", protect(["faculty"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (!job.appliedBy.includes(req.user._id)) {
+      return res.status(400).json({ message: "You have not applied for this job" });
+    }
+
+    job.appliedBy.pull(req.user._id);
+    await job.save();
+
+    return res.status(200).json({ message: "Application withdrawn successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to withdraw application" });
+  }
+});
+
 // ✅ Delete a job (by HR)
 router.delete("/:id", protect(["hr"]), async (req, res) => {
   try {

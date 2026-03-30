@@ -7,7 +7,7 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 
-const JobCard = ({ job, userId }) => {
+const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing = false }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
 
@@ -108,7 +108,15 @@ const JobCard = ({ job, userId }) => {
         </div>
 
         <div className="mt-4">
-          {applied ? (
+          {showWithdraw ? (
+            <button
+              onClick={() => onWithdraw?.(job._id)}
+              disabled={isWithdrawing}
+              className="btn w-full border border-red-600 text-red-600 bg-transparent hover:bg-red-600 hover:text-white disabled:border-red-300 disabled:text-red-300 disabled:hover:bg-transparent"
+            >
+              {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
+            </button>
+          ) : applied ? (
             <button disabled className="btn btn-outline w-full opacity-75">
               Applied
             </button>
