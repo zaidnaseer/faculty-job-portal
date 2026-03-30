@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VacanciesPage from "./pages/VacanciesPage";
-import ResumePage from "./pages/ResumePage";
+import ApplicantResumePage from "./pages/ApplicantResumePage";
+import HrResumePage from "./pages/HrResumePage";
 import HRPage from "./pages/HRPage";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
@@ -13,7 +14,6 @@ import HRDashboard from "./pages/HRDashboard";
 import JobApplicantsPage from "./pages/JobApplicantsPage";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
 import LandingPage from "./pages/LandingPage"; // Import the new landing page
-import DisplayResume from "./pages/DisplayResume"; // Import the DisplayResume page
 
 const ProtectedRoute = ({ element, allowedRoles }) => {
   const { user } = useContext(AuthContext);
@@ -32,7 +32,7 @@ const ProtectedRoute = ({ element, allowedRoles }) => {
 
 function App() {
   const { user } = useContext(AuthContext); // Get user context
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -50,13 +50,13 @@ function App() {
           />
           <Route
             path="/resume"
-            element={<ProtectedRoute element={<ResumePage />} allowedRoles={["faculty"]} />}
+            element={<ProtectedRoute element={<ApplicantResumePage />} allowedRoles={["faculty"]} />}
           />
           <Route
             path="/add-resume"
             element={<ProtectedRoute element={<AddResumePage />} allowedRoles={["faculty"]} />}
           />
-          <Route 
+          <Route
             path="/my-applications"
             element={<ProtectedRoute element={<MyApplicationsPage />} allowedRoles={["faculty"]} />}
           />
@@ -67,9 +67,9 @@ function App() {
           />
           <Route
             path="/create-job"
-            element={<ProtectedRoute element={<CreateJobPage  />} allowedRoles={["hr"]} />}
+            element={<ProtectedRoute element={<CreateJobPage />} allowedRoles={["hr"]} />}
           />
-          
+
           <Route
             path="/hr"
             element={<ProtectedRoute element={<HRDashboard />} allowedRoles={["hr"]} />}
@@ -79,9 +79,12 @@ function App() {
             path="/job-applicants/:jobId"
             element={<ProtectedRoute element={<JobApplicantsPage />} allowedRoles={["hr"]} />}
           />
-          <Route path="/display-resume" element={<DisplayResume />} />
+          <Route
+            path="/display-resume"
+            element={<ProtectedRoute element={<HrResumePage />} allowedRoles={["hr"]} />}
+          />
 
-        
+
           {/* Redirect based on authentication status */}
           <Route path="*" element={
             user ? (
