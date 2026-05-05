@@ -191,75 +191,73 @@ const RegisterPage = () => {
             </motion.div>
           )}
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md">
-
-              <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                  I am a
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  <label className="flex items-center p-3 border rounded-md cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50 bg-white">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="faculty"
-                      checked={formData.role === "faculty"}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 flex items-center">
-                      <FaUserTie className="h-5 w-5 text-blue-600 mr-2" />
-                      <span>Job Seeker</span>
-                    </span>
+          <form className="mt-8 space-y-7" onSubmit={handleSubmit}>
+            <div className="rounded-md space-y-6">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Role details</p>
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                    I am a
                   </label>
+                  <div className="flex flex-wrap gap-2">
+                    <label className="flex items-center p-3 border rounded-md cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50 bg-white">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="faculty"
+                        checked={formData.role === "faculty"}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-2 flex items-center">
+                        <FaUserTie className="h-5 w-5 text-blue-600 mr-2" />
+                        <span>Job Seeker</span>
+                      </span>
+                    </label>
 
-                  <label className="flex items-center p-3 border rounded-md cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50 bg-white">
-                    <input
-                      type="radio"
-                      name="role"
-                      value="hr"
-                      checked={formData.role === "hr"}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 flex items-center">
-                      <FaUniversity className="h-5 w-5 text-blue-600 mr-2" />
-                      <span>Employer</span>
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {formData.role === "hr" && (
-                <div className="mb-10">
-                  <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
-                    University / Institution Name
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                      <FaUniversity />
-                    </span>
-                    <input
-                      id="university"
-                      name="university"
-                      type="text"
-                      required={formData.role === "hr"}
-                      value={formData.university}
-                      onChange={handleChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your institution name"
-                    />
+                    <label className="flex items-center p-3 border rounded-md cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50 bg-white">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="hr"
+                        checked={formData.role === "hr"}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-2 flex items-center">
+                        <FaUniversity className="h-5 w-5 text-blue-600 mr-2" />
+                        <span>Employer</span>
+                      </span>
+                    </label>
                   </div>
-                  <div className="relative mt-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300"></div>
+                </div>
+
+                {formData.role === "hr" && (
+                  <div>
+                    <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
+                      University / Institution Name
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <FaUniversity />
+                      </span>
+                      <input
+                        id="university"
+                        name="university"
+                        type="text"
+                        required={formData.role === "hr"}
+                        value={formData.university}
+                        onChange={handleChange}
+                        className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your institution name"
+                      />
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              <div className="mb-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account details</p>
                 <div>
                   <button
                     type="button"
@@ -272,7 +270,7 @@ const RegisterPage = () => {
                   </button>
                 </div>
 
-                <div className="relative mt-4">
+                <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
                   </div>
@@ -280,73 +278,73 @@ const RegisterPage = () => {
                     <span className="px-2 bg-white text-gray-500">Or sign up with</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <FaUser />
-                  </span>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your full name"
-                  />
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <FaUser />
+                    </span>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <FaEnvelope />
-                  </span>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your email address"
-                  />
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <FaEnvelope />
+                    </span>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your email address"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <FaLock />
-                  </span>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Create a password"
-                  />
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <FaLock />
+                    </span>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Create a password"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters</p>
               </div>
             </div>
             <div>
