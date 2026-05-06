@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VacanciesPage from "./pages/VacanciesPage";
 import ApplicantProfilePage from "./pages/ApplicantProfilePage";
-import HrProfilePage from "./pages/HrProfilePage";
-import HRPage from "./pages/HRPage";
+import HRProfile from "./pages/HRProfile";
+import HRApplicants from "./pages/HRApplicants";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
 import AddProfilePage from "./pages/AddProfilePage";
@@ -63,7 +63,7 @@ function App() {
           {/* HR-only routes */}
           <Route
             path="/hrD"
-            element={<ProtectedRoute element={<HRPage />} allowedRoles={["hr"]} />}
+            element={<ProtectedRoute element={<HRApplicants />} allowedRoles={["hr"]} />}
           />
           <Route
             path="/create-job"
@@ -81,7 +81,7 @@ function App() {
           />
           <Route
             path="/display-profile"
-            element={<ProtectedRoute element={<HrProfilePage />} allowedRoles={["hr"]} />}
+            element={<ProtectedRoute element={<HRProfile />} allowedRoles={["hr"]} />}
           />
 
 
