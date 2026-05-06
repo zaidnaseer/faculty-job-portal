@@ -3,7 +3,6 @@ import Navbar from "./components/Navbar";
 import VacanciesPage from "./pages/VacanciesPage";
 import ApplicantProfilePage from "./pages/ApplicantProfilePage";
 import HRProfile from "./pages/HRProfile";
-import HRApplicants from "./pages/HRApplicants";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
 import AddProfilePage from "./pages/AddProfilePage";
@@ -61,10 +60,6 @@ function App() {
             element={<ProtectedRoute element={<MyApplicationsPage />} allowedRoles={["faculty"]} />}
           />
           {/* HR-only routes */}
-          <Route
-            path="/hrD"
-            element={<ProtectedRoute element={<HRApplicants />} allowedRoles={["hr"]} />}
-          />
           <Route
             path="/create-job"
             element={<ProtectedRoute element={<CreateJobPage />} allowedRoles={["hr"]} />}
