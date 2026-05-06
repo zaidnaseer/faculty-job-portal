@@ -136,7 +136,7 @@ const HRProfile = () => {
             <RippleBackground>
                 <div className="card p-6 max-w-3xl mx-auto m-2">
                     <button
-                        onClick={() => jobId ? navigate(`/jobs/${jobId}/applicants`) : navigate(-1)}
+                        onClick={() => jobId ? navigate(`/job-applicants/${jobId}`) : navigate(-1)}
                         className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
                     >
                         Go Back
@@ -191,24 +191,24 @@ const HRProfile = () => {
         <RippleBackground>
             <div className="container py-8">
                 {viewMode === 'current' && snapshotProfile && (
-                    <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-center justify-between">
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center justify-between">
                         <span>Viewing latest profile.</span>
                         <button
                             type="button"
                             onClick={handleViewSnapshot}
-                            className="text-slate-900 underline hover:text-slate-700"
+                            className="text-amber-900 underline hover:text-amber-700"
                         >
                             Back to Original Profile
                         </button>
                     </div>
                 )}
                 {viewMode === 'snapshot' && isProfileUpdated && (
-                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center justify-between">
+                    <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-center justify-between">
                         <span>Profile updated since application.</span>
                         <button
                             type="button"
                             onClick={handleViewCurrent}
-                            className="text-amber-900 underline hover:text-amber-700"
+                            className="text-slate-900 underline hover:text-slate-700"
                         >
                             View Latest Profile
                         </button>
@@ -223,7 +223,7 @@ const HRProfile = () => {
                     canEdit={false}
                     pageTitle={viewMode === 'current' ? 'Current Profile' : 'Applicant Profile'}
                     showBackButton
-                    onBack={() => navigate(-1)}
+                    onBack={() => jobId ? navigate(`/job-applicants/${jobId}`) : navigate(-1)}
                 />
             </div>
         </RippleBackground>
