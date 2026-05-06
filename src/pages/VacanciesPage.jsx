@@ -230,6 +230,11 @@ const VacanciesPage = () => {
                   authToken={user.token}
                   applicationStatus={applicationStatusByJobId[job._id]}
                   reapplyEligibleAt={reapplyEligibleAtByJobId[job._id]}
+                  onApplySuccess={(jobId) => {
+                    setAppliedJobIds((prev) => Array.from(new Set([...prev, jobId])));
+                    setApplicationStatusByJobId((prev) => ({ ...prev, [jobId]: "active" }));
+                    setReapplyEligibleAtByJobId((prev) => ({ ...prev, [jobId]: null }));
+                  }}
                 />
               ))}
             </div>

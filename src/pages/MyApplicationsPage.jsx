@@ -85,6 +85,16 @@ const MyApplicationsPage = () => {
     }
   };
 
+  const handleApplySuccess = (jobId) => {
+    setAppliedJobs((prevJobs) =>
+      prevJobs.map((job) =>
+        job._id === jobId
+          ? { ...job, applicationStatus: "active", applicationUpdatedAt: new Date().toISOString(), reapplyEligibleAt: null }
+          : job
+      )
+    );
+  };
+
   if (loading) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-screen">
@@ -181,6 +191,7 @@ const MyApplicationsPage = () => {
                       showApplyAction={true}
                       applicationStatus={job.applicationStatus}
                       reapplyEligibleAt={job.reapplyEligibleAt}
+                      onApplySuccess={handleApplySuccess}
                       applicationUpdatedAt={job.applicationUpdatedAt}
                       showReapplyTooltip={true}
                     />

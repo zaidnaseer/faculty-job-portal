@@ -18,7 +18,8 @@ const JobCard = ({
   isWithdrawing = false,
   showApplyAction = true,
   applicationStatus,
-  reapplyEligibleAt
+  reapplyEligibleAt,
+  onApplySuccess
 }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -95,6 +96,7 @@ const JobCard = ({
 
       if (response.ok) {
         setApplied(true);
+        onApplySuccess?.(jobId);
         alert("Successfully applied for the job");
       } else {
         alert(data.message || "Failed to apply for job");
