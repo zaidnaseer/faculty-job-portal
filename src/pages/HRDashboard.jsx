@@ -86,10 +86,14 @@ const HRDashboard = () => {
               <p className="text-xs text-gray-400 mb-4">Posted on {new Date(job.postedDate).toLocaleDateString()}</p>
 
               <h4 className="font-semibold mt-2 mb-1 text-gray-800">Applicants:</h4>
-              {job.appliedBy.length > 0 ? (
+              {job.applications?.filter((entry) => entry.status === "active").length > 0 ? (
                 <div className="flex items-center mb-2">
-                  <span className="text-blue-700 font-bold">{job.appliedBy.length}</span>
-                  <span className="text-gray-600 ml-2 text-sm">applicant{job.appliedBy.length > 1 ? 's' : ''}</span>
+                  <span className="text-blue-700 font-bold">
+                    {job.applications.filter((entry) => entry.status === "active").length}
+                  </span>
+                  <span className="text-gray-600 ml-2 text-sm">
+                    applicant{job.applications.filter((entry) => entry.status === "active").length > 1 ? 's' : ''}
+                  </span>
                   <button
                     onClick={() => navigate(`/job-applicants/${job._id}`)}
                     className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs transition"

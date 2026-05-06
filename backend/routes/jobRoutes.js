@@ -9,11 +9,25 @@ router.get('/my-applications', protect(["faculty"]), async (req, res) => {
   try {
     const userId = req.user.id;  // Assuming the user is stored in req.user after authentication
 
-    // Fetch jobs where the current user is in the 'appliedBy' array
-    const appliedJobs = await Job.find({ appliedBy: userId }).populate('postedBy', 'name email');
+    // Fetch jobs where the current user has an application
+    const appliedJobs = await Job.find({ "applications.user": userId })
+      .populate('postedBy', 'name email')
+      .lean();
+
+    const jobsWithStatus = appliedJobs.map((job) => {
+      const application = job.applications.find(
+        (entry) => entry.user.toString() === userId.toString()
+      );
+
+      return {
+        ...job,
+        applicationStatus: application?.status || "active",
+        applicationUpdatedAt: application?.updatedAt || application?.appliedAt || null
+      };
+    });
 
     // Return the applied jobs  
-    res.json(appliedJobs);
+    res.json(jobsWithStatus);
   } catch (error) {
     console.error('Error fetching applications:', error);
     res.status(500).json({ message: 'Server error' });
@@ -23,7 +37,7 @@ router.get('/my-applications', protect(["faculty"]), async (req, res) => {
 router.get("/my-jobs", protect(['hr']), async (req, res) => {
   console.log("Fetching HR jobs for user:");
   try {
-    const jobs = await Job.find({ postedBy: req.user._id }).populate("appliedBy", "name email"); // Populate faculty details
+    const jobs = await Job.find({ postedBy: req.user._id }).populate("applications.user", "name email"); // Populate faculty details
     console.log(Array.isArray(jobs));
     res.json(jobs);
     console.log(jobs);
@@ -37,7 +51,7 @@ router.get("/my-jobs", protect(['hr']), async (req, res) => {
 router.get("/", async (req, res) => {
 
   try {
-    const jobs = await Job.find().populate("postedBy", "name email").populate("appliedBy", "name email");
+    const jobs = await Job.find().populate("postedBy", "name email").populate("applications.user", "name email");
     res.status(200).json(jobs);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch jobs" });
@@ -49,7 +63,7 @@ router.get("/JOBS/:id", async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)
       .populate("postedBy", "name email")
-      .populate("appliedBy", "name email");
+      .populate("applications.user", "name email");
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
@@ -62,9 +76,14 @@ router.get("/JOBS/:id", async (req, res) => {
 // Get applicants for a specific job (for HR dashboard)
 router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
   try {
-    const job = await Job.findById(req.params.jobId).populate("appliedBy", "name email");
+    const job = await Job.findById(req.params.jobId).populate("applications.user", "name email");
     if (!job) return res.status(404).json({ message: "Job not found" });
-    res.json({ applicants: job.appliedBy, jobTitle: job.title });
+
+    const applicants = job.applications
+      .filter((entry) => entry.status === "active")
+      .map((entry) => entry.user);
+
+    res.json({ applicants, jobTitle: job.title });
   } catch (error) {
     console.error("Error fetching applicants:", error);
     res.status(500).json({ message: "Server error" });
@@ -94,44 +113,109 @@ router.post("/", protect(["hr"]), async (req, res) => {
   }
 });
 
+// ✅ Reject an applicant for a job (by HR)
+router.patch("/:jobId/applicants/:applicantId/reject", protect(["hr"]), async (req, res) => {
+  try {
+    const { jobId, applicantId } = req.params;
+    const job = await Job.findById(jobId);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this job" });
+    }
+
+    const application = job.applications.find(
+      (entry) => entry.user.toString() === applicantId.toString()
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (application.status === "rejected") {
+      return res.status(400).json({ message: "Application already rejected" });
+    }
+
+    if (application.status === "withdrawn") {
+      return res.status(400).json({ message: "Cannot reject a withdrawn application" });
+    }
+
+    application.status = "rejected";
+    application.updatedAt = new Date();
+    await job.save();
+
+    return res.status(200).json({ message: "Application rejected" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to reject application" });
+  }
+});
+
 // ✅ Apply for a job (by Faculty)
 router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
   try {
-    const profile = await Profile.findOne({ user: req.user._id });
-    if (!profile) {
-      return res.status(400).json({
-        message: "You cannot apply to a job without creating a profile.",
-      });
-    }
-
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    if (!job.appliedBy.includes(req.user._id)) {
-      job.appliedBy.push(req.user._id);
+    const existingApplication = job.applications.find(
+      (entry) => entry.user.toString() === req.user._id.toString()
+    );
+
+    if (existingApplication) {
+      if (existingApplication.status === "active") {
+        return res.status(400).json({ message: "You have already applied for this job" });
+      }
+
+      if (existingApplication.status === "rejected") {
+        return res.status(400).json({ message: "You were not selected for this role" });
+      }
+
+      existingApplication.status = "active";
+      existingApplication.updatedAt = new Date();
+      existingApplication.appliedAt = new Date();
       await job.save();
       return res.status(200).json({ message: "Successfully applied for the job" });
-    } else {
-      return res.status(400).json({ message: "You have already applied for this job" });
     }
+
+    job.applications.push({
+      user: req.user._id,
+      status: "active",
+      appliedAt: new Date(),
+      updatedAt: new Date()
+    });
+    await job.save();
+    return res.status(200).json({ message: "Successfully applied for the job" });
   } catch (error) {
     res.status(500).json({ error: "Failed to apply for job" });
   }
 });
 
-// Withdraw application for a job (by Faculty)
+// ✅ Withdraw an application (by Faculty)
 router.delete("/withdraw/:id", protect(["faculty"]), async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    if (!job.appliedBy.includes(req.user._id)) {
-      return res.status(400).json({ message: "You have not applied for this job" });
+    const application = job.applications.find(
+      (entry) => entry.user.toString() === req.user._id.toString()
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
     }
 
-    job.appliedBy.pull(req.user._id);
+    if (application.status === "withdrawn") {
+      return res.status(400).json({ message: "Application already withdrawn" });
+    }
+
+    if (application.status === "rejected") {
+      return res.status(400).json({ message: "Cannot withdraw a rejected application" });
+    }
+
+    application.status = "withdrawn";
+    application.updatedAt = new Date();
     await job.save();
 
     return res.status(200).json({ message: "Application withdrawn successfully" });

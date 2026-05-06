@@ -40,7 +40,11 @@ const VacanciesPage = () => {
           },
         });
         const data = await response.json();
-        setAppliedJobIds(data.map(app => app._id));
+        setAppliedJobIds(
+          data
+            .filter((app) => app.applicationStatus === "active")
+            .map((app) => app._id)
+        );
       } catch (error) {
         console.error("Error fetching applications:", error);
       }
@@ -207,7 +211,13 @@ const VacanciesPage = () => {
           {filteredJobs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => (
-                <JobCard key={job.id} job={job} userId={user.id} />
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  userId={user.id}
+                  backendUrl={backendUrl}
+                  authToken={user.token}
+                />
               ))}
             </div>
           ) : (

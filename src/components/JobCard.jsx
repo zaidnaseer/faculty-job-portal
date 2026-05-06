@@ -8,17 +8,40 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 
-const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing = false }) => {
-  const navigate = useNavigate();
+const JobCard = ({
+  job,
+  userId,
+  backendUrl,
+  authToken,
+  showWithdraw = false,
+  onWithdraw,
+  isWithdrawing = false,
+  showApplyAction = true,
+  applicationStatus
+}) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (job.appliedBy && job.appliedBy.includes(userId)) {
+    if (applicationStatus === "active") {
+      setApplied(true);
+      return;
+    }
+
+    if (!userId) {
+      return;
+    }
+
+    const statusFromJob = job?.applications?.find(
+      (entry) => entry.user?._id?.toString?.() === userId?.toString?.()
+    )?.status;
+
+    if (statusFromJob === "active") {
       setApplied(true);
     }
-  }, [job.appliedBy, userId]);
+  }, [job?.applications, userId, applicationStatus]);
 
   const toggleSave = () => {
     setSaved(!saved);
@@ -35,11 +58,13 @@ const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing 
 
   const applyForJob = async (jobId) => {
     try {
-      const response = await fetch(`/api/jobs/apply/${jobId}`, {
+      const apiBaseUrl = backendUrl || import.meta.env.VITE_BACKEND_URL;
+      const token = authToken || localStorage.getItem("token");
+      const response = await fetch(`${apiBaseUrl}/api/jobs/apply/${jobId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -85,12 +110,9 @@ const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing 
     <>
       <div className="card h-full flex flex-col">
         {/* University name */}
-
         <div className="bg-blue-900 text-white text-lg font-semibold px-4 py-2 mb-4 text-center tracking-wide uppercase rounded-t">
           {job.institution}
         </div>
-
-
         {/* Job title and save icon */}
         <div className="flex justify-between items-start">
           <div>
@@ -101,7 +123,24 @@ const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing 
             {saved ? <FaBookmark className="text-primary" /> : <FaRegBookmark />}
           </button>
         </div>
-
+        <div className="flex items-center gap-2">
+          {applicationStatus && (
+            <span
+              className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
+                  ? "bg-amber-100 text-amber-700"
+                  : applicationStatus === "rejected"
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}
+            >
+              {applicationStatus === "withdrawn"
+                ? "Withdrawn"
+                : applicationStatus === "rejected"
+                  ? "Not Selected"
+                  : "Active"}
+            </span>
+          )}
+        </div>
         {/* Job info */}
         <div className="mt-4 space-y-2 text-sm text-gray-500">
           <div className="flex items-center">
@@ -136,8 +175,8 @@ const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing 
             )}
           </div>
 
-          <div className="mt-4">
-            {showWithdraw ? (
+          {showWithdraw ? (
+            <div className="mt-4">
               <button
                 onClick={() => onWithdraw?.(job._id)}
                 disabled={isWithdrawing}
@@ -145,16 +184,20 @@ const JobCard = ({ job, userId, showWithdraw = false, onWithdraw, isWithdrawing 
               >
                 {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
               </button>
-            ) : applied ? (
-              <button disabled className="btn btn-outline w-full opacity-75">
-                Applied
-              </button>
-            ) : (
-              <button onClick={handleApplyClick} className="btn btn-primary w-full">
-                Apply Now
-              </button>
-            )}
-          </div>
+            </div>
+          ) : showApplyAction ? (
+            <div className="mt-4">
+              {applied ? (
+                <button disabled className="btn btn-outline w-full opacity-75">
+                  Applied
+                </button>
+              ) : (
+                <button onClick={handleApplyClick} className="btn btn-primary w-full">
+                  Apply Now
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 

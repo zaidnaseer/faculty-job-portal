@@ -10,6 +10,7 @@ const JobApplicantsPage = () => {
     const [applicants, setApplicants] = useState([]);
     const [jobTitle, setJobTitle] = useState("");
     const [loading, setLoading] = useState(true);
+    const [rejectingId, setRejectingId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,6 +31,33 @@ const JobApplicantsPage = () => {
         };
         fetchApplicants();
     }, [jobId, user, backendUrl]);
+
+    const handleRejectApplicant = async (applicantId) => {
+        if (!window.confirm("Reject this applicant?")) return;
+
+        setRejectingId(applicantId);
+        try {
+            const response = await fetch(
+                `${backendUrl}/api/jobs/${jobId}/applicants/${applicantId}/reject`,
+                {
+                    method: "PATCH",
+                    headers: { Authorization: `Bearer ${user.token}` },
+                }
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                alert(data.message || "Failed to reject applicant");
+                return;
+            }
+
+            setApplicants((prev) => prev.filter((faculty) => faculty._id !== applicantId));
+        } catch (error) {
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setRejectingId(null);
+        }
+    };
 
     return (
         <RippleBackground>
@@ -61,6 +89,13 @@ const JobApplicantsPage = () => {
                                     className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs transition"
                                 >
                                     View Profile
+                                </button>
+                                <button
+                                    onClick={() => handleRejectApplicant(faculty._id)}
+                                    disabled={rejectingId === faculty._id}
+                                    className="ml-2 px-3 py-1 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 text-xs transition disabled:text-rose-300"
+                                >
+                                    {rejectingId === faculty._id ? "Rejecting..." : "Reject"}
                                 </button>
                             </li>
                         ))}

@@ -11,6 +11,7 @@ const MyApplicationsPage = () => {
   const [withdrawingJobId, setWithdrawingJobId] = useState(null);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [pendingWithdrawJobId, setPendingWithdrawJobId] = useState(null);
+  const [activeTab, setActiveTab] = useState("active");
 
 
   useEffect(() => {
@@ -66,7 +67,11 @@ const MyApplicationsPage = () => {
 
       if (response.ok) {
         setAppliedJobs((prevJobs) =>
-          prevJobs.filter((job) => job._id !== pendingWithdrawJobId)
+          prevJobs.map((job) =>
+            job._id === pendingWithdrawJobId
+              ? { ...job, applicationStatus: "withdrawn" }
+              : job
+          )
         );
         setShowWithdrawModal(false);
         setPendingWithdrawJobId(null);
@@ -96,23 +101,88 @@ const MyApplicationsPage = () => {
       <div className="container py-8">
         <h2 className="text-2xl font-bold mb-6">My Applications</h2>
 
+        <div className="mb-6 inline-flex rounded-full bg-gray-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("active")}
+            className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "active"
+                ? "bg-white text-gray-900 shadow"
+                : "text-gray-500 hover:text-gray-700"
+              }`}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("archived")}
+            className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "archived"
+                ? "bg-white text-gray-900 shadow"
+                : "text-gray-500 hover:text-gray-700"
+              }`}
+          >
+            Archived
+          </button>
+        </div>
+
         {appliedJobs.length === 0 ? (
           <div className="text-center">
             <p className="text-gray-600">You haven't applied for any jobs yet.</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {appliedJobs.map((job) => (
-              <JobCard
-                key={job._id}
-                job={job}
-                userId={user.id}
-                showWithdraw={true}
-                onWithdraw={openWithdrawModal}
-                isWithdrawing={withdrawingJobId === job._id}
-              />
-            ))}
-          </div>
+        ) : null}
+
+        {activeTab === "active" && (
+          <>
+            {appliedJobs.filter((job) => job.applicationStatus === "active").length === 0 ? (
+              <div className="text-center">
+                <p className="text-gray-600">No active applications right now.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {appliedJobs
+                  .filter((job) => job.applicationStatus === "active")
+                  .map((job) => (
+                    <JobCard
+                      key={job._id}
+                      job={job}
+                      userId={user.id}
+                      backendUrl={backendUrl}
+                      authToken={user.token}
+                      showWithdraw={true}
+                      onWithdraw={openWithdrawModal}
+                      isWithdrawing={withdrawingJobId === job._id}
+                      showApplyAction={false}
+                      applicationStatus={job.applicationStatus}
+                    />
+                  ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "archived" && (
+          <>
+            {appliedJobs.filter((job) => job.applicationStatus !== "active").length === 0 ? (
+              <div className="text-center">
+                <p className="text-gray-600">No archived applications yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {appliedJobs
+                  .filter((job) => job.applicationStatus !== "active")
+                  .map((job) => (
+                    <JobCard
+                      key={job._id}
+                      job={job}
+                      userId={user.id}
+                      backendUrl={backendUrl}
+                      authToken={user.token}
+                      showApplyAction={false}
+                      applicationStatus={job.applicationStatus}
+                    />
+                  ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

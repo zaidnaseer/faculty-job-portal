@@ -70,7 +70,7 @@ async function insertData() {
     const documents = jobsData.map((job) => ({
       ...job,
       postedBy: hrUserId,
-      appliedBy: [],
+      applications: [],
       postedDate: new Date()
     }));
 

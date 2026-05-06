@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+const applicationSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['active', 'withdrawn', 'rejected'],
+      default: 'active'
+    },
+    appliedAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+  },
+  { _id: false }
+);
+
 const jobSchema = new mongoose.Schema({
   // NEW: Specify the institution (university/college) posting the job
   institution: { type: String, required: true },
@@ -22,11 +40,11 @@ const jobSchema = new mongoose.Schema({
     required: true
   },
 
-  // Link to faculty users who applied to this job
-  appliedBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }]
+  // Track applications with status and timestamps
+  applications: {
+    type: [applicationSchema],
+    default: []
+  }
 });
 
 const Job = mongoose.model('Job', jobSchema);
