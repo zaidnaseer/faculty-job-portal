@@ -85,7 +85,11 @@ const JobApplicantsPage = () => {
                                     <div className="text-gray-500 text-xs">{faculty.email}</div>
                                 </div>
                                 <button
-                                    onClick={() => navigate(`/display-profile?facultyId=${faculty._id}`, { state: { facultyId: faculty._id } })}
+                                    onClick={() =>
+                                        navigate(`/display-profile?facultyId=${faculty._id}&jobId=${jobId}`, {
+                                            state: { facultyId: faculty._id, jobId },
+                                        })
+                                    }
                                     className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs transition"
                                 >
                                     View Profile

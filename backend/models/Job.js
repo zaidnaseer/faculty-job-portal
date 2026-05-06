@@ -7,6 +7,12 @@ const applicationSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    profileSnapshot: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
+    profileUpdatedAt: { type: Date, default: null },
+    snapshotCapturedAt: { type: Date, default: null },
     status: {
       type: String,
       enum: ['active', 'withdrawn', 'rejected'],

@@ -4,6 +4,19 @@ const Job = require("../models/Job");
 const Profile = require("../models/Profile");
 const { requireAuth, protect } = require("../middleware/authMiddleware");
 
+const buildProfileSnapshot = (profile) => ({
+  name: profile?.name || "",
+  title: profile?.title || "",
+  email: profile?.email || "",
+  phone: profile?.phone || "",
+  location: profile?.location || "",
+  skills: Array.isArray(profile?.skills) ? profile.skills : [],
+  summary: profile?.summary || "",
+  experience: Array.isArray(profile?.experience) ? profile.experience : [],
+  education: Array.isArray(profile?.education) ? profile.education : [],
+  publications: Array.isArray(profile?.publications) ? profile.publications : [],
+  profileImage: profile?.profileImage || "",
+});
 
 router.get('/my-applications', protect(["faculty"]), async (req, res) => {
   try {
@@ -90,6 +103,39 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
   }
 });
 
+router.get("/:jobId/applicants/:applicantId/snapshot", protect(["hr"]), async (req, res) => {
+  try {
+    const { jobId, applicantId } = req.params;
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this application" });
+    }
+
+    const application = job.applications.find(
+      (entry) => entry.user.toString() === applicantId.toString()
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    return res.status(200).json({
+      profileSnapshot: application.profileSnapshot || null,
+      profileUpdatedAt: application.profileUpdatedAt || null,
+      snapshotCapturedAt: application.snapshotCapturedAt || null,
+      appliedAt: application.appliedAt || null,
+      updatedAt: application.updatedAt || null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch application snapshot" });
+  }
+});
+
 // ✅ Create a new job (by HR)
 router.post("/", protect(["hr"]), async (req, res) => {
   try {
@@ -158,6 +204,15 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
 
     if (!job) return res.status(404).json({ message: "Job not found" });
 
+    const profile = await Profile.findOne({ user: req.user._id }).lean();
+    if (!profile) {
+      return res.status(400).json({ message: "Please create a profile before applying." });
+    }
+
+    const profileSnapshot = buildProfileSnapshot(profile);
+    const profileUpdatedAt = profile.updatedAt || profile.createdAt || new Date();
+    const snapshotCapturedAt = new Date();
+
     const existingApplication = job.applications.find(
       (entry) => entry.user.toString() === req.user._id.toString()
     );
@@ -174,12 +229,18 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
       existingApplication.status = "active";
       existingApplication.updatedAt = new Date();
       existingApplication.appliedAt = new Date();
+      existingApplication.profileSnapshot = profileSnapshot;
+      existingApplication.profileUpdatedAt = profileUpdatedAt;
+      existingApplication.snapshotCapturedAt = snapshotCapturedAt;
       await job.save();
       return res.status(200).json({ message: "Successfully applied for the job" });
     }
 
     job.applications.push({
       user: req.user._id,
+      profileSnapshot,
+      profileUpdatedAt,
+      snapshotCapturedAt,
       status: "active",
       appliedAt: new Date(),
       updatedAt: new Date()
