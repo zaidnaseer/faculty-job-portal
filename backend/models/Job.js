@@ -38,6 +38,7 @@ const jobSchema = new mongoose.Schema({
   postedDate: { type: Date, default: Date.now },
   description: { type: String, required: true },
   skills: { type: [String], required: true },
+  reapplyCooldownMonths: { type: Number, default: 0 },
 
   // Link to the HR user who posted the job
   postedBy: {

@@ -12,6 +12,7 @@ const CreateJobPage = () => {
     location: "",
     description: "",
     skills: "",
+    reapplyCooldownMonths: "1",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -44,6 +45,7 @@ const CreateJobPage = () => {
         body: JSON.stringify({
           ...formData,
           skills: formData.skills.split(",").map((skill) => skill.trim()), // Convert skills to array
+          reapplyCooldownMonths: Number(formData.reapplyCooldownMonths),
         }),
       });
 
@@ -147,6 +149,22 @@ const CreateJobPage = () => {
               onChange={handleChange}
               className="form-input w-full"
             />
+          </div>
+
+          {/* Reapply Cooldown */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Allow Candidates to Reapply After</label>
+            <select
+              name="reapplyCooldownMonths"
+              value={formData.reapplyCooldownMonths}
+              onChange={handleChange}
+              className="form-input w-full"
+              required
+            >
+              <option value="1">1 month</option>
+              <option value="3">3 months</option>
+              <option value="6">6 months</option>
+            </select>
           </div>
 
           {/* Error and Success Message */}

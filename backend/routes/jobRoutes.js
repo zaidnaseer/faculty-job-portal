@@ -18,6 +18,13 @@ const buildProfileSnapshot = (profile) => ({
   profileImage: profile?.profileImage || "",
 });
 
+const addMonths = (date, months) => {
+  const base = new Date(date);
+  const result = new Date(base);
+  result.setMonth(result.getMonth() + months);
+  return result;
+};
+
 router.get('/my-applications', protect(["faculty"]), async (req, res) => {
   try {
     const userId = req.user.id;  // Assuming the user is stored in req.user after authentication
@@ -32,10 +39,16 @@ router.get('/my-applications', protect(["faculty"]), async (req, res) => {
         (entry) => entry.user.toString() === userId.toString()
       );
 
+      const cooldownMonths = Number(job.reapplyCooldownMonths) || 0;
+      const baseDate = application?.updatedAt || application?.appliedAt || null;
+      const reapplyEligibleAt =
+        baseDate && cooldownMonths > 0 ? addMonths(baseDate, cooldownMonths) : null;
+
       return {
         ...job,
         applicationStatus: application?.status || "active",
-        applicationUpdatedAt: application?.updatedAt || application?.appliedAt || null
+        applicationUpdatedAt: baseDate,
+        reapplyEligibleAt
       };
     });
 
@@ -139,7 +152,7 @@ router.get("/:jobId/applicants/:applicantId/snapshot", protect(["hr"]), async (r
 // ✅ Create a new job (by HR)
 router.post("/", protect(["hr"]), async (req, res) => {
   try {
-    const { title, department, type, location, description, skills } = req.body;
+    const { title, department, type, location, description, skills, reapplyCooldownMonths } = req.body;
 
     const newJob = new Job({
       institution: req.user.university,
@@ -149,6 +162,7 @@ router.post("/", protect(["hr"]), async (req, res) => {
       location,
       description,
       skills,
+      reapplyCooldownMonths: Number(reapplyCooldownMonths) || 0,
       postedBy: req.user._id, // Logged-in HR ID from JWT
     });
 
@@ -222,8 +236,19 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
         return res.status(400).json({ message: "You have already applied for this job" });
       }
 
-      if (existingApplication.status === "rejected") {
-        return res.status(400).json({ message: "You were not selected for this role" });
+      if (existingApplication.status === "rejected" || existingApplication.status === "withdrawn") {
+        const cooldownMonths = Number(job.reapplyCooldownMonths) || 0;
+        const updatedAt = existingApplication.updatedAt || existingApplication.appliedAt || new Date();
+
+        if (cooldownMonths > 0) {
+          const eligibleAt = addMonths(updatedAt, cooldownMonths);
+          if (new Date() < eligibleAt) {
+            return res.status(400).json({
+              message: "Reapply cooldown period has not passed for this role",
+              eligibleAt
+            });
+          }
+        }
       }
 
       existingApplication.status = "active";

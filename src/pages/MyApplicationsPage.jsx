@@ -106,8 +106,8 @@ const MyApplicationsPage = () => {
             type="button"
             onClick={() => setActiveTab("active")}
             className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "active"
-                ? "bg-white text-gray-900 shadow"
-                : "text-gray-500 hover:text-gray-700"
+              ? "bg-white text-gray-900 shadow"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             Active
@@ -116,8 +116,8 @@ const MyApplicationsPage = () => {
             type="button"
             onClick={() => setActiveTab("archived")}
             className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "archived"
-                ? "bg-white text-gray-900 shadow"
-                : "text-gray-500 hover:text-gray-700"
+              ? "bg-white text-gray-900 shadow"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             Archived
@@ -152,6 +152,8 @@ const MyApplicationsPage = () => {
                       isWithdrawing={withdrawingJobId === job._id}
                       showApplyAction={false}
                       applicationStatus={job.applicationStatus}
+                      applicationUpdatedAt={job.applicationUpdatedAt}
+                      showReapplyTooltip={false}
                     />
                   ))}
               </div>
@@ -176,8 +178,11 @@ const MyApplicationsPage = () => {
                       userId={user.id}
                       backendUrl={backendUrl}
                       authToken={user.token}
-                      showApplyAction={false}
+                      showApplyAction={true}
                       applicationStatus={job.applicationStatus}
+                      reapplyEligibleAt={job.reapplyEligibleAt}
+                      applicationUpdatedAt={job.applicationUpdatedAt}
+                      showReapplyTooltip={true}
                     />
                   ))}
               </div>

@@ -17,7 +17,8 @@ const JobCard = ({
   onWithdraw,
   isWithdrawing = false,
   showApplyAction = true,
-  applicationStatus
+  applicationStatus,
+  reapplyEligibleAt
 }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -55,6 +56,28 @@ const JobCard = ({
       year: "numeric",
     });
   };
+
+  const getDaysUntilReapply = () => {
+    if (!reapplyEligibleAt) {
+      return 0;
+    }
+
+    const eligibleDate = new Date(reapplyEligibleAt);
+    if (Number.isNaN(eligibleDate.getTime())) {
+      return 0;
+    }
+
+    const diffMs = eligibleDate.getTime() - Date.now();
+    if (diffMs <= 0) {
+      return 0;
+    }
+
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  };
+
+  const daysUntilReapply = getDaysUntilReapply();
+  const isArchivedStatus = applicationStatus === "withdrawn" || applicationStatus === "rejected";
+  const shouldShowCooldownState = isArchivedStatus && daysUntilReapply > 0;
 
   const applyForJob = async (jobId) => {
     try {
@@ -127,10 +150,10 @@ const JobCard = ({
           {applicationStatus && (
             <span
               className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
-                  ? "bg-amber-100 text-amber-700"
-                  : applicationStatus === "rejected"
-                    ? "bg-rose-100 text-rose-700"
-                    : "bg-emerald-100 text-emerald-700"
+                ? "bg-amber-100 text-amber-700"
+                : applicationStatus === "rejected"
+                  ? "bg-rose-100 text-rose-700"
+                  : "bg-emerald-100 text-emerald-700"
                 }`}
             >
               {applicationStatus === "withdrawn"
@@ -191,9 +214,13 @@ const JobCard = ({
                 <button disabled className="btn btn-outline w-full opacity-75">
                   Applied
                 </button>
+              ) : shouldShowCooldownState ? (
+                <p className="text-sm font-medium text-amber-700 text-center">
+                  Apply after {daysUntilReapply} day{daysUntilReapply === 1 ? "" : "s"}
+                </p>
               ) : (
                 <button onClick={handleApplyClick} className="btn btn-primary w-full">
-                  Apply Now
+                  Apply
                 </button>
               )}
             </div>

@@ -10,6 +10,8 @@ const VacanciesPage = () => {
 
   const [jobs, setJobs] = useState([]); // All jobs fetched from the server
   const [appliedJobIds, setAppliedJobIds] = useState([]); // Job IDs the user has applied to
+  const [applicationStatusByJobId, setApplicationStatusByJobId] = useState({});
+  const [reapplyEligibleAtByJobId, setReapplyEligibleAtByJobId] = useState({});
   const [searchTerm, setSearchTerm] = useState(""); // Search term for job titles, keywords, etc.
   const [filters, setFilters] = useState({
     type: "all", // Filter for job type
@@ -45,6 +47,15 @@ const VacanciesPage = () => {
             .filter((app) => app.applicationStatus === "active")
             .map((app) => app._id)
         );
+
+        const nextStatusByJobId = {};
+        const nextEligibleAtByJobId = {};
+        data.forEach((app) => {
+          nextStatusByJobId[app._id] = app.applicationStatus;
+          nextEligibleAtByJobId[app._id] = app.reapplyEligibleAt || null;
+        });
+        setApplicationStatusByJobId(nextStatusByJobId);
+        setReapplyEligibleAtByJobId(nextEligibleAtByJobId);
       } catch (error) {
         console.error("Error fetching applications:", error);
       }
@@ -217,6 +228,8 @@ const VacanciesPage = () => {
                   userId={user.id}
                   backendUrl={backendUrl}
                   authToken={user.token}
+                  applicationStatus={applicationStatusByJobId[job._id]}
+                  reapplyEligibleAt={reapplyEligibleAtByJobId[job._id]}
                 />
               ))}
             </div>
