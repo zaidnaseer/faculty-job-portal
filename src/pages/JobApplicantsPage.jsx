@@ -7,10 +7,16 @@ const JobApplicantsPage = () => {
     const { jobId } = useParams();
     const { user } = useContext(AuthContext);
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const [applicants, setApplicants] = useState([]);
+    const [applicantsByStatus, setApplicantsByStatus] = useState({
+        active: [],
+        rejected: [],
+        withdrawn: []
+    });
     const [jobTitle, setJobTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [rejectingId, setRejectingId] = useState(null);
+    const [activeTab, setActiveTab] = useState("active");
+    const [retentionMonths, setRetentionMonths] = useState(12);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -21,7 +27,22 @@ const JobApplicantsPage = () => {
                 });
                 if (!response.ok) throw new Error("Failed to fetch applicants");
                 const data = await response.json();
-                setApplicants(data.applicants || []);
+                if (data.applicantsByStatus) {
+                    setApplicantsByStatus({
+                        active: data.applicantsByStatus.active || [],
+                        rejected: data.applicantsByStatus.rejected || [],
+                        withdrawn: data.applicantsByStatus.withdrawn || [],
+                    });
+                } else {
+                    setApplicantsByStatus({
+                        active: data.applicants || [],
+                        rejected: [],
+                        withdrawn: [],
+                    });
+                }
+                if (typeof data.retentionMonths === "number") {
+                    setRetentionMonths(data.retentionMonths);
+                }
                 setJobTitle(data.jobTitle || "");
             } catch (error) {
                 console.error(error);
@@ -51,13 +72,38 @@ const JobApplicantsPage = () => {
                 return;
             }
 
-            setApplicants((prev) => prev.filter((faculty) => faculty._id !== applicantId));
+            setApplicantsByStatus((prev) => {
+                const nextActive = (prev.active || []).filter(
+                    (faculty) => faculty._id !== applicantId
+                );
+                const rejectedSet = new Set((prev.rejected || []).map((entry) => entry._id));
+                const rejectedCandidate = (prev.active || []).find(
+                    (faculty) => faculty._id === applicantId
+                );
+                const nextRejected = rejectedCandidate && !rejectedSet.has(applicantId)
+                    ? [...(prev.rejected || []), rejectedCandidate]
+                    : prev.rejected || [];
+
+                return {
+                    ...prev,
+                    active: nextActive,
+                    rejected: nextRejected,
+                };
+            });
         } catch (error) {
             alert("Something went wrong. Please try again.");
         } finally {
             setRejectingId(null);
         }
     };
+
+    const currentApplicants = applicantsByStatus[activeTab] || [];
+    const emptyMessage =
+        activeTab === "active"
+            ? "No active applicants for this job yet."
+            : activeTab === "rejected"
+                ? "No rejected applicants to show."
+                : "No withdrawn applications to show.";
 
     return (
         <RippleBackground>
@@ -69,13 +115,35 @@ const JobApplicantsPage = () => {
                     ← Back
                 </button>
                 <h2 className="text-2xl font-bold mb-4 text-blue-800">Applicants for: <span className="text-gray-800">{jobTitle}</span></h2>
+                <div className="mb-6 flex flex-wrap gap-2">
+                    {["active", "rejected", "withdrawn"].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${activeTab === tab
+                                    ? "bg-blue-600 text-white shadow"
+                                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                                }`}
+                        >
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            <span className="ml-2 text-xs font-normal">
+                                ({(applicantsByStatus[tab] || []).length})
+                            </span>
+                        </button>
+                    ))}
+                </div>
+                {(activeTab === "rejected" || activeTab === "withdrawn") && (
+                    <p className="mb-4 text-xs text-gray-500">
+                        Showing applications {activeTab} within the last {retentionMonths} months.
+                    </p>
+                )}
                 {loading ? (
                     <p className="text-gray-500">Loading applicants...</p>
-                ) : applicants.length === 0 ? (
-                    <p className="text-gray-400">No applicants for this job yet.</p>
+                ) : currentApplicants.length === 0 ? (
+                    <p className="text-gray-400">{emptyMessage}</p>
                 ) : (
                     <ul className="divide-y divide-gray-100 bg-white rounded-xl shadow p-6">
-                        {applicants.map((faculty) => (
+                        {currentApplicants.map((faculty) => (
                             <li key={faculty._id} className="flex items-center py-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold mr-4">
                                     {faculty.name?.[0]?.toUpperCase() || "?"}
@@ -94,13 +162,15 @@ const JobApplicantsPage = () => {
                                 >
                                     View Profile
                                 </button>
-                                <button
-                                    onClick={() => handleRejectApplicant(faculty._id)}
-                                    disabled={rejectingId === faculty._id}
-                                    className="ml-2 px-3 py-1 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 text-xs transition disabled:text-rose-300"
-                                >
-                                    {rejectingId === faculty._id ? "Rejecting..." : "Reject"}
-                                </button>
+                                {activeTab === "active" && (
+                                    <button
+                                        onClick={() => handleRejectApplicant(faculty._id)}
+                                        disabled={rejectingId === faculty._id}
+                                        className="ml-2 px-3 py-1 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 text-xs transition disabled:text-rose-300"
+                                    >
+                                        {rejectingId === faculty._id ? "Rejecting..." : "Reject"}
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>

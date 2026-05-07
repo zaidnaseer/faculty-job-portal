@@ -25,32 +25,66 @@ const addMonths = (date, months) => {
   return result;
 };
 
+const APPLICATION_RETENTION_MONTHS = 12;
+
+const getRetentionCutoff = () => addMonths(new Date(), -APPLICATION_RETENTION_MONTHS);
+
+const purgeExpiredApplications = async (job) => {
+  const cutoff = getRetentionCutoff();
+  const originalCount = job.applications.length;
+
+  job.applications = job.applications.filter((entry) => {
+    if (!entry) return false;
+
+    if (entry.status === "rejected" || entry.status === "withdrawn") {
+      const lastUpdated = entry.updatedAt || entry.appliedAt || new Date(0);
+      return lastUpdated >= cutoff;
+    }
+
+    return true;
+  });
+
+  if (job.applications.length !== originalCount) {
+    await job.save();
+  }
+
+  return job;
+};
+
 router.get('/my-applications', protect(["faculty"]), async (req, res) => {
   try {
     const userId = req.user.id;  // Assuming the user is stored in req.user after authentication
 
     // Fetch jobs where the current user has an application
     const appliedJobs = await Job.find({ "applications.user": userId })
-      .populate('postedBy', 'name email')
-      .lean();
+      .populate('postedBy', 'name email');
 
-    const jobsWithStatus = appliedJobs.map((job) => {
+    const jobsWithStatus = [];
+
+    for (const job of appliedJobs) {
+      await purgeExpiredApplications(job);
+
       const application = job.applications.find(
         (entry) => entry.user.toString() === userId.toString()
       );
+
+      if (!application) {
+        continue;
+      }
 
       const cooldownMonths = Number(job.reapplyCooldownMonths) || 0;
       const baseDate = application?.updatedAt || application?.appliedAt || null;
       const reapplyEligibleAt =
         baseDate && cooldownMonths > 0 ? addMonths(baseDate, cooldownMonths) : null;
 
-      return {
-        ...job,
+      const jobData = job.toObject();
+      jobsWithStatus.push({
+        ...jobData,
         applicationStatus: application?.status || "active",
         applicationUpdatedAt: baseDate,
         reapplyEligibleAt
-      };
-    });
+      });
+    }
 
     // Return the applied jobs  
     res.json(jobsWithStatus);
@@ -64,6 +98,9 @@ router.get("/my-jobs", protect(['hr']), async (req, res) => {
   console.log("Fetching HR jobs for user:");
   try {
     const jobs = await Job.find({ postedBy: req.user._id }).populate("applications.user", "name email"); // Populate faculty details
+    for (const job of jobs) {
+      await purgeExpiredApplications(job);
+    }
     console.log(Array.isArray(jobs));
     res.json(jobs);
     console.log(jobs);
@@ -105,11 +142,37 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
     const job = await Job.findById(req.params.jobId).populate("applications.user", "name email");
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    const applicants = job.applications
-      .filter((entry) => entry.status === "active")
-      .map((entry) => entry.user);
+    await purgeExpiredApplications(job);
 
-    res.json({ applicants, jobTitle: job.title });
+    const applicantsByStatus = {
+      active: [],
+      rejected: [],
+      withdrawn: []
+    };
+
+    job.applications.forEach((entry) => {
+      if (!entry?.user) return;
+
+      if (entry.status === "active") {
+        applicantsByStatus.active.push(entry.user);
+        return;
+      }
+
+      if (entry.status === "rejected") {
+        applicantsByStatus.rejected.push(entry.user);
+        return;
+      }
+
+      if (entry.status === "withdrawn") {
+        applicantsByStatus.withdrawn.push(entry.user);
+      }
+    });
+
+    res.json({
+      applicantsByStatus,
+      jobTitle: job.title,
+      retentionMonths: APPLICATION_RETENTION_MONTHS
+    });
   } catch (error) {
     console.error("Error fetching applicants:", error);
     res.status(500).json({ message: "Server error" });
@@ -217,6 +280,8 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
     const job = await Job.findById(req.params.id);
 
     if (!job) return res.status(404).json({ message: "Job not found" });
+
+    await purgeExpiredApplications(job);
 
     const profile = await Profile.findOne({ user: req.user._id }).lean();
     if (!profile) {
