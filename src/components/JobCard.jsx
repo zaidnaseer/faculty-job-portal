@@ -187,18 +187,20 @@ const JobCard = ({
 
         {/* Skills and apply button */}
         <div className="mt-auto pt-4">
-          <div className="flex gap-2 text-sm">
-            {job.skills.slice(0, 3).map((skill, index) => (
-              <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                {skill}
-              </span>
-            ))}
-            {job.skills.length > 3 && (
-              <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                +{job.skills.length - 3} more
-              </span>
-            )}
-          </div>
+          {Array.isArray(job.skills) && job.skills.length > 0 && (
+            <div className="flex gap-2 text-sm">
+              {job.skills.slice(0, 3).map((skill, index) => (
+                <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {skill}
+                </span>
+              ))}
+              {job.skills.length > 3 && (
+                <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                  +{job.skills.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
 
           {showWithdraw ? (
             <div className="mt-4">
