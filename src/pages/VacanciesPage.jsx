@@ -80,6 +80,25 @@ const VacanciesPage = () => {
   };
 
   // Filter jobs based on search term, filters, and remove jobs already applied to
+  const isCooldownBlocked = (jobId) => {
+    const status = applicationStatusByJobId[jobId];
+    if (status !== "withdrawn" && status !== "rejected") {
+      return false;
+    }
+
+    const eligibleAt = reapplyEligibleAtByJobId[jobId];
+    if (!eligibleAt) {
+      return false;
+    }
+
+    const eligibleDate = new Date(eligibleAt);
+    if (Number.isNaN(eligibleDate.getTime())) {
+      return false;
+    }
+
+    return eligibleDate.getTime() > Date.now();
+  };
+
   const filteredJobs = jobs
     .filter((job) => {
       const matchesSearch =
@@ -98,7 +117,8 @@ const VacanciesPage = () => {
 
       return matchesSearch && matchesType && matchesDepartment && matchesLocation && matchesInstitution;
     })
-    .filter((job) => !appliedJobIds.includes(job._id)); // Remove jobs already applied to
+    .filter((job) => !appliedJobIds.includes(job._id))
+    .filter((job) => !isCooldownBlocked(job._id)); // Hide jobs still in reapply cooldown
 
   // Show loading spinner while jobs are being fetched
   if (loading) {
@@ -228,8 +248,6 @@ const VacanciesPage = () => {
                   userId={user.id}
                   backendUrl={backendUrl}
                   authToken={user.token}
-                  applicationStatus={applicationStatusByJobId[job._id]}
-                  reapplyEligibleAt={reapplyEligibleAtByJobId[job._id]}
                   onApplySuccess={(jobId) => {
                     setAppliedJobIds((prev) => Array.from(new Set([...prev, jobId])));
                     setApplicationStatusByJobId((prev) => ({ ...prev, [jobId]: "active" }));
