@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Job = require("../models/Job");
 const Profile = require("../models/Profile");
+const { getPrivateResumeUrl, copyResumeForApplication } = require("../utils/r2");
 const { requireAuth, protect } = require("../middleware/authMiddleware");
 
 const buildProfileSnapshot = (profile) => ({
+  _id: profile?._id,
   name: profile?.name || "",
   title: profile?.title || "",
   email: profile?.email || "",
@@ -16,6 +18,12 @@ const buildProfileSnapshot = (profile) => ({
   education: Array.isArray(profile?.education) ? profile.education : [],
   publications: Array.isArray(profile?.publications) ? profile.publications : [],
   profileImage: profile?.profileImage || "",
+  resumeFile: profile?.resumeFile?.key ? {
+    key: profile.resumeFile.key,
+    filename: profile.resumeFile.filename || "resume.pdf",
+    size: profile.resumeFile.size,
+    contentType: profile.resumeFile.contentType,
+  } : null,
 });
 
 const addMonths = (date, months) => {
@@ -200,8 +208,20 @@ router.get("/:jobId/applicants/:applicantId/snapshot", protect(["hr"]), async (r
       return res.status(404).json({ message: "Application not found" });
     }
 
+    const resumeSnapshot = application.profileSnapshot?.resumeFile;
+    const resumeUrl = resumeSnapshot?.key
+      ? await getPrivateResumeUrl(resumeSnapshot.key, 300)
+      : null;
+    const profileSnapshot = application.profileSnapshot
+      ? { ...application.profileSnapshot, resumeFile: undefined }
+      : null;
+
     return res.status(200).json({
-      profileSnapshot: application.profileSnapshot || null,
+      profileSnapshot,
+      resume: resumeUrl ? {
+        url: resumeUrl,
+        filename: resumeSnapshot.filename || "resume.pdf",
+      } : null,
       profileUpdatedAt: application.profileUpdatedAt || null,
       snapshotCapturedAt: application.snapshotCapturedAt || null,
       appliedAt: application.appliedAt || null,
@@ -289,6 +309,13 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
     }
 
     const profileSnapshot = buildProfileSnapshot(profile);
+    if (profileSnapshot.resumeFile?.key) {
+      profileSnapshot.resumeFile.key = await copyResumeForApplication(
+        profileSnapshot.resumeFile.key,
+        req.user._id,
+        profileSnapshot.resumeFile.filename
+      );
+    }
     const profileUpdatedAt = profile.updatedAt || profile.createdAt || new Date();
     const snapshotCapturedAt = new Date();
 

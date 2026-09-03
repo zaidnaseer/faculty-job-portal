@@ -20,8 +20,11 @@ const HRProfile = () => {
     const [snapshotProfile, setSnapshotProfile] = useState(null);
     const [currentProfile, setCurrentProfile] = useState(null);
     const [snapshotMeta, setSnapshotMeta] = useState(null);
+    const [resumeUrl, setResumeUrl] = useState('');
+    const [resumeName, setResumeName] = useState('resume.pdf');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const displayProfile = viewMode === 'current' || !snapshotProfile ? currentProfile : snapshotProfile;
 
     useEffect(() => {
         let isMounted = true;
@@ -127,6 +130,84 @@ const HRProfile = () => {
         };
     }, [facultyId, jobId, user?.token, backendUrl]);
 
+    useEffect(() => {
+        let isMounted = true;
+
+            const fetchResume = async () => {
+                if (!backendUrl || !displayProfile?._id || !user?.token) {
+                if (isMounted) {
+                    setResumeUrl('');
+                    setResumeName('resume.pdf');
+                }
+                return;
+            }
+
+            try {
+                if (viewMode === 'snapshot' && snapshotMeta?.resume) {
+                    if (isMounted) {
+                        setResumeUrl(snapshotMeta.resume.url || '');
+                        setResumeName(snapshotMeta.resume.filename || 'resume.pdf');
+                    }
+                    return;
+                }
+
+                const response = await fetch(`${backendUrl}/api/faculty/resume/${displayProfile._id}`, {
+                    headers: {
+                        Authorization: `Bearer ${user.token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        if (isMounted) {
+                            setResumeUrl('');
+                            setResumeName('resume.pdf');
+                        }
+                        return;
+                    }
+                    throw new Error('Resume was not available for this applicant.');
+                }
+
+                const data = await response.json();
+                if (isMounted) {
+                    setResumeUrl(data.url || '');
+                    setResumeName(data.filename || displayProfile?.resumeFile?.filename || 'resume.pdf');
+                }
+            } catch (resumeError) {
+                if (isMounted) {
+                    setResumeUrl('');
+                    setResumeName('resume.pdf');
+                }
+            }
+        };
+
+        fetchResume();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [backendUrl, displayProfile?._id, snapshotMeta, user?.token, viewMode]);
+
+    const refreshResumeUrl = async () => {
+        if (!backendUrl || !displayProfile?._id || !user?.token) {
+            return null;
+        }
+
+        const response = await fetch(`${backendUrl}/api/faculty/resume/${displayProfile._id}`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+        });
+
+        if (!response.ok) {
+            throw new Error('Resume is no longer available. Please try again.');
+        }
+
+        const data = await response.json();
+        setResumeUrl(data.url || '');
+        setResumeName(data.filename || displayProfile?.resumeFile?.filename || 'resume.pdf');
+        return data;
+    };
+
     if (loading) {
         return <p className="text-center">Loading profile...</p>;
     }
@@ -152,8 +233,6 @@ const HRProfile = () => {
         currentProfile?.updatedAt &&
         new Date(currentProfile.updatedAt) > new Date(snapshotMeta.profileUpdatedAt)
     );
-
-    const displayProfile = viewMode === 'current' || !snapshotProfile ? currentProfile : snapshotProfile;
 
     const handleViewCurrent = () => {
         const nextParams = new URLSearchParams(location.search);
@@ -224,6 +303,9 @@ const HRProfile = () => {
                     pageTitle={viewMode === 'current' ? 'Current Profile' : 'Applicant Profile'}
                     showBackButton
                     onBack={() => jobId ? navigate(`/job-applicants/${jobId}`) : navigate(-1)}
+                    resumeUrl={resumeUrl}
+                    resumeName={resumeName}
+                    onRefreshResume={refreshResumeUrl}
                 />
             </div>
         </RippleBackground>

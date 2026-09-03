@@ -15,6 +15,9 @@ import {
     Trash2,
     Link as LinkIcon,
     Camera,
+    FileText,
+    Download,
+    Eye,
 } from "lucide-react";
 
 const EditableProfile = ({
@@ -27,6 +30,10 @@ const EditableProfile = ({
     pageTitle = "Profile",
     showBackButton = false,
     onBack,
+    resumeUrl = "",
+    resumeName = "resume.pdf",
+    onRefreshResume,
+    onDeleteResume,
 }) => {
     const [newSkill, setNewSkill] = useState("");
     const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
@@ -38,6 +45,10 @@ const EditableProfile = ({
         description: "",
     });
     const [newPublication, setNewPublication] = useState({ title: "", description: "", link: "" });
+    const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
+    const [activeResumeUrl, setActiveResumeUrl] = useState(resumeUrl);
+    const [activeResumeName, setActiveResumeName] = useState(resumeName);
+    const [isResumeActionLoading, setIsResumeActionLoading] = useState(false);
 
     const hasText = (value) => typeof value === "string" && value.trim().length > 0;
 
@@ -110,6 +121,65 @@ const EditableProfile = ({
 
         setNewPublication({ title: "", description: "", link: "" });
     };
+
+    const getFreshResume = async () => {
+        setIsResumeActionLoading(true);
+        try {
+            const freshResume = onRefreshResume ? await onRefreshResume() : null;
+            const nextUrl = freshResume?.url || resumeUrl;
+            const nextName = freshResume?.filename || resumeName;
+
+            if (!nextUrl) return null;
+
+            setActiveResumeUrl(nextUrl);
+            setActiveResumeName(nextName);
+            return { url: nextUrl, filename: nextName };
+        } finally {
+            setIsResumeActionLoading(false);
+        }
+    };
+
+    const handleOpenResume = async () => {
+        const freshResume = await getFreshResume();
+        if (freshResume) {
+            setIsResumePreviewOpen(true);
+        }
+    };
+
+    const handleDownloadResume = async () => {
+        const freshResume = await getFreshResume();
+        if (!freshResume) return;
+
+        const link = document.createElement("a");
+        link.href = freshResume.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.download = freshResume.filename || "resume.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
+    const handleDeleteResume = async () => {
+        if (!onDeleteResume || isResumeActionLoading) return;
+
+        setIsResumeActionLoading(true);
+        try {
+            await onDeleteResume();
+            setIsResumePreviewOpen(false);
+            setActiveResumeUrl("");
+            setActiveResumeName("resume.pdf");
+        } catch (error) {
+            alert(error.message || "Failed to delete resume.");
+        } finally {
+            setIsResumeActionLoading(false);
+        }
+    };
+
+    const isPdfResume =
+        profile?.resumeFile?.contentType === "application/pdf" ||
+        activeResumeName.toLowerCase().endsWith(".pdf") ||
+        activeResumeUrl.toLowerCase().includes(".pdf");
 
     return (
         <div className="min-h-screen">
@@ -305,6 +375,100 @@ const EditableProfile = ({
                                 </p>
                             )}
                         </div>
+
+                        {resumeUrl && (
+                            <div className="bg-white p-6 rounded-xl shadow">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
+                                            <FileText size={18} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-gray-500">Resume</p>
+                                            <p className="truncate text-base font-semibold text-gray-800">{resumeName}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenResume}
+                                            disabled={isResumeActionLoading}
+                                            className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700"
+                                        >
+                                            <Eye size={16} /> {isResumeActionLoading ? "Loading..." : "Preview"}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleDownloadResume}
+                                            disabled={isResumeActionLoading}
+                                            className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm hover:bg-gray-300"
+                                        >
+                                            <Download size={16} /> Download
+                                        </button>
+                                        {onDeleteResume && (
+                                            <button
+                                                type="button"
+                                                onClick={handleDeleteResume}
+                                                disabled={isResumeActionLoading}
+                                                className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-3 py-2 rounded-md text-sm hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Trash2 size={16} /> Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {isResumePreviewOpen && (
+                                    <div className="fixed inset-x-0 bottom-0 top-16 z-[60] flex items-center justify-center bg-black/80 p-4 sm:p-6">
+                                        <div className="flex h-full max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+                                            <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+                                                <div className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{activeResumeName}</div>
+                                                <div className="ml-4 flex items-center gap-2">
+                                                    <a
+                                                        href={activeResumeUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                                                    >
+                                                        Open in new tab
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsResumePreviewOpen(false)}
+                                                        className="rounded-md bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-300"
+                                                    >
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {isPdfResume ? (
+                                                <iframe
+                                                    title="Resume preview overlay"
+                                                    src={activeResumeUrl}
+                                                    className="h-full w-full bg-white"
+                                                />
+                                            ) : (
+                                                <div className="flex h-full items-center justify-center bg-gray-50 p-6">
+                                                    <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center shadow-sm">
+                                                        <p className="mb-3 text-gray-600">This file type is best viewed in a new tab.</p>
+                                                        <a
+                                                            href={activeResumeUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                                        >
+                                                            <Eye size={16} /> Open Resume
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="bg-white p-6 rounded-xl shadow">
                             <h3 className="flex items-center gap-2 text-lg font-bold mb-4">

@@ -27,6 +27,8 @@ const ApplicantProfilePage = () => {
 
   const [profile, setProfile] = useState(null);
   const [originalProfile, setOriginalProfile] = useState(null);
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeName, setResumeName] = useState("resume.pdf");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -116,6 +118,99 @@ const ApplicantProfilePage = () => {
       isMounted = false;
     };
   }, [backendUrl, facultyId, isHrFlow, navigate, user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchResume = async () => {
+      if (!backendUrl || !profile?._id) {
+        if (isMounted) {
+          setResumeUrl("");
+          setResumeName("resume.pdf");
+        }
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem("token") || user?.token;
+        const response = await fetch(`${backendUrl}/api/faculty/resume/${profile._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            if (isMounted) {
+              setResumeUrl("");
+              setResumeName("resume.pdf");
+            }
+            return;
+          }
+          throw new Error("Resume not available.");
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setResumeUrl(data.url || "");
+          setResumeName(data.filename || profile?.resumeFile?.filename || "resume.pdf");
+        }
+      } catch (fetchError) {
+        if (isMounted) {
+          setResumeUrl("");
+          setResumeName("resume.pdf");
+        }
+      }
+    };
+
+    fetchResume();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [backendUrl, profile?._id, user?.token]);
+
+  const refreshResumeUrl = async () => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      return null;
+    }
+
+    const response = await fetch(`${backendUrl}/api/faculty/resume/${profile._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      throw new Error("Resume is no longer available. Please try again.");
+    }
+
+    const data = await response.json();
+    setResumeUrl(data.url || "");
+    setResumeName(data.filename || profile?.resumeFile?.filename || "resume.pdf");
+    return data;
+  };
+
+  const deleteResume = async () => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const response = await fetch(`${backendUrl}/api/faculty/resume/${profile._id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || "Failed to delete resume.");
+    }
+
+    setResumeUrl("");
+    setResumeName("resume.pdf");
+    setProfile((prev) => ({ ...prev, resumeFile: undefined }));
+  };
 
   const handleCancel = () => {
     if (originalProfile) {
@@ -216,6 +311,10 @@ const ApplicantProfilePage = () => {
           pageTitle={isHrFlow ? "Applicant Profile" : "About"}
           showBackButton={isHrFlow}
           onBack={() => navigate(-1)}
+          resumeUrl={resumeUrl}
+          resumeName={resumeName}
+          onRefreshResume={refreshResumeUrl}
+          onDeleteResume={deleteResume}
         />
       </div>
     </RippleBackground>

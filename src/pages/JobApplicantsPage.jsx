@@ -110,7 +110,7 @@ const JobApplicantsPage = () => {
             <div className="container py-8">
                 <button
                     className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate("/hr")}
                 >
                     ← Back
                 </button>

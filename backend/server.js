@@ -7,6 +7,7 @@ const jobRoutes = require("./routes/jobRoutes");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
 const profileRoutes = require("./routes/profileRoutes");
+const previewRoutes = require("./routes/previewRoutes");
 app.use(express.json());
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "")
   .split(",")
@@ -41,6 +42,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/preview", previewRoutes);
 const PORT = process.env.PORT || 5000;
 
 mongoose

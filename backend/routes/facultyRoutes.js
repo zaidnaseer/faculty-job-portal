@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const Profile = require('../models/Profile');
+const { uploadResumeToR2, getPrivateResumeUrl, deleteResumeFromR2 } = require('../utils/r2');
 const { protect, requireAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -78,6 +79,54 @@ router.put('/update/:id', protect(['faculty']), async (req, res) => {
 });
 
 // ✅ Create new profile (separate route)
+router.get('/resume/:profileId', protect(['faculty', 'hr']), async (req, res) => {
+  try {
+    const profile = await Profile.findById(req.params.profileId);
+    if (!profile || !profile.resumeFile || !profile.resumeFile.key) {
+      return res.status(404).json({ message: 'Resume not found' });
+    }
+
+    const isOwner = profile.user.toString() === req.user.id.toString();
+    const isHR = req.user.role === 'hr';
+
+    if (!isOwner && !isHR) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const signedUrl = await getPrivateResumeUrl(profile.resumeFile.key, 300);
+    if (!signedUrl) {
+      return res.status(500).json({ message: 'Resume URL could not be generated' });
+    }
+
+    res.json({ url: signedUrl, filename: profile.resumeFile.filename || 'resume.pdf' });
+  } catch (error) {
+    console.error('Error generating signed resume URL:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.delete('/resume/:profileId', protect(['faculty']), async (req, res) => {
+  try {
+    const profile = await Profile.findById(req.params.profileId);
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    if (profile.user.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await deleteResumeFromR2(profile.resumeFile?.key);
+    profile.resumeFile = undefined;
+    await profile.save();
+
+    res.json({ message: 'Resume deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting resume:', error);
+    res.status(500).json({ message: 'Failed to delete resume' });
+  }
+});
+
 router.post('/add', protect(['faculty']), upload.single('resume'), async (req, res) => {
   try {
     const { name, email, phone, skills, summary, experience, education, publications } = req.body;
@@ -108,13 +157,20 @@ router.post('/add', protect(['faculty']), upload.single('resume'), async (req, r
       publications: parsedPublications
     });
 
-    // ✅ Add resume file if uploaded
+    // ✅ Upload resume to Cloudflare R2 and store the object URL
     if (req.file) {
+      const uploadedResume = await uploadResumeToR2(req.file, req.user.id);
+
+      if (!uploadedResume) {
+        return res.status(400).json({ message: 'Cloudflare R2 is not configured. Please add R2 credentials first.' });
+      }
+
       newProfile.resumeFile = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
-        filename: req.file.originalname,
-        size: req.file.size
+        url: uploadedResume.url,
+        key: uploadedResume.key,
+        filename: uploadedResume.filename,
+        size: uploadedResume.size,
+        contentType: uploadedResume.contentType,
       };
     }
 

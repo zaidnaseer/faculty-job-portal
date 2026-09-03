@@ -31,10 +31,12 @@ const profileSchema = new mongoose.Schema({
     link: String,
   }],
   resumeFile: {
-    data: Buffer,
-    contentType: String,
+    url: String,
+    key: String,
     filename: String,
-    size: Number
+    size: Number,
+    contentType: String,
+    data: Buffer,
   }
 }, { timestamps: true });
 

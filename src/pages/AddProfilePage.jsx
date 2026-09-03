@@ -1,6 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RippleBackground from "../components/RippleBackground";
+
+const WORD_FILE_TYPES = [
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+const isWordFile = (file) => {
+  if (!file) return false;
+  const name = file.name?.toLowerCase() || "";
+  const mime = file.type?.toLowerCase() || "";
+  return name.endsWith(".doc") || name.endsWith(".docx") || WORD_FILE_TYPES.includes(mime);
+};
+
+const initialPreviewState = {
+  status: "idle",
+  error: "",
+  pdfUrl: "",
+  fileName: "",
+};
 
 const AddProfilePage = () => {
   const navigate = useNavigate();
@@ -24,31 +43,115 @@ const AddProfilePage = () => {
   const [showPublicationForm, setShowPublicationForm] = useState(false);
   const [showEducationForm, setShowEducationForm] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState("");
+  const [resumeDownloadUrl, setResumeDownloadUrl] = useState("");
+  const [previewState, setPreviewState] = useState(initialPreviewState);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fileError, setFileError] = useState("");
 
-  const handleResumeUpload = (e) => {
+  useEffect(() => {
+    return () => {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+      if (resumeDownloadUrl) URL.revokeObjectURL(resumeDownloadUrl);
+    };
+  }, [resumePreviewUrl, resumeDownloadUrl]);
+
+  const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
     setFileError("");
 
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf', 'text/rtf'];
-      if (!allowedTypes.includes(file.type)) {
-        setFileError('Invalid file type. Only PDF, Word (.doc, .docx), TXT, and RTF documents are allowed.');
-        e.target.value = '';
-        return;
-      }
+    if (!file) return;
 
-      // Validate file size (5MB = 5 * 1024 * 1024 bytes)
-      const maxSize = 5 * 1024 * 1024;
-      if (file.size > maxSize) {
-        setFileError('File size exceeds 5MB limit. Please choose a smaller file.');
-        e.target.value = '';
-        return;
-      }
-
-      setResumeFile(file);
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf', 'text/rtf'];
+    if (!allowedTypes.includes(file.type) && !file.name?.match(/\.(pdf|doc|docx|txt|rtf)$/i)) {
+      setFileError('Invalid file type. Only PDF, Word (.doc, .docx), TXT, and RTF documents are allowed.');
+      e.target.value = '';
+      return;
     }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setFileError('File size exceeds 5MB limit. Please choose a smaller file.');
+      e.target.value = '';
+      return;
+    }
+
+    if (resumePreviewUrl) {
+      URL.revokeObjectURL(resumePreviewUrl);
+    }
+    if (resumeDownloadUrl) {
+      URL.revokeObjectURL(resumeDownloadUrl);
+    }
+
+    const nextDownloadUrl = URL.createObjectURL(file);
+    setResumeFile(file);
+    setResumePreviewUrl("");
+    setResumeDownloadUrl(nextDownloadUrl);
+    setIsPreviewOpen(false);
+    setPreviewState({ status: "idle", error: "", pdfUrl: "", fileName: file.name });
+
+    if (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf')) {
+      const nextPreviewUrl = URL.createObjectURL(file);
+      setResumePreviewUrl(nextPreviewUrl);
+      setPreviewState({ status: 'ready', error: '', pdfUrl: nextPreviewUrl, fileName: file.name });
+      return;
+    }
+
+    if (!isWordFile(file)) {
+      setPreviewState({ status: 'error', error: 'Only .doc and .docx files can be previewed in the browser.', pdfUrl: '', fileName: file.name });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setPreviewState({ status: 'uploading', error: '', pdfUrl: '', fileName: file.name });
+
+    try {
+      const response = await fetch(`${backendUrl}/api/preview`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ message: 'Unable to convert the document for preview.' }));
+        throw new Error(data.message || 'Unable to convert the document for preview.');
+      }
+
+      if (!contentType.includes('application/pdf')) {
+        throw new Error('The server did not return a valid PDF preview.');
+      }
+
+      const pdfBlob = await response.blob();
+      const nextPreviewUrl = URL.createObjectURL(pdfBlob);
+      setResumePreviewUrl(nextPreviewUrl);
+      setPreviewState({ status: 'ready', error: '', pdfUrl: nextPreviewUrl, fileName: file.name });
+    } catch (error) {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+      setResumePreviewUrl("");
+      setPreviewState({
+        status: 'error',
+        error: error.message || 'The document could not be converted for preview.',
+        pdfUrl: '',
+        fileName: file.name,
+      });
+    }
+  };
+
+  const clearResumeSelection = () => {
+    if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+    if (resumeDownloadUrl) URL.revokeObjectURL(resumeDownloadUrl);
+
+    setResumeFile(null);
+    setResumePreviewUrl("");
+    setResumeDownloadUrl("");
+    setPreviewState(initialPreviewState);
+    setIsPreviewOpen(false);
+    setFileError("");
+
+    const fileInput = document.querySelector('#resume-upload-input');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleChange = (e) => {
@@ -206,10 +309,89 @@ const AddProfilePage = () => {
                 <h3 className="text-xl font-bold text-white mb-2">Upload Resume</h3>
                 <p className="text-blue-100 text-sm mb-2">Upload your resume to include with your profile</p>
                 <p className="text-blue-200 text-xs mb-4">Accepted formats: PDF, DOC, DOCX, TXT, RTF | Max size: 5MB</p>
-                {resumeFile && <span className="inline-block mb-4 px-3 py-1 bg-green-500 text-white rounded-full text-xs">✓ {resumeFile.name} ({(resumeFile.size / 1024).toFixed(1)} KB)</span>}
+                {resumeFile && (
+                  <div className="mb-4 rounded-xl border border-white/40 bg-white/10 p-3 text-left text-white">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{resumeFile.name}</p>
+                        <p className="text-xs text-blue-100">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsPreviewOpen(true)}
+                          disabled={previewState.status === 'uploading' || !resumePreviewUrl}
+                          className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Preview
+                        </button>
+                        <a
+                          href={resumeDownloadUrl || '#'}
+                          download={resumeFile.name}
+                          className="rounded-md bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-50"
+                        >
+                          Download
+                        </a>
+                        <button
+                          type="button"
+                          onClick={clearResumeSelection}
+                          className="rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+
+                    {previewState.status === 'uploading' && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-blue-100">
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Converting document to PDF preview...
+                      </div>
+                    )}
+                    {previewState.status === 'error' && (
+                      <div className="mt-3 rounded-lg border border-red-200 bg-red-500/20 px-3 py-2 text-xs text-red-100">
+                        {previewState.error}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {fileError && <p className="text-red-200 bg-red-500/30 px-3 py-2 rounded-lg text-xs mb-4">{fileError}</p>}
+
+                {isPreviewOpen && resumePreviewUrl && (
+                  <div className="fixed inset-x-0 bottom-0 top-16 z-[60] flex items-center justify-center bg-black/80 p-4 sm:p-6">
+                    <div className="flex h-full max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <div className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{resumeFile?.name || 'Resume preview'}</div>
+                        <div className="ml-4 flex items-center gap-2">
+                          <a
+                            href={resumePreviewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                          >
+                            Open in new tab
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setIsPreviewOpen(false)}
+                            className="rounded-md bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-300"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                      <iframe
+                        title="Resume preview overlay"
+                        src={resumePreviewUrl}
+                        className="h-full w-full bg-white"
+                      />
+                    </div>
+                  </div>
+                )}
                 <label className="relative inline-flex items-center cursor-pointer group">
                   <input
+                    id="resume-upload-input"
                     type="file"
                     accept=".pdf,.doc,.docx,.txt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/rtf,text/rtf"
                     onChange={handleResumeUpload}
