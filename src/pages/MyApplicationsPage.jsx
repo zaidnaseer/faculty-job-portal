@@ -95,6 +95,9 @@ const MyApplicationsPage = () => {
     );
   };
 
+  const activeJobs = appliedJobs.filter((job) => job.applicationStatus === "active");
+  const archivedJobs = appliedJobs.filter((job) => job.applicationStatus !== "active");
+
   if (loading) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-screen">
@@ -115,22 +118,32 @@ const MyApplicationsPage = () => {
           <button
             type="button"
             onClick={() => setActiveTab("active")}
-            className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "active"
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "active"
               ? "bg-white text-gray-900 shadow"
               : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            Active
+            <span>Active</span>
+            {activeJobs.length > 0 && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-700">
+                {activeJobs.length}
+              </span>
+            )}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("archived")}
-            className={`px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "archived"
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full transition ${activeTab === "archived"
               ? "bg-white text-gray-900 shadow"
               : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            Archived
+            <span>Archived</span>
+            {archivedJobs.length > 0 && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-700">
+                {archivedJobs.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -142,15 +155,13 @@ const MyApplicationsPage = () => {
 
         {activeTab === "active" && (
           <>
-            {appliedJobs.length > 0 && appliedJobs.filter((job) => job.applicationStatus === "active").length === 0 ? (
+            {appliedJobs.length > 0 && activeJobs.length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-600">No active applications right now.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {appliedJobs
-                  .filter((job) => job.applicationStatus === "active")
-                  .map((job) => (
+                {activeJobs.map((job) => (
                     <JobCard
                       key={job._id}
                       job={job}
@@ -173,15 +184,13 @@ const MyApplicationsPage = () => {
 
         {activeTab === "archived" && (
           <>
-            {appliedJobs.length > 0 && appliedJobs.filter((job) => job.applicationStatus !== "active").length === 0 ? (
+            {appliedJobs.length > 0 && archivedJobs.length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-600">No archived applications yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {appliedJobs
-                  .filter((job) => job.applicationStatus !== "active")
-                  .map((job) => (
+                {archivedJobs.map((job) => (
                     <JobCard
                       key={job._id}
                       job={job}
