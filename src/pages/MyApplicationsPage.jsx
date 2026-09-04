@@ -142,7 +142,7 @@ const MyApplicationsPage = () => {
 
         {activeTab === "active" && (
           <>
-            {appliedJobs.filter((job) => job.applicationStatus === "active").length === 0 ? (
+            {appliedJobs.length > 0 && appliedJobs.filter((job) => job.applicationStatus === "active").length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-600">No active applications right now.</p>
               </div>
@@ -173,7 +173,7 @@ const MyApplicationsPage = () => {
 
         {activeTab === "archived" && (
           <>
-            {appliedJobs.filter((job) => job.applicationStatus !== "active").length === 0 ? (
+            {appliedJobs.length > 0 && appliedJobs.filter((job) => job.applicationStatus !== "active").length === 0 ? (
               <div className="text-center">
                 <p className="text-gray-600">No archived applications yet.</p>
               </div>
