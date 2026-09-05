@@ -187,9 +187,9 @@ const EditableProfile = ({
                 {showBackButton ? (
                     <button
                         onClick={onBack}
-                        className="bg-gray-200 hover:bg-gray-300 text-white py-2 px-4 rounded-md shadow"
+                        className="btn-back"
                     >
-                        Go Back
+                        ← Back
                     </button>
                 ) : (
                     <div></div>

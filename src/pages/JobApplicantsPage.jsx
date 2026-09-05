@@ -109,7 +109,7 @@ const JobApplicantsPage = () => {
         <RippleBackground>
             <div className="container py-8">
                 <button
-                    className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+                    className="btn-back mb-6"
                     onClick={() => navigate("/hr")}
                 >
                     ← Back
@@ -121,8 +121,8 @@ const JobApplicantsPage = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-full text-sm font-semibold transition ${activeTab === tab
-                                    ? "bg-blue-600 text-white shadow"
-                                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                                ? "bg-blue-600 text-white shadow"
+                                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                                 }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}

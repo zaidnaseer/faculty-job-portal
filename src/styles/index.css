@@ -24,6 +24,10 @@ body {
     @apply border border-primary text-primary hover:bg-primary hover:text-white;
   }
 
+  .btn-back {
+    @apply inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-primary hover:bg-blue-50 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
   .card {
     @apply bg-white rounded-lg shadow-md p-6;
   }

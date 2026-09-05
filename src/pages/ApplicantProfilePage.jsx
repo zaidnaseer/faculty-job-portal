@@ -278,9 +278,9 @@ const ApplicantProfilePage = () => {
         <div className="card p-6 max-w-3xl mx-auto m-2">
           <button
             onClick={() => navigate(-1)}
-            className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
+            className="btn-back"
           >
-            Go Back
+            ← Back
           </button>
           <p className="mt-4 text-red-600">{error}</p>
         </div>

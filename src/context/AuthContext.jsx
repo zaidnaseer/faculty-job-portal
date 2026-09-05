@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
 
@@ -39,11 +39,11 @@ export const AuthProvider = ({ children }) => {
           };
 
           // ✅ Store user data in localStorage
-          setUser({...userData});
+          setUser({ ...userData });
           console.log("User from auth:", user)
           localStorage.setItem("user", JSON.stringify(userData));
         } else {
-            console.log("Failed to fetch user data");
+          console.log("Failed to fetch user data");
           throw new Error("Failed to fetch user");
         }
       } catch (error) {
