@@ -17,6 +17,7 @@ const Login = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeAuthMethod, setActiveAuthMethod] = useState(null);
 
   const completeAppLogin = useCallback(async (firebaseUser) => {
     const idToken = await firebaseUser.getIdToken();
@@ -52,6 +53,7 @@ const Login = () => {
       }
 
       setIsLoading(true);
+      setActiveAuthMethod("google");
       try {
         const firebaseCredential = await getRedirectResult(auth);
         if (!firebaseCredential) {
@@ -65,6 +67,7 @@ const Login = () => {
         console.error("Google redirect sign-in error:", err);
       } finally {
         setIsLoading(false);
+        setActiveAuthMethod(null);
       }
     };
 
@@ -81,6 +84,7 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     setError("");
     setIsLoading(true);
+    setActiveAuthMethod("google");
 
     try {
       const googleProvider = new GoogleAuthProvider();
@@ -113,6 +117,7 @@ const Login = () => {
       }
     } finally {
       setIsLoading(false);
+      setActiveAuthMethod(null);
     }
   };
 
@@ -120,6 +125,7 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+    setActiveAuthMethod("email");
 
     try {
       const { email, password } = formData;
@@ -130,6 +136,7 @@ const Login = () => {
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);
+      setActiveAuthMethod(null);
     }
   };
 
@@ -173,7 +180,7 @@ const Login = () => {
                 className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
               >
                 <FaGoogle className="w-5 h-5" />
-                {isLoading ? "Redirecting to Google..." : "Sign in with Google"}
+                {isLoading && activeAuthMethod === "google" ? "Redirecting to Google..." : "Sign in with Google"}
               </button>
             </div>
 
@@ -260,7 +267,7 @@ const Login = () => {
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <FaSignInAlt className={`h-5 w-5 ${isLoading ? "text-blue-300" : "text-blue-500"} group-hover:text-blue-400`} />
                 </span>
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading && activeAuthMethod === "email" ? "Signing in..." : "Sign in"}
               </button>
             </div>
           </motion.form>
