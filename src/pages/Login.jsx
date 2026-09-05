@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaSignInAlt, FaGoogle } from "react-icons/fa";
@@ -10,7 +10,7 @@ import RippleBackground from "../components/RippleBackground";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, user, isAuthLoading } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -139,6 +139,19 @@ const Login = () => {
       setActiveAuthMethod(null);
     }
   };
+
+  // Keep authenticated users from returning to the login form via back or stale links.
+  if (isAuthLoading) {
+    return null;
+  }
+
+  if (user?.role === "faculty") {
+    return <Navigate to="/profile" replace />;
+  }
+
+  if (user?.role === "hr") {
+    return <Navigate to="/hr" replace />;
+  }
 
   return (
     <RippleBackground>

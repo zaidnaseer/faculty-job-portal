@@ -5,15 +5,16 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-      
-        
         const token = localStorage.getItem("token");
-        console.log(token)
-        if (!token) return;
+        if (!token) {
+          setUser(null);
+          return;
+        }
 
         // ✅ Decode token to extract user data
         const decoded = jwtDecode(token);
@@ -48,6 +49,8 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("Failed to fetch user:", error);
         logout(); // Logout on token failure
+      } finally {
+        setIsAuthLoading(false);
       }
     };
 
@@ -77,7 +80,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, isAuthLoading }}>
       {children}
     </AuthContext.Provider>
   );
