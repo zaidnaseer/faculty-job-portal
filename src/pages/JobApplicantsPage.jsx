@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import RippleBackground from "../components/RippleBackground";
@@ -17,9 +17,13 @@ const JobApplicantsPage = () => {
     const [rejectingId, setRejectingId] = useState(null);
     const [activeTab, setActiveTab] = useState("active");
     const [retentionMonths, setRetentionMonths] = useState(12);
+    const hasFetchedApplicants = useRef(false);
     const navigate = useNavigate();
 
     useEffect(() => {
+        if (hasFetchedApplicants.current) return;
+        hasFetchedApplicants.current = true;
+
         const fetchApplicants = async () => {
             try {
                 const response = await fetch(`${backendUrl}/api/jobs/${jobId}/applicants`, {
@@ -44,6 +48,11 @@ const JobApplicantsPage = () => {
                     setRetentionMonths(data.retentionMonths);
                 }
                 setJobTitle(data.jobTitle || "");
+
+                fetch(`${backendUrl}/api/jobs/${jobId}/applicants/visit`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${user.token}` },
+                }).catch((error) => console.error("Failed to record applicant list visit:", error));
             } catch (error) {
                 console.error(error);
             } finally {
@@ -98,6 +107,9 @@ const JobApplicantsPage = () => {
     };
 
     const currentApplicants = applicantsByStatus[activeTab] || [];
+    const sortedApplicants = [...currentApplicants].sort(
+        (left, right) => Number(right.isNew) - Number(left.isNew)
+    );
     const emptyMessage =
         activeTab === "active"
             ? "No active applicants for this job yet."
@@ -143,13 +155,20 @@ const JobApplicantsPage = () => {
                     <p className="text-gray-400">{emptyMessage}</p>
                 ) : (
                     <ul className="divide-y divide-gray-100 bg-white rounded-xl shadow p-6">
-                        {currentApplicants.map((faculty) => (
+                        {sortedApplicants.map((faculty) => (
                             <li key={faculty._id} className="flex items-center py-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold mr-4">
+                                <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
                                     {faculty.name?.[0]?.toUpperCase() || "?"}
                                 </div>
                                 <div className="flex-1">
-                                    <div className="font-medium text-gray-800">{faculty.name}</div>
+                                    <div className="flex items-center gap-2 font-medium text-gray-800">
+                                        {faculty.name}
+                                        {faculty.isNew && (
+                                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">
+                                                New
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="text-gray-500 text-xs">{faculty.email}</div>
                                 </div>
                                 <button

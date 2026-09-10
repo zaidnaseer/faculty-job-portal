@@ -115,9 +115,16 @@ router.get('/my-applications', protect(["faculty"]), async (req, res) => {
 router.get("/my-jobs", protect(['hr']), async (req, res) => {
   console.log("Fetching HR jobs for user:");
   try {
+    const visitsByJobId = new Map(
+      (req.user.applicantListVisits || []).map((visit) => [visit.job.toString(), visit.visitedAt])
+    );
     const jobs = await Job.find({ postedBy: req.user._id }).populate("applications.user", "name email"); // Populate faculty details
     for (const job of jobs) {
       await purgeExpiredApplications(job);
+      const lastVisitedAt = visitsByJobId.get(job._id.toString());
+      job.set("newApplicants", job.applications.filter(
+        (entry) => entry.status === "active" && entry.appliedAt && (!lastVisitedAt || entry.appliedAt > lastVisitedAt)
+      ).length, { strict: false });
     }
     console.log(Array.isArray(jobs));
     res.json(jobs);
@@ -167,6 +174,9 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
 
     await purgeExpiredApplications(job);
 
+    const lastVisitedAt = (req.user.applicantListVisits || []).find(
+      (visit) => visit.job.toString() === job._id.toString()
+    )?.visitedAt;
     const applicantsByStatus = {
       active: [],
       rejected: [],
@@ -176,18 +186,25 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
     job.applications.forEach((entry) => {
       if (!entry?.user) return;
 
+      const applicant = entry.user.toObject ? entry.user.toObject() : entry.user;
+      applicant.isNew = Boolean(
+        entry.status === "active" &&
+        entry.appliedAt &&
+        (!lastVisitedAt || entry.appliedAt > lastVisitedAt)
+      );
+
       if (entry.status === "active") {
-        applicantsByStatus.active.push(entry.user);
+        applicantsByStatus.active.push(applicant);
         return;
       }
 
       if (entry.status === "rejected") {
-        applicantsByStatus.rejected.push(entry.user);
+        applicantsByStatus.rejected.push(applicant);
         return;
       }
 
       if (entry.status === "withdrawn") {
-        applicantsByStatus.withdrawn.push(entry.user);
+        applicantsByStatus.withdrawn.push(applicant);
       }
     });
 
@@ -198,6 +215,32 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching applicants:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.post("/:jobId/applicants/visit", protect(["hr"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.jobId).select("_id postedBy");
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this application list" });
+    }
+
+    const visitedAt = new Date();
+    const existingVisit = (req.user.applicantListVisits || []).find(
+      (visit) => visit.job.toString() === job._id.toString()
+    );
+    if (existingVisit) {
+      existingVisit.visitedAt = visitedAt;
+    } else {
+      req.user.applicantListVisits.push({ job: job._id, visitedAt });
+    }
+    await req.user.save();
+
+    res.status(204).end();
+  } catch (error) {
+    console.error("Error recording applicant list visit:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
