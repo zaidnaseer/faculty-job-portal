@@ -198,6 +198,7 @@ const MyApplicationsPage = () => {
                       backendUrl={backendUrl}
                       authToken={user.token}
                       showApplyAction={true}
+                      disableApplyAction={job.status !== "Active"}
                       applicationStatus={job.applicationStatus}
                       reapplyEligibleAt={job.reapplyEligibleAt}
                       onApplySuccess={handleApplySuccess}

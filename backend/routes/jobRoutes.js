@@ -35,6 +35,16 @@ const addMonths = (date, months) => {
 
 const APPLICATION_RETENTION_MONTHS = 12;
 
+const hasCompletePosting = (job) => (
+  job.title?.trim() &&
+  job.department?.trim() &&
+  job.type &&
+  job.location?.trim() &&
+  job.description?.trim() &&
+  Array.isArray(job.skills) &&
+  job.skills.length > 0
+);
+
 const getRetentionCutoff = () => addMonths(new Date(), -APPLICATION_RETENTION_MONTHS);
 
 const purgeExpiredApplications = async (job) => {
@@ -122,7 +132,7 @@ router.get("/my-jobs", protect(['hr']), async (req, res) => {
 router.get("/", async (req, res) => {
 
   try {
-    const jobs = await Job.find().populate("postedBy", "name email").populate("applications.user", "name email");
+    const jobs = await Job.find({ $or: [{ status: "Active" }, { status: { $exists: false } }] }).populate("postedBy", "name email").populate("applications.user", "name email");
     res.status(200).json(jobs);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch jobs" });
@@ -136,7 +146,9 @@ router.get("/JOBS/:id", async (req, res) => {
       .populate("postedBy", "name email")
       .populate("applications.user", "name email");
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!job || (job.status && job.status !== "Active")) {
+      return res.status(404).json({ message: "Job not found" });
+    }
 
     res.status(200).json(job);
   } catch (error) {
@@ -149,6 +161,9 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
   try {
     const job = await Job.findById(req.params.jobId).populate("applications.user", "name email");
     if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this application list" });
+    }
 
     await purgeExpiredApplications(job);
 
@@ -235,8 +250,9 @@ router.get("/:jobId/applicants/:applicantId/snapshot", protect(["hr"]), async (r
 // ✅ Create a new job (by HR)
 router.post("/", protect(["hr"]), async (req, res) => {
   try {
-    const { title, department, type, location, description, skills, reapplyCooldownMonths } = req.body;
+    const { title, department, type, location, description, skills, reapplyCooldownMonths, status } = req.body;
 
+    const requestedStatus = ["Active", "Draft"].includes(status) ? status : "Active";
     const newJob = new Job({
       institution: req.user.university,
       title,
@@ -246,13 +262,92 @@ router.post("/", protect(["hr"]), async (req, res) => {
       description,
       skills,
       reapplyCooldownMonths: Number(reapplyCooldownMonths) || 0,
+      status: requestedStatus,
       postedBy: req.user._id, // Logged-in HR ID from JWT
     });
+
+    if (requestedStatus === "Active" && !hasCompletePosting(newJob)) {
+      return res.status(400).json({ message: "Complete all job details before publishing" });
+    }
 
     await newJob.save();
     res.status(201).json(newJob);
   } catch (error) {
     res.status(500).json({ error: "Failed to create job" });
+  }
+});
+
+// Update a job posting (by its owner)
+router.patch("/:id", protect(["hr"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this job" });
+    }
+
+    if (!job.status) job.status = "Active";
+
+    const allowedFields = ["title", "department", "type", "location", "description", "skills", "reapplyCooldownMonths", "status"];
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) job[field] = field === "reapplyCooldownMonths"
+        ? Number(req.body[field]) || 0
+        : req.body[field];
+    });
+
+    if (!["Active", "Draft"].includes(job.status)) {
+      return res.status(400).json({ message: "This job cannot be published" });
+    }
+    if (job.status === "Active" && !hasCompletePosting(job)) {
+      return res.status(400).json({ message: "Complete all job details before publishing" });
+    }
+
+    await job.save();
+    res.status(200).json(job);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update job" });
+  }
+});
+
+// Close or reopen a job posting (by its owner)
+router.patch("/:id/status", protect(["hr"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this job" });
+    }
+    if (!["Active", "Closed"].includes(req.body.status)) {
+      return res.status(400).json({ message: "Status must be Active or Closed" });
+    }
+
+    job.status = req.body.status;
+    await job.save();
+    res.status(200).json(job);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update job status" });
+  }
+});
+
+// Permanently delete a stopped job and its embedded application data.
+router.delete("/:id/permanent", protect(["hr"]), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to permanently delete this job" });
+    }
+    if (job.status !== "Closed" && job.status !== "Deleted") {
+      return res.status(400).json({ message: "Only stopped jobs can be permanently deleted" });
+    }
+
+    await job.deleteOne();
+    res.status(200).json({ message: "Job permanently deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to permanently delete job" });
   }
 });
 
@@ -299,7 +394,7 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!job || (job.status && job.status !== "Active")) return res.status(404).json({ message: "Job not found" });
 
     await purgeExpiredApplications(job);
 
@@ -413,8 +508,9 @@ router.delete("/:id", protect(["hr"]), async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this job" });
     }
 
-    await job.deleteOne();
-    res.status(200).json({ message: "Job deleted successfully" });
+    job.status = "Deleted";
+    await job.save();
+    res.status(200).json({ message: "Job deleted successfully", job });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete job" });
   }

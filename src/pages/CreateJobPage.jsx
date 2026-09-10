@@ -1,18 +1,22 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import RippleBackground from "../components/RippleBackground";
 
 const CreateJobPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const sourceJob = location.state?.job;
+  const mode = location.state?.mode || "create";
   const [formData, setFormData] = useState({
-    title: "",
-    department: "",
-    type: "Full-time",
-    location: "",
-    description: "",
-    skills: [],
-    reapplyCooldownMonths: "1",
+    title: sourceJob?.title || "",
+    department: sourceJob?.department || "",
+    type: sourceJob?.type || "Full-time",
+    location: sourceJob?.location || "",
+    description: sourceJob?.description || "",
+    skills: sourceJob?.skills || [],
+    reapplyCooldownMonths: String(sourceJob?.reapplyCooldownMonths || "1"),
   });
   const [skillInput, setSkillInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +31,7 @@ const CreateJobPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, requestedStatus = "Active") => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -37,8 +41,10 @@ const CreateJobPage = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Authorization token not found");
 
-      const response = await fetch(`${backendUrl}/api/jobs`, {
-        method: "POST",
+      const isEditing = mode === "edit" && sourceJob?._id;
+      const isPublishingDraft = isEditing && sourceJob.status === "Draft" && requestedStatus === "Active";
+      const response = await fetch(isEditing ? `${backendUrl}/api/jobs/${sourceJob._id}` : `${backendUrl}/api/jobs`, {
+        method: isEditing ? "PATCH" : "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -47,6 +53,7 @@ const CreateJobPage = () => {
           ...formData,
           skills: formData.skills,
           reapplyCooldownMonths: Number(formData.reapplyCooldownMonths),
+          status: isEditing ? (isPublishingDraft ? "Active" : sourceJob.status) : requestedStatus,
         }),
       });
 
@@ -56,7 +63,7 @@ const CreateJobPage = () => {
         throw new Error(data.message || "Failed to create job");
       }
 
-      setSuccess("Job created successfully!");
+      setSuccess(isPublishingDraft ? "Job published successfully!" : isEditing ? "Job updated successfully!" : requestedStatus === "Draft" ? "Draft saved successfully!" : "Job created successfully!");
       navigate("/hr"); // Redirect to vacancies page
     } catch (error) {
       setError(error.message);
@@ -70,7 +77,9 @@ const CreateJobPage = () => {
       <div className="container py-10">
         <div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-900 via-blue-900 to-slate-900 px-6 py-8 text-white shadow-lg">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-200">HR Portal</p>
-          <h2 className="mt-3 text-3xl font-semibold">Create a new job posting</h2>
+          <h2 className="mt-3 text-3xl font-semibold">
+            {mode === "edit" ? "Edit job posting" : mode === "duplicate" ? "Duplicate job posting" : "Create a new job posting"}
+          </h2>
           <p className="mt-2 max-w-2xl text-sm text-sky-100">
             Share the role details, highlight the skills you need, and set a reapply window for candidates.
           </p>
@@ -250,13 +259,25 @@ const CreateJobPage = () => {
             <p className="text-xs text-gray-500">
               Posting will be visible immediately to candidates.
             </p>
-            <button
-              type="submit"
-              className={`btn btn-primary w-full sm:w-auto ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-              disabled={loading}
-            >
-              {loading ? "Creating..." : "Create Job"}
-            </button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              {(mode !== "edit" || sourceJob?.status === "Draft") && (
+                <button
+                  type="button"
+                  onClick={(event) => handleSubmit(event, "Draft")}
+                  className={`btn btn-outline w-full sm:w-auto ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  disabled={loading}
+                >
+                  Save Draft
+                </button>
+              )}
+              <button
+                type="submit"
+                className={`btn btn-primary w-full sm:w-auto ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : mode === "edit" && sourceJob?.status !== "Draft" ? "Save Changes" : "Publish Job"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -7,6 +7,7 @@ import {
   FaMapMarkerAlt,
   FaCalendarAlt,
 } from "react-icons/fa";
+import { formatFullDate } from "../utils/dateFormatting";
 
 const JobCard = ({
   job,
@@ -17,6 +18,7 @@ const JobCard = ({
   onWithdraw,
   isWithdrawing = false,
   showApplyAction = true,
+  disableApplyAction = false,
   applicationStatus,
   reapplyEligibleAt,
   onApplySuccess
@@ -49,15 +51,6 @@ const JobCard = ({
     setSaved(!saved);
   };
 
-  const getHumanReadableDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("default", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   const getDaysUntilReapply = () => {
     if (!reapplyEligibleAt) {
       return 0;
@@ -79,6 +72,7 @@ const JobCard = ({
   const daysUntilReapply = getDaysUntilReapply();
   const isArchivedStatus = applicationStatus === "withdrawn" || applicationStatus === "rejected";
   const shouldShowCooldownState = isArchivedStatus && daysUntilReapply > 0;
+  const isNoLongerAcceptingApplications = job?.status && job.status !== "Active";
 
   const applyForJob = async (jobId) => {
     try {
@@ -166,6 +160,11 @@ const JobCard = ({
             </span>
           )}
         </div>
+        {isNoLongerAcceptingApplications && (
+          <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
+            This job is no longer taking new applications{applicationStatus === "active" ? ". Your application is still active" : ""}.
+          </p>
+        )}
         {/* Job info */}
         <div className="mt-4 space-y-2 text-sm text-gray-500">
           <div className="flex items-center">
@@ -178,7 +177,7 @@ const JobCard = ({
           </div>
           <div className="flex items-center">
             <FaCalendarAlt className="mr-2" />
-            <span>Posted: {getHumanReadableDate(job.postedDate)}</span>
+            <span>Posted: {formatFullDate(job.postedDate, "Date unavailable")}</span>
           </div>
         </div>
 
@@ -217,6 +216,10 @@ const JobCard = ({
               {applied ? (
                 <button disabled className="btn btn-outline w-full opacity-75">
                   Applied
+                </button>
+              ) : disableApplyAction ? (
+                <button disabled className="btn btn-outline w-full cursor-not-allowed opacity-60">
+                  Applications Closed
                 </button>
               ) : shouldShowCooldownState ? (
                 <p className="text-sm font-medium text-amber-700 text-center">

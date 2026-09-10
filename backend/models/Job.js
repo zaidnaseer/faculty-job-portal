@@ -29,15 +29,16 @@ const jobSchema = new mongoose.Schema({
   institution: { type: String, required: true },
 
   // Job title comes next
-  title: { type: String, required: true },
+  title: { type: String, default: "" },
 
   // Followed by department, type, location, etc.
-  department: { type: String, required: true },
-  type: { type: String, required: true, enum: ["Full-time", "Part-time", "Contract", "Internship"] },
-  location: { type: String, required: true },
+  department: { type: String, default: "" },
+  type: { type: String, enum: ["Full-time", "Part-time", "Contract", "Internship"], default: "Full-time" },
+  location: { type: String, default: "" },
   postedDate: { type: Date, default: Date.now },
-  description: { type: String, required: true },
-  skills: { type: [String], required: true },
+  status: { type: String, enum: ["Active", "Draft", "Closed", "Deleted"], default: "Active" },
+  description: { type: String, default: "" },
+  skills: { type: [String], default: [] },
   reapplyCooldownMonths: { type: Number, default: 0 },
 
   // Link to the HR user who posted the job
