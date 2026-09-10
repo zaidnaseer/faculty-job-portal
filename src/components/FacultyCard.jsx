@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FaEnvelope, FaPhone, FaUniversity } from 'react-icons/fa';
+import { formatFullDate } from '../utils/dateFormatting';
 
 const FacultyCard = ({ faculty }) => {
   return (
@@ -16,7 +17,7 @@ const FacultyCard = ({ faculty }) => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h3 className="text-lg font-bold">{faculty.name}</h3>
           <div className="text-sm text-gray-500">
-            Applied: {faculty.appliedDate}
+            Applied: {formatFullDate(faculty.appliedDate, 'Date unavailable')}
           </div>
         </div>
         

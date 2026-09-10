@@ -212,6 +212,31 @@ const ApplicantProfilePage = () => {
     setProfile((prev) => ({ ...prev, resumeFile: undefined }));
   };
 
+  const uploadResume = async (file) => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    const response = await fetch(`${backendUrl}/api/faculty/resume/${profile._id}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to upload resume.");
+    }
+
+    setProfile((prev) => ({ ...prev, resumeFile: data.resumeFile }));
+    setResumeName(data.resumeFile?.filename || file.name);
+    await refreshResumeUrl();
+  };
+
   const handleCancel = () => {
     if (originalProfile) {
       setProfile(cloneProfile(originalProfile));
@@ -314,6 +339,7 @@ const ApplicantProfilePage = () => {
           resumeUrl={resumeUrl}
           resumeName={resumeName}
           onRefreshResume={refreshResumeUrl}
+          onUploadResume={uploadResume}
           onDeleteResume={deleteResume}
         />
       </div>

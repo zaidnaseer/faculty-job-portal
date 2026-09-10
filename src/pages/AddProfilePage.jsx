@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RippleBackground from "../components/RippleBackground";
+import { formatMonthYear } from "../utils/dateFormatting";
 
 const WORD_FILE_TYPES = [
   "application/msword",
@@ -592,9 +593,9 @@ const AddProfilePage = () => {
                           <h4 className="font-semibold text-gray-800 text-lg">{exp.title}</h4>
                           <p className="text-blue-600 font-medium">{exp.institution}</p>
                           <p className="text-gray-500 text-sm mt-1">
-                            {exp.start ? new Date(exp.start + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : ''}
+                            {formatMonthYear(exp.start)}
                             {' - '}
-                            {exp.current ? 'Present' : (exp.end ? new Date(exp.end + '-01').toLocaleString('default', { month: 'short', year: 'numeric' }) : '')}
+                            {exp.current ? 'Present' : formatMonthYear(exp.end)}
                           </p>
                           {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
                         </div>
@@ -821,7 +822,7 @@ const AddProfilePage = () => {
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-800 text-lg">{edu.degree}{edu.field && ` in ${edu.field}`}</h4>
                           <p className="text-blue-600 font-medium">{edu.institution}</p>
-                          {edu.year && <p className="text-gray-500 text-sm mt-1">{edu.year}</p>}
+                          {edu.year && <p className="text-gray-500 text-sm mt-1">{formatMonthYear(edu.year)}</p>}
                         </div>
                         <button
                           type="button"

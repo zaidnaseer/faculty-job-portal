@@ -127,6 +127,43 @@ router.delete('/resume/:profileId', protect(['faculty']), async (req, res) => {
   }
 });
 
+router.post('/resume/:profileId', protect(['faculty']), upload.single('resume'), async (req, res) => {
+  try {
+    const profile = await Profile.findById(req.params.profileId);
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    if (profile.user.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please select a resume to upload.' });
+    }
+
+    const uploadedResume = await uploadResumeToR2(req.file, req.user.id);
+    if (!uploadedResume) {
+      return res.status(400).json({ message: 'Cloudflare R2 is not configured. Please add R2 credentials first.' });
+    }
+
+    await deleteResumeFromR2(profile.resumeFile?.key);
+    profile.resumeFile = {
+      url: uploadedResume.url,
+      key: uploadedResume.key,
+      filename: uploadedResume.filename,
+      size: uploadedResume.size,
+      contentType: uploadedResume.contentType,
+    };
+    await profile.save();
+
+    res.status(201).json(profile);
+  } catch (error) {
+    console.error('Error uploading resume:', error);
+    res.status(500).json({ message: error.message || 'Failed to upload resume' });
+  }
+});
+
 router.post('/add', protect(['faculty']), upload.single('resume'), async (req, res) => {
   try {
     const { name, email, phone, skills, summary, experience, education, publications } = req.body;

@@ -18,7 +18,9 @@ import {
     FileText,
     Download,
     Eye,
+    Upload,
 } from "lucide-react";
+import { formatMonthYear } from "../utils/dateFormatting";
 
 const EditableProfile = ({
     profile,
@@ -33,6 +35,7 @@ const EditableProfile = ({
     resumeUrl = "",
     resumeName = "resume.pdf",
     onRefreshResume,
+    onUploadResume,
     onDeleteResume,
 }) => {
     const [newSkill, setNewSkill] = useState("");
@@ -49,8 +52,57 @@ const EditableProfile = ({
     const [activeResumeUrl, setActiveResumeUrl] = useState(resumeUrl);
     const [activeResumeName, setActiveResumeName] = useState(resumeName);
     const [isResumeActionLoading, setIsResumeActionLoading] = useState(false);
+    const [resumeUploadError, setResumeUploadError] = useState("");
 
     const hasText = (value) => typeof value === "string" && value.trim().length > 0;
+
+    const parseMonth = (value) => {
+        if (!hasText(value) || /^(present|current)$/i.test(value.trim())) {
+            return null;
+        }
+
+        const trimmedValue = value.trim();
+        if (/^\d{4}-\d{2}$/.test(trimmedValue)) {
+            const [year, month] = trimmedValue.split("-").map(Number);
+            return { year, month };
+        }
+
+        const date = new Date(trimmedValue);
+        return Number.isNaN(date.getTime())
+            ? null
+            : { year: date.getFullYear(), month: date.getMonth() + 1 };
+    };
+
+    const formatExperienceDuration = (start, end, isCurrent) => {
+        const startMonth = parseMonth(start);
+        if (!startMonth) {
+            return "";
+        }
+
+        const endMonth = isCurrent || !hasText(end)
+            ? { year: new Date().getFullYear(), month: new Date().getMonth() + 1 }
+            : parseMonth(end);
+        if (!endMonth) {
+            return "";
+        }
+
+        const totalMonths = Math.max(
+            1,
+            (endMonth.year - startMonth.year) * 12 + endMonth.month - startMonth.month,
+        );
+        const years = Math.floor(totalMonths / 12);
+        const months = totalMonths % 12;
+        const duration = [];
+
+        if (years > 0) {
+            duration.push(`${years} yr${years === 1 ? "" : "s"}`);
+        }
+        if (months > 0) {
+            duration.push(`${months} mo${months === 1 ? "" : "s"}`);
+        }
+
+        return duration.join(" ");
+    };
 
     const updateProfileField = (name, value) => {
         setProfile((prev) => ({ ...prev, [name]: value }));
@@ -171,6 +223,29 @@ const EditableProfile = ({
             setActiveResumeName("resume.pdf");
         } catch (error) {
             alert(error.message || "Failed to delete resume.");
+        } finally {
+            setIsResumeActionLoading(false);
+        }
+    };
+
+    const handleUploadResume = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        setResumeUploadError("");
+
+        if (!file || !onUploadResume) return;
+
+        const allowedExtensions = /\.(pdf|doc|docx|txt|rtf)$/i;
+        if (!allowedExtensions.test(file.name) || file.size > 5 * 1024 * 1024) {
+            setResumeUploadError("Choose a PDF, Word, TXT, or RTF file up to 5MB.");
+            return;
+        }
+
+        setIsResumeActionLoading(true);
+        try {
+            await onUploadResume(file);
+        } catch (error) {
+            setResumeUploadError(error.message || "Failed to upload resume.");
         } finally {
             setIsResumeActionLoading(false);
         }
@@ -376,6 +451,32 @@ const EditableProfile = ({
                             )}
                         </div>
 
+                        {!resumeUrl && canEdit && onUploadResume && (
+                            <div className="bg-white p-6 rounded-xl shadow border border-blue-100">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h3 className="flex items-center gap-2 text-lg font-bold text-gray-800">
+                                            <FileText size={18} /> Upload your resume
+                                        </h3>
+                                        <p className="mt-1 text-sm text-gray-600">Add a resume so employers can learn more about your experience.</p>
+                                    </div>
+                                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                                        <Upload size={16} />
+                                        {isResumeActionLoading ? "Uploading..." : "Choose file"}
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.doc,.docx,.txt,.rtf"
+                                            onChange={handleUploadResume}
+                                            disabled={isResumeActionLoading}
+                                            className="sr-only"
+                                        />
+                                    </label>
+                                </div>
+                                <p className="mt-3 text-xs text-gray-500">PDF, Word, TXT, or RTF. Maximum size: 5MB.</p>
+                                {resumeUploadError && <p className="mt-2 text-sm text-red-600">{resumeUploadError}</p>}
+                            </div>
+                        )}
+
                         {resumeUrl && (
                             <div className="bg-white p-6 rounded-xl shadow">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -530,7 +631,7 @@ const EditableProfile = ({
                                             <div>
                                                 <h4 className="font-semibold">{hasText(edu?.degree) ? edu.degree : "Degree not added"}</h4>
                                                 <p className="text-gray-600">{hasText(edu?.institution) ? edu.institution : "Institution not added"}</p>
-                                                <p className="text-sm text-gray-500">{hasText(edu?.year) ? edu.year : "Year not added"}</p>
+                                                <p className="text-sm text-gray-500">{formatMonthYear(edu?.year, "Year not added")}</p>
                                             </div>
                                         )}
 
@@ -638,7 +739,10 @@ const EditableProfile = ({
                                                 <h4 className="font-semibold">{hasText(exp?.title) ? exp.title : "Role not added"}</h4>
                                                 <p className="text-gray-600">{hasText(exp?.institution) ? exp.institution : "Organization not added"}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    {hasText(exp?.start) ? exp.start : "Start not added"} - {hasText(exp?.end) ? exp.end : "Present"}
+                                                    {formatMonthYear(exp?.start, "Start not added")} - {exp?.current ? "Present" : formatMonthYear(exp?.end, "Present")}
+                                                    {formatExperienceDuration(exp?.start, exp?.end, exp?.current) && (
+                                                        <> · {formatExperienceDuration(exp?.start, exp?.end, exp?.current)}</>
+                                                    )}
                                                 </p>
                                                 <p className="text-gray-700 mt-1">{hasText(exp?.description) ? exp.description : ""}</p>
                                             </div>
