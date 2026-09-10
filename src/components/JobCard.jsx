@@ -127,93 +127,83 @@ const JobCard = ({
 
   return (
     <>
-      <div className="card h-full flex flex-col">
-        {/* University name */}
-        <div className="bg-blue-900 text-white text-lg font-semibold px-4 py-2 mb-4 text-center tracking-wide uppercase rounded-t">
-          {job.institution}
-        </div>
-        {/* Job title and save icon */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold">{job.title}</h3>
-            <p className="text-gray-600">{job.department}</p>
-          </div>
-          <button onClick={toggleSave} className="text-gray-400 hover:text-primary">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+        <div className="flex flex-1 flex-col p-5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="truncate pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              {job.institution || "Institution"}
+            </p>
+          <button
+            type="button"
+            onClick={toggleSave}
+            aria-label={saved ? "Remove saved job" : "Save job"}
+            className="-mr-2 -mt-2 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-primary"
+          >
             {saved ? <FaBookmark className="text-primary" /> : <FaRegBookmark />}
           </button>
-        </div>
-        <div className="flex items-center gap-2">
-          {applicationStatus && (
-            <span
-              className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
-                ? "bg-amber-100 text-amber-700"
-                : applicationStatus === "rejected"
-                  ? "bg-rose-100 text-rose-700"
-                  : "bg-emerald-100 text-emerald-700"
-                }`}
-            >
-              {applicationStatus === "withdrawn"
-                ? "Withdrawn"
-                : applicationStatus === "rejected"
-                  ? "Not Selected"
-                  : "Active"}
+          </div>
+
+          <div>
+            <h3 className="mt-2 text-xl font-bold leading-tight text-slate-900">{job.title}</h3>
+            {job.department && (
+              <p className="mt-2 text-sm font-medium text-blue-700">{job.department}</p>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <FaBriefcase className="text-slate-400" />
+              {job.type}
             </span>
-          )}
-        </div>
-        {isNoLongerAcceptingApplications && (
-          <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
-            This job is no longer taking new applications{applicationStatus === "active" ? ". Your application is still active" : ""}.
-          </p>
-        )}
-        {/* Job info */}
-        <div className="mt-4 space-y-2 text-sm text-gray-500">
-          <div className="flex items-center">
-            <FaBriefcase className="mr-2" />
-            <span>{job.type}</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <FaMapMarkerAlt className="text-slate-400" />
+              {job.location}
+            </span>
           </div>
-          <div className="flex items-center">
-            <FaMapMarkerAlt className="mr-2" />
-            <span>{job.location}</span>
-          </div>
-          <div className="flex items-center">
-            <FaCalendarAlt className="mr-2" />
-            <span>Posted: {formatFullDate(job.postedDate, "Date unavailable")}</span>
-          </div>
-        </div>
 
-        {/* Job description */}
-        <div className="mt-4 line-clamp-2 text-sm">{job.description}</div>
+          <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+            <FaCalendarAlt />
+            <span>Posted {formatFullDate(job.postedDate, "Date unavailable")}</span>
+          </div>
 
-        {/* Skills and apply button */}
-        <div className="mt-auto pt-4">
-          {Array.isArray(job.skills) && job.skills.length > 0 && (
-            <div className="flex gap-2 text-sm">
-              {job.skills.slice(0, 3).map((skill, index) => (
-                <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {skill}
+          <div className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">{job.description}</div>
+
+          <div className="mt-auto pt-6">
+            {applicationStatus && (
+              <div className="mb-3">
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
+                    ? "bg-amber-100 text-amber-700"
+                    : applicationStatus === "rejected"
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-emerald-100 text-emerald-700"
+                    }`}
+                >
+                  {applicationStatus === "withdrawn"
+                    ? "Withdrawn"
+                    : applicationStatus === "rejected"
+                      ? "Not Selected"
+                      : "Active"}
                 </span>
-              ))}
-              {job.skills.length > 3 && (
-                <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                  +{job.skills.length - 3} more
-                </span>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {showWithdraw ? (
-            <div className="mt-4">
+            {isNoLongerAcceptingApplications && (
+              <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
+                This job is no longer taking new applications{applicationStatus === "active" ? ". Your application is still active" : ""}.
+              </p>
+            )}
+
+            {showWithdraw ? (
               <button
                 onClick={() => onWithdraw?.(job._id)}
                 disabled={isWithdrawing}
-                className="btn w-full border border-red-600 text-red-600 bg-transparent hover:bg-red-600 hover:text-white disabled:border-red-300 disabled:text-red-300 disabled:hover:bg-transparent"
+                className="btn w-full border border-red-600 bg-transparent text-red-600 hover:bg-red-600 hover:text-white disabled:border-red-300 disabled:text-red-300 disabled:hover:bg-transparent"
               >
                 {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
               </button>
-            </div>
-          ) : showApplyAction ? (
-            <div className="mt-4">
-              {applied ? (
+            ) : showApplyAction ? (
+              applied ? (
                 <button disabled className="btn btn-outline w-full opacity-75">
                   Applied
                 </button>
@@ -222,16 +212,16 @@ const JobCard = ({
                   Applications Closed
                 </button>
               ) : shouldShowCooldownState ? (
-                <p className="text-sm font-medium text-amber-700 text-center">
+                <p className="text-center text-sm font-medium text-amber-700">
                   Apply after {daysUntilReapply} day{daysUntilReapply === 1 ? "" : "s"}
                 </p>
               ) : (
                 <button onClick={handleApplyClick} className="btn btn-primary w-full">
                   Apply
                 </button>
-              )}
-            </div>
-          ) : null}
+              )
+            ) : null}
+          </div>
         </div>
       </div>
 
