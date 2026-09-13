@@ -162,21 +162,21 @@ const MyApplicationsPage = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {activeJobs.map((job) => (
-                    <JobCard
-                      key={job._id}
-                      job={job}
-                      userId={user.id}
-                      backendUrl={backendUrl}
-                      authToken={user.token}
-                      showWithdraw={true}
-                      onWithdraw={openWithdrawModal}
-                      isWithdrawing={withdrawingJobId === job._id}
-                      showApplyAction={false}
-                      applicationStatus={job.applicationStatus}
-                      applicationUpdatedAt={job.applicationUpdatedAt}
-                      showReapplyTooltip={false}
-                    />
-                  ))}
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    userId={user.id}
+                    backendUrl={backendUrl}
+                    authToken={user.token}
+                    showWithdraw={true}
+                    onWithdraw={openWithdrawModal}
+                    isWithdrawing={withdrawingJobId === job._id}
+                    showApplyAction={false}
+                    applicationStatus={job.applicationStatus}
+                    applicationUpdatedAt={job.applicationUpdatedAt}
+                    showReapplyTooltip={false}
+                  />
+                ))}
               </div>
             )}
           </>
@@ -191,21 +191,21 @@ const MyApplicationsPage = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {archivedJobs.map((job) => (
-                    <JobCard
-                      key={job._id}
-                      job={job}
-                      userId={user.id}
-                      backendUrl={backendUrl}
-                      authToken={user.token}
-                      showApplyAction={true}
-                      disableApplyAction={job.status !== "Active"}
-                      applicationStatus={job.applicationStatus}
-                      reapplyEligibleAt={job.reapplyEligibleAt}
-                      onApplySuccess={handleApplySuccess}
-                      applicationUpdatedAt={job.applicationUpdatedAt}
-                      showReapplyTooltip={true}
-                    />
-                  ))}
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    userId={user.id}
+                    backendUrl={backendUrl}
+                    authToken={user.token}
+                    showApplyAction={true}
+                    disableApplyAction={job.status !== "Active"}
+                    applicationStatus={job.applicationStatus}
+                    reapplyEligibleAt={job.reapplyEligibleAt}
+                    onApplySuccess={handleApplySuccess}
+                    applicationUpdatedAt={job.applicationUpdatedAt}
+                    showReapplyTooltip={true}
+                  />
+                ))}
               </div>
             )}
           </>

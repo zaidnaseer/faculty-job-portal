@@ -35,6 +35,124 @@ body {
   .form-input {
     @apply w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary;
   }
+
+  .vacancies-shell {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
+    transition: grid-template-columns 250ms ease-out;
+  }
+
+  .vacancies-browser {
+    min-width: 0;
+  }
+
+  .vacancies-grid {
+    transition: grid-template-columns 250ms ease-out;
+  }
+
+  .vacancies-detail-panel {
+    overflow: hidden;
+  }
+
+  .vacancies-detail-content {
+    opacity: 1;
+  }
+
+  .vacancies-mobile-back {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vacancies-shell.is-split {
+    grid-template-columns: minmax(250px, 0.38fr) minmax(0, 0.62fr);
+    align-items: start;
+  }
+
+  .vacancies-shell.is-split .vacancies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vacancies-shell.is-split .vacancies-browser {
+    max-height: calc(100vh - 16rem);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .vacancies-detail-panel {
+    min-width: 0;
+    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 250ms ease-out;
+  }
+
+  .vacancies-shell.is-split .vacancies-detail-panel {
+    transform: translateX(0);
+  }
+
+  .vacancies-detail-content {
+    animation: vacancies-detail-fade-in 180ms ease-out 250ms both;
+  }
+}
+
+@media (max-width: 1023px) {
+  .vacancies-shell {
+    grid-template-columns: 1fr;
+    transition: none;
+  }
+
+  .vacancies-shell.is-split .vacancies-browser {
+    display: none;
+  }
+
+  .vacancies-shell.is-split .vacancies-detail-panel {
+    position: fixed;
+    top: 4rem;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    overflow-y: auto;
+    background: #f8fafc;
+    padding: 1rem;
+  }
+
+  .vacancies-shell.is-split .vacancies-mobile-back {
+    display: inline-flex;
+    margin: 0 auto 1rem;
+  }
+}
+
+@keyframes vacancies-detail-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes vacancies-detail-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .vacancies-shell,
+  .vacancies-grid,
+  .vacancies-detail-panel,
+  .vacancies-detail-content {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .slick-track {

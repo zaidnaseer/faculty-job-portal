@@ -21,7 +21,11 @@ const JobCard = ({
   disableApplyAction = false,
   applicationStatus,
   reapplyEligibleAt,
-  onApplySuccess
+  onApplySuccess,
+  onSelect,
+  isSelected = false,
+  detailView = false,
+  listView = false,
 }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -125,22 +129,96 @@ const JobCard = ({
     }
   };
 
+  const applicationAction = (
+    <div className={detailView ? "pt-5" : "mt-auto pt-6"}>
+      {applicationStatus && (
+        <div className="mb-3">
+          <span
+            className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
+              ? "bg-amber-100 text-amber-700"
+              : applicationStatus === "rejected"
+                ? "bg-rose-100 text-rose-700"
+                : "bg-emerald-100 text-emerald-700"
+              }`}
+          >
+            {applicationStatus === "withdrawn"
+              ? "Withdrawn"
+              : applicationStatus === "rejected"
+                ? "Not Selected"
+                : "Active"}
+          </span>
+        </div>
+      )}
+
+      {isNoLongerAcceptingApplications && (
+        <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
+          This job is no longer taking new applications{applicationStatus === "active" ? ". Your application is still active" : ""}.
+        </p>
+      )}
+
+      {showWithdraw ? (
+        <button
+          onClick={() => onWithdraw?.(job._id)}
+          disabled={isWithdrawing}
+          className={`btn border border-red-600 bg-transparent text-red-600 hover:bg-red-600 hover:text-white disabled:border-red-300 disabled:text-red-300 disabled:hover:bg-transparent ${detailView ? "w-auto" : "w-full"}`}
+        >
+          {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
+        </button>
+      ) : showApplyAction ? (
+        applied ? (
+          <button disabled className={`btn btn-outline opacity-75 ${detailView ? "w-auto" : "w-full"}`}>
+            Applied
+          </button>
+        ) : disableApplyAction ? (
+          <button disabled className={`btn btn-outline cursor-not-allowed opacity-60 ${detailView ? "w-auto" : "w-full"}`}>
+            Applications Closed
+          </button>
+        ) : shouldShowCooldownState ? (
+          <p className="text-center text-sm font-medium text-amber-700">
+            Apply after {daysUntilReapply} day{daysUntilReapply === 1 ? "" : "s"}
+          </p>
+        ) : (
+          <button onClick={handleApplyClick} className={`btn btn-primary ${detailView ? "w-auto" : "w-full"}`}>
+            Apply
+          </button>
+        )
+      ) : null}
+    </div>
+  );
+
   return (
     <>
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-        <div className="flex flex-1 flex-col p-5">
+      <div
+        className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition duration-200 ${detailView
+          ? "border-slate-200 shadow-md"
+          : `cursor-pointer hover:-translate-y-1 hover:shadow-lg ${isSelected ? "border-primary ring-2 ring-primary/20" : "border-slate-200"}`
+          }`}
+        onClick={() => onSelect?.(job)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onSelect?.(job);
+          }
+        }}
+        role={onSelect ? "button" : undefined}
+        tabIndex={onSelect ? 0 : undefined}
+      >
+        <div className={`flex flex-1 flex-col ${listView ? "p-4" : "p-5"}`}>
           <div className="flex items-start justify-between gap-3">
             <p className="truncate pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
               {job.institution || "Institution"}
             </p>
-          <button
-            type="button"
-            onClick={toggleSave}
-            aria-label={saved ? "Remove saved job" : "Save job"}
-            className="-mr-2 -mt-2 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-primary"
-          >
-            {saved ? <FaBookmark className="text-primary" /> : <FaRegBookmark />}
-          </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleSave();
+              }}
+              aria-label={saved ? "Remove saved job" : "Save job"}
+              className="-mr-2 -mt-2 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-primary"
+            >
+              {saved ? <FaBookmark className="text-primary" /> : <FaRegBookmark />}
+            </button>
           </div>
 
           <div>
@@ -166,62 +244,13 @@ const JobCard = ({
             <span>Posted {formatFullDate(job.postedDate, "Date unavailable")}</span>
           </div>
 
-          <div className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">{job.description}</div>
+          {detailView && applicationAction}
 
-          <div className="mt-auto pt-6">
-            {applicationStatus && (
-              <div className="mb-3">
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-semibold ${applicationStatus === "withdrawn"
-                    ? "bg-amber-100 text-amber-700"
-                    : applicationStatus === "rejected"
-                      ? "bg-rose-100 text-rose-700"
-                      : "bg-emerald-100 text-emerald-700"
-                    }`}
-                >
-                  {applicationStatus === "withdrawn"
-                    ? "Withdrawn"
-                    : applicationStatus === "rejected"
-                      ? "Not Selected"
-                      : "Active"}
-                </span>
-              </div>
-            )}
-
-            {isNoLongerAcceptingApplications && (
-              <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600">
-                This job is no longer taking new applications{applicationStatus === "active" ? ". Your application is still active" : ""}.
-              </p>
-            )}
-
-            {showWithdraw ? (
-              <button
-                onClick={() => onWithdraw?.(job._id)}
-                disabled={isWithdrawing}
-                className="btn w-full border border-red-600 bg-transparent text-red-600 hover:bg-red-600 hover:text-white disabled:border-red-300 disabled:text-red-300 disabled:hover:bg-transparent"
-              >
-                {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
-              </button>
-            ) : showApplyAction ? (
-              applied ? (
-                <button disabled className="btn btn-outline w-full opacity-75">
-                  Applied
-                </button>
-              ) : disableApplyAction ? (
-                <button disabled className="btn btn-outline w-full cursor-not-allowed opacity-60">
-                  Applications Closed
-                </button>
-              ) : shouldShowCooldownState ? (
-                <p className="text-center text-sm font-medium text-amber-700">
-                  Apply after {daysUntilReapply} day{daysUntilReapply === 1 ? "" : "s"}
-                </p>
-              ) : (
-                <button onClick={handleApplyClick} className="btn btn-primary w-full">
-                  Apply
-                </button>
-              )
-            ) : null}
+          <div className={`mt-4 text-sm leading-6 text-slate-600 ${detailView ? "whitespace-pre-line" : listView ? "line-clamp-2" : "line-clamp-3"}`}>
+            {job.description}
           </div>
+
+          {!detailView && applicationAction}
         </div>
       </div>
 

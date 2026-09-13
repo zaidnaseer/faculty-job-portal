@@ -191,7 +191,7 @@ const HRDashboard = () => {
                   </div>
                 ) : (
                   <div className="mt-7 flex items-center gap-5 text-sm">
-                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700"><UserRound size={17} className="text-blue-600" /> {job.applications?.filter((entry) => entry.status === "active").length || 0} Applicants</span>
+                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700"><UserRound size={17} className="text-blue-600" /> {job.applications?.filter((entry) => entry.status === "active").length || 0} Applicant{(job.applications?.filter((entry) => entry.status === "active").length || 0) === 1 ? "" : "s"}</span>
                     <span className="inline-flex items-center gap-2 font-semibold text-slate-700"><Sparkles size={16} className="text-emerald-500" /> {job.newApplicants || 0} New</span>
                   </div>
                 )}
