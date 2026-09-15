@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     User,
     Mail,
@@ -21,6 +21,7 @@ import {
     Upload,
 } from "lucide-react";
 import { formatMonthYear } from "../utils/dateFormatting";
+import defaultProfileImage from "../../assets/default-profile.jpg";
 
 const EditableProfile = ({
     profile,
@@ -37,6 +38,9 @@ const EditableProfile = ({
     onRefreshResume,
     onUploadResume,
     onDeleteResume,
+    profileImageUrl = "",
+    onUploadProfileImage,
+    onDeleteProfileImage,
 }) => {
     const [newSkill, setNewSkill] = useState("");
     const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
@@ -53,6 +57,55 @@ const EditableProfile = ({
     const [activeResumeName, setActiveResumeName] = useState(resumeName);
     const [isResumeActionLoading, setIsResumeActionLoading] = useState(false);
     const [resumeUploadError, setResumeUploadError] = useState("");
+    const [isProfileImageActionLoading, setIsProfileImageActionLoading] = useState(false);
+    const [profileImageError, setProfileImageError] = useState("");
+    const [isProfileImageMenuOpen, setIsProfileImageMenuOpen] = useState(false);
+    const [isProfileImageDeleteConfirmOpen, setIsProfileImageDeleteConfirmOpen] = useState(false);
+    const [profileImageCrop, setProfileImageCrop] = useState(null);
+    const [profileImageCropOffset, setProfileImageCropOffset] = useState({ x: 0, y: 0 });
+    const [profileImageCropSize, setProfileImageCropSize] = useState(null);
+    const [profileImageCropSelectionSize, setProfileImageCropSelectionSize] = useState(220);
+    const [isProfileImageCropResizing, setIsProfileImageCropResizing] = useState(false);
+    const profileImageMenuRef = useRef(null);
+    const profileImageCropDragRef = useRef(null);
+    const profileImageCropResizeRef = useRef(null);
+
+    const handleProfileImageCropResizeKeyDown = (event) => {
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            return;
+        }
+
+        event.preventDefault();
+        const delta = event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -2 : 2;
+        setProfileImageCropSelectionSize((size) => Math.min(280, Math.max(140, size + delta)));
+    };
+
+    useEffect(() => {
+        if (!isProfileImageMenuOpen) {
+            return undefined;
+        }
+
+        const handleDocumentPointerDown = (event) => {
+            if (!profileImageMenuRef.current?.contains(event.target)) {
+                setIsProfileImageMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("pointerdown", handleDocumentPointerDown);
+        return () => document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    }, [isProfileImageMenuOpen]);
+
+    useEffect(() => {
+        if (!isEditing) {
+            setIsProfileImageMenuOpen(false);
+        }
+    }, [isEditing]);
+
+    useEffect(() => () => {
+        if (profileImageCrop?.url) {
+            URL.revokeObjectURL(profileImageCrop.url);
+        }
+    }, [profileImageCrop?.url]);
 
     const hasText = (value) => typeof value === "string" && value.trim().length > 0;
 
@@ -256,6 +309,251 @@ const EditableProfile = ({
         activeResumeName.toLowerCase().endsWith(".pdf") ||
         activeResumeUrl.toLowerCase().includes(".pdf");
 
+    const handleUploadProfileImage = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        setProfileImageError("");
+
+        if (!file || !onUploadProfileImage) return;
+
+        if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type) || file.size > 5 * 1024 * 1024) {
+            setProfileImageError("Choose a JPEG, PNG, WEBP, or GIF image up to 5MB.");
+            return;
+        }
+
+        const url = URL.createObjectURL(file);
+        setProfileImageCrop({ file, url });
+        setProfileImageCropOffset({ x: 0, y: 0 });
+        setProfileImageCropSize(null);
+        setProfileImageCropSelectionSize(220);
+        setIsProfileImageMenuOpen(false);
+    };
+
+    const getCropImageLayout = () => {
+        if (!profileImageCropSize) return null;
+
+        const cropViewportSize = 280;
+        const selectionSize = profileImageCropSelectionSize;
+        const scale = Math.max(
+            cropViewportSize / profileImageCropSize.width,
+            cropViewportSize / profileImageCropSize.height,
+        );
+        const width = profileImageCropSize.width * scale;
+        const height = profileImageCropSize.height * scale;
+        const baseLeft = (cropViewportSize - width) / 2;
+        const baseTop = (cropViewportSize - height) / 2;
+        const selectionLeft = (cropViewportSize - selectionSize) / 2;
+        const selectionTop = (cropViewportSize - selectionSize) / 2;
+        const minX = selectionLeft + selectionSize - width - baseLeft;
+        const maxX = selectionLeft - baseLeft;
+        const minY = selectionTop + selectionSize - height - baseTop;
+        const maxY = selectionTop - baseTop;
+
+        return {
+            cropViewportSize,
+            selectionSize,
+            selectionLeft,
+            selectionTop,
+            scale,
+            width,
+            height,
+            left: baseLeft + Math.min(maxX, Math.max(minX, profileImageCropOffset.x)),
+            top: baseTop + Math.min(maxY, Math.max(minY, profileImageCropOffset.y)),
+        };
+    };
+
+    const handleProfileImageCropPointerDown = (event) => {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        profileImageCropDragRef.current = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            offset: profileImageCropOffset,
+        };
+    };
+
+    const handleProfileImageCropPointerMove = (event) => {
+        const drag = profileImageCropDragRef.current;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+
+        setProfileImageCropOffset({
+            x: drag.offset.x + event.clientX - drag.startX,
+            y: drag.offset.y + event.clientY - drag.startY,
+        });
+    };
+
+    const handleProfileImageCropPointerUp = (event) => {
+        if (profileImageCropDragRef.current?.pointerId === event.pointerId) {
+            profileImageCropDragRef.current = null;
+        }
+    };
+
+    const handleProfileImageCropResizePointerDown = (event, corner) => {
+        event.stopPropagation();
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        profileImageCropResizeRef.current = {
+            corner,
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            size: profileImageCropSelectionSize,
+        };
+        setIsProfileImageCropResizing(true);
+    };
+
+    const handleProfileImageCropResizePointerMove = (event) => {
+        const resize = profileImageCropResizeRef.current;
+        if (!resize || resize.pointerId !== event.pointerId) return;
+
+        const deltaX = event.clientX - resize.startX;
+        const deltaY = event.clientY - resize.startY;
+        const diagonalDelta = {
+            topLeft: -(deltaX + deltaY) / 2,
+            topRight: (deltaX - deltaY) / 2,
+            bottomLeft: (-deltaX + deltaY) / 2,
+            bottomRight: (deltaX + deltaY) / 2,
+        }[resize.corner];
+
+        setProfileImageCropSelectionSize(Math.min(280, Math.max(140, resize.size + diagonalDelta)));
+    };
+
+    const handleProfileImageCropResizePointerUp = (event) => {
+        if (profileImageCropResizeRef.current?.pointerId === event.pointerId) {
+            profileImageCropResizeRef.current = null;
+            setIsProfileImageCropResizing(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isProfileImageCropResizing) {
+            return undefined;
+        }
+
+        const handleWindowPointerMove = (event) => {
+            event.preventDefault();
+            handleProfileImageCropResizePointerMove(event);
+        };
+        const handleWindowPointerUp = (event) => {
+            handleProfileImageCropResizePointerUp(event);
+        };
+
+        window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
+        window.addEventListener("pointerup", handleWindowPointerUp);
+        window.addEventListener("pointercancel", handleWindowPointerUp);
+
+        return () => {
+            window.removeEventListener("pointermove", handleWindowPointerMove);
+            window.removeEventListener("pointerup", handleWindowPointerUp);
+            window.removeEventListener("pointercancel", handleWindowPointerUp);
+        };
+    }, [isProfileImageCropResizing]);
+
+    const closeProfileImageCrop = () => {
+        if (profileImageCrop?.url) URL.revokeObjectURL(profileImageCrop.url);
+        setProfileImageCrop(null);
+        setProfileImageCropSize(null);
+        setProfileImageCropOffset({ x: 0, y: 0 });
+        setIsProfileImageCropResizing(false);
+        profileImageCropResizeRef.current = null;
+    };
+
+    useEffect(() => {
+        if (!profileImageCrop && !isProfileImageDeleteConfirmOpen) {
+            return undefined;
+        }
+
+        const handleEscape = (event) => {
+            if (event.key !== 'Escape') return;
+
+            if (profileImageCrop) {
+                closeProfileImageCrop();
+            } else {
+                setIsProfileImageDeleteConfirmOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [profileImageCrop, isProfileImageDeleteConfirmOpen]);
+
+    const confirmProfileImageCrop = async () => {
+        const layout = getCropImageLayout();
+        if (!profileImageCrop || !layout || !onUploadProfileImage) return;
+
+        setIsProfileImageActionLoading(true);
+        setProfileImageError("");
+
+        try {
+            const image = new Image();
+            image.src = profileImageCrop.url;
+            await image.decode();
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 512;
+            const context = canvas.getContext("2d");
+            const sourceX = Math.max(0, (layout.selectionLeft - layout.left) / layout.scale);
+            const sourceY = Math.max(0, (layout.selectionTop - layout.top) / layout.scale);
+            const sourceSize = layout.selectionSize / layout.scale;
+
+            context.drawImage(
+                image,
+                sourceX,
+                sourceY,
+                sourceSize,
+                sourceSize,
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+            );
+
+            const croppedFile = await new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        reject(new Error("The image could not be cropped."));
+                        return;
+                    }
+                    resolve(new File([blob], "profile-picture.png", { type: "image/png" }));
+                }, "image/png");
+            });
+
+            await onUploadProfileImage(croppedFile);
+            closeProfileImageCrop();
+        } catch (error) {
+            setProfileImageError(error.message || "Failed to crop or upload profile image.");
+        } finally {
+            setIsProfileImageActionLoading(false);
+        }
+    };
+
+    const handleDeleteProfileImage = async () => {
+        if (!onDeleteProfileImage || isProfileImageActionLoading) return;
+
+        setIsProfileImageActionLoading(true);
+        setProfileImageError("");
+        try {
+            await onDeleteProfileImage();
+            return true;
+        } catch (error) {
+            setProfileImageError(error.message || "Failed to delete profile image.");
+            return false;
+        } finally {
+            setIsProfileImageActionLoading(false);
+        }
+    };
+
+    const confirmDeleteProfileImage = async () => {
+        const deleted = await handleDeleteProfileImage();
+        if (deleted) {
+            setIsProfileImageDeleteConfirmOpen(false);
+            setIsProfileImageMenuOpen(false);
+        }
+    };
+
+    const profileImageCropLayout = getCropImageLayout();
+
     return (
         <div className="min-h-screen">
             <div className="max-w-6xl mx-auto px-6 pt-4 pb-2 flex justify-between items-center">
@@ -305,11 +603,62 @@ const EditableProfile = ({
             <div className="max-w-6xl mx-auto px-6 pb-10">
                 <div className={`flex flex-col md:flex-row gap-6 -mt-20`}>
                     <div className="w-full md:w-1/3 bg-white rounded-xl shadow p-6 text-center">
-                        <img
-                            src={profile?.profileImage || "/assets/default-profile.jpg"}
-                            alt={hasText(profile?.name) ? profile.name : "Profile"}
-                            className="w-32 h-32 rounded-full mx-auto border-4 border-white object-cover"
-                        />
+                        <div ref={profileImageMenuRef} className="group relative mx-auto h-32 w-32">
+                            <img
+                                src={profileImageUrl || defaultProfileImage}
+                                alt={hasText(profile?.name) ? profile.name : "Profile"}
+                                className="h-32 w-32 rounded-full border-4 border-white object-cover"
+                            />
+
+                            {isEditing && onUploadProfileImage && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsProfileImageMenuOpen((isOpen) => !isOpen)}
+                                        aria-label="Edit profile picture"
+                                        aria-expanded={isProfileImageMenuOpen}
+                                        className="absolute inset-0 hidden items-center justify-center rounded-full bg-gray-900/0 text-white opacity-0 transition hover:bg-gray-900/60 hover:opacity-100 focus:bg-gray-900/60 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group-hover:bg-gray-900/60 group-hover:opacity-100 md:flex"
+                                    >
+                                        <Pencil size={24} aria-hidden="true" />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsProfileImageMenuOpen((isOpen) => !isOpen)}
+                                        aria-label="Edit profile picture"
+                                        aria-expanded={isProfileImageMenuOpen}
+                                        className="absolute bottom-0 right-0 z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:hidden"
+                                    >
+                                        <Pencil size={16} aria-hidden="true" />
+                                    </button>
+
+                                    {isProfileImageMenuOpen && (
+                                        <div className="absolute left-1/2 top-full z-20 mt-2 w-44 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-1 text-left shadow-lg">
+                                            <label className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <Camera size={16} />
+                                                Change photo
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                                    onChange={handleUploadProfileImage}
+                                                    disabled={isProfileImageActionLoading}
+                                                    className="sr-only"
+                                                />
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsProfileImageDeleteConfirmOpen(true)}
+                                                disabled={!profileImageUrl || !onDeleteProfileImage || isProfileImageActionLoading}
+                                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Trash2 size={16} />
+                                                Remove photo
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
 
                         {isEditing ? (
                             <div className="space-y-2 mt-4 text-left">
@@ -335,10 +684,192 @@ const EditableProfile = ({
                             </>
                         )}
 
-                        {isEditing && (
-                            <button className="flex items-center gap-2 mx-auto mt-3 text-sm text-blue-600">
-                                <Camera size={16} /> Change Photo
-                            </button>
+                        {isProfileImageActionLoading && <p className="mt-3 text-xs text-gray-500">Updating profile picture...</p>}
+                        {profileImageError && <p className="mt-3 text-xs text-red-600">{profileImageError}</p>}
+
+                        {profileImageError && (
+                            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" role="presentation">
+                                <div
+                                    role="alertdialog"
+                                    aria-modal="true"
+                                    aria-labelledby="profile-image-error-title"
+                                    className="w-full max-w-sm rounded-xl border border-red-200 bg-white p-5 text-left shadow-2xl"
+                                >
+                                    <h3 id="profile-image-error-title" className="text-base font-bold text-red-700">
+                                        Profile picture could not be updated
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-600">{profileImageError}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setProfileImageError("")}
+                                        className="mt-4 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {profileImageCrop && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation">
+                                <div
+                                    role="dialog"
+                                    aria-modal="true"
+                                    aria-labelledby="crop-profile-picture-title"
+                                    className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-2xl"
+                                >
+                                    <h3 id="crop-profile-picture-title" className="text-lg font-bold text-gray-900">
+                                        Adjust profile picture
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Drag the photo until the part you want is inside the circle.
+                                    </p>
+
+                                    <div
+                                        className="mx-auto mt-5 h-[280px] w-[280px] touch-none cursor-grab overflow-hidden bg-gray-200 ring-4 ring-gray-100 active:cursor-grabbing"
+                                        onPointerDown={handleProfileImageCropPointerDown}
+                                        onPointerMove={handleProfileImageCropPointerMove}
+                                        onPointerUp={handleProfileImageCropPointerUp}
+                                        onPointerCancel={handleProfileImageCropPointerUp}
+                                    >
+                                        <div className="relative h-full w-full">
+                                            <img
+                                                src={profileImageCrop.url}
+                                                alt="Profile picture crop preview"
+                                                draggable="false"
+                                                onDragStart={(event) => event.preventDefault()}
+                                                onLoad={(event) => setProfileImageCropSize({
+                                                    width: event.currentTarget.naturalWidth,
+                                                    height: event.currentTarget.naturalHeight,
+                                                })}
+                                                className="pointer-events-none absolute max-w-none select-none"
+                                                style={profileImageCropLayout ? {
+                                                    width: profileImageCropLayout.width,
+                                                    height: profileImageCropLayout.height,
+                                                    left: profileImageCropLayout.left,
+                                                    top: profileImageCropLayout.top,
+                                                } : { visibility: "hidden" }}
+                                            />
+                                            {profileImageCropLayout && (
+                                                <>
+                                                    <div
+                                                        className="pointer-events-none absolute rounded-full border-4 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
+                                                        style={{
+                                                            width: profileImageCropLayout.selectionSize,
+                                                            height: profileImageCropLayout.selectionSize,
+                                                            left: profileImageCropLayout.selectionLeft,
+                                                            top: profileImageCropLayout.selectionTop,
+                                                        }}
+                                                    />
+                                                    {[
+                                                        { corner: "topLeft", label: "Resize crop from top left", left: profileImageCropLayout.selectionLeft - 12, top: profileImageCropLayout.selectionTop - 12, border: "border-l-4 border-t-4", cursor: "cursor-nwse-resize" },
+                                                        { corner: "topRight", label: "Resize crop from top right", left: profileImageCropLayout.selectionLeft + profileImageCropLayout.selectionSize - 12, top: profileImageCropLayout.selectionTop - 12, border: "border-r-4 border-t-4", cursor: "cursor-nesw-resize" },
+                                                        { corner: "bottomLeft", label: "Resize crop from bottom left", left: profileImageCropLayout.selectionLeft - 12, top: profileImageCropLayout.selectionTop + profileImageCropLayout.selectionSize - 12, border: "border-l-4 border-b-4", cursor: "cursor-nesw-resize" },
+                                                        { corner: "bottomRight", label: "Resize crop from bottom right", left: profileImageCropLayout.selectionLeft + profileImageCropLayout.selectionSize - 12, top: profileImageCropLayout.selectionTop + profileImageCropLayout.selectionSize - 12, border: "border-r-4 border-b-4", cursor: "cursor-nwse-resize" },
+                                                    ].map((handle) => (
+                                                        <button
+                                                            key={handle.corner}
+                                                            type="button"
+                                                            aria-label={handle.label}
+                                                            onPointerDown={(event) => handleProfileImageCropResizePointerDown(event, handle.corner)}
+                                                            onKeyDown={handleProfileImageCropResizeKeyDown}
+                                                            className={`pointer-events-auto absolute z-10 h-6 w-6 rounded-sm border-white bg-transparent drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] ${handle.border} ${handle.cursor}`}
+                                                            style={{ left: handle.left, top: handle.top }}
+                                                        />
+                                                    ))}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <label className="mt-5 block text-sm font-medium text-gray-700" htmlFor="profile-picture-size">
+                                        Crop circle size
+                                    </label>
+                                    <input
+                                        id="profile-picture-size"
+                                        type="range"
+                                        min="140"
+                                        max="280"
+                                        step="1"
+                                        value={profileImageCropSelectionSize}
+                                        onChange={(event) => setProfileImageCropSelectionSize(Number(event.target.value))}
+                                        className="mt-2 w-full accent-blue-600"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Smaller crop</span>
+                                        <span>Larger crop</span>
+                                    </div>
+                                    <p className="mt-4 text-center text-xs text-gray-500">
+                                        The circular area is the part that will appear on your profile.
+                                    </p>
+                                    <div className="mt-6 flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={closeProfileImageCrop}
+                                            disabled={isProfileImageActionLoading}
+                                            className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={confirmProfileImageCrop}
+                                            disabled={!profileImageCropLayout || isProfileImageActionLoading}
+                                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {isProfileImageActionLoading ? "Saving..." : "Use this photo"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {isProfileImageDeleteConfirmOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+                                <div
+                                    role="dialog"
+                                    aria-modal="true"
+                                    aria-labelledby="delete-profile-picture-title"
+                                    className="w-full max-w-sm rounded-xl bg-white p-6 text-left shadow-2xl"
+                                >
+                                    <h3 id="delete-profile-picture-title" className="text-lg font-bold text-gray-900">
+                                        Remove profile picture?
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Your profile picture will be deleted and your profile will show the default picture instead.
+                                    </p>
+                                    <div className="mt-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            Default profile picture preview
+                                        </p>
+                                        <img
+                                            src={defaultProfileImage}
+                                            alt="The default profile picture that will appear after removal"
+                                            className="mx-auto mt-3 h-24 w-24 rounded-full object-cover ring-4 ring-white"
+                                        />
+                                        <p className="mt-3 text-sm font-medium text-gray-700">
+                                            This is what your profile will show after removal.
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsProfileImageDeleteConfirmOpen(false)}
+                                            className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={confirmDeleteProfileImage}
+                                            disabled={isProfileImageActionLoading}
+                                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {isProfileImageActionLoading ? "Removing..." : "Remove photo"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
                         <div className="mt-6 text-left space-y-2 text-sm">

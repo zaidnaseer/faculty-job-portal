@@ -22,6 +22,7 @@ const HRProfile = () => {
     const [snapshotMeta, setSnapshotMeta] = useState(null);
     const [resumeUrl, setResumeUrl] = useState('');
     const [resumeName, setResumeName] = useState('resume.pdf');
+    const [profileImageUrl, setProfileImageUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const displayProfile = viewMode === 'current' || !snapshotProfile ? currentProfile : snapshotProfile;
@@ -133,8 +134,8 @@ const HRProfile = () => {
     useEffect(() => {
         let isMounted = true;
 
-            const fetchResume = async () => {
-                if (!backendUrl || !displayProfile?._id || !user?.token) {
+        const fetchResume = async () => {
+            if (!backendUrl || !displayProfile?._id || !user?.token) {
                 if (isMounted) {
                     setResumeUrl('');
                     setResumeName('resume.pdf');
@@ -183,6 +184,43 @@ const HRProfile = () => {
         };
 
         fetchResume();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [backendUrl, displayProfile?._id, snapshotMeta, user?.token, viewMode]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchProfileImage = async () => {
+            if (!backendUrl || !displayProfile?._id || !user?.token) {
+                if (isMounted) setProfileImageUrl('');
+                return;
+            }
+
+            try {
+                if (viewMode === 'snapshot' && snapshotMeta) {
+                    if (isMounted) setProfileImageUrl(snapshotMeta.profileImage?.url || '');
+                    return;
+                }
+
+                const response = await fetch(`${backendUrl}/api/faculty/profile-image/${displayProfile._id}`, {
+                    headers: { Authorization: `Bearer ${user.token}` },
+                });
+                if (!response.ok) {
+                    if (response.status !== 404) throw new Error('Profile image was not available.');
+                    if (isMounted) setProfileImageUrl('');
+                    return;
+                }
+                const data = await response.json();
+                if (isMounted) setProfileImageUrl(data.url || '');
+            } catch {
+                if (isMounted) setProfileImageUrl('');
+            }
+        };
+
+        fetchProfileImage();
 
         return () => {
             isMounted = false;
@@ -306,6 +344,7 @@ const HRProfile = () => {
                     resumeUrl={resumeUrl}
                     resumeName={resumeName}
                     onRefreshResume={refreshResumeUrl}
+                    profileImageUrl={profileImageUrl}
                 />
             </div>
         </RippleBackground>

@@ -46,6 +46,8 @@ const AddProfilePage = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState("");
   const [resumeDownloadUrl, setResumeDownloadUrl] = useState("");
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState("");
   const [previewState, setPreviewState] = useState(initialPreviewState);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -54,8 +56,37 @@ const AddProfilePage = () => {
     return () => {
       if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
       if (resumeDownloadUrl) URL.revokeObjectURL(resumeDownloadUrl);
+      if (profileImagePreviewUrl) URL.revokeObjectURL(profileImagePreviewUrl);
     };
-  }, [resumePreviewUrl, resumeDownloadUrl]);
+  }, [resumePreviewUrl, resumeDownloadUrl, profileImagePreviewUrl]);
+
+  const handleProfileImageUpload = (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+
+    if (!file) return;
+
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+      setFileError('Invalid image type. Only JPEG, PNG, WEBP, and GIF images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('Image size exceeds 5MB limit. Please choose a smaller image.');
+      return;
+    }
+
+    if (profileImagePreviewUrl) URL.revokeObjectURL(profileImagePreviewUrl);
+    setProfileImageFile(file);
+    setProfileImagePreviewUrl(URL.createObjectURL(file));
+    setFileError('');
+  };
+
+  const clearProfileImageSelection = () => {
+    if (profileImagePreviewUrl) URL.revokeObjectURL(profileImagePreviewUrl);
+    setProfileImageFile(null);
+    setProfileImagePreviewUrl('');
+  };
 
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
@@ -199,6 +230,9 @@ const AddProfilePage = () => {
       // Add resume file if uploaded
       if (resumeFile) {
         formDataToSend.append('resume', resumeFile);
+      }
+      if (profileImageFile) {
+        formDataToSend.append('profileImage', profileImageFile);
       }
 
       const response = await fetch(`${backendUrl}/api/faculty/add`, {
@@ -405,6 +439,36 @@ const AddProfilePage = () => {
                     Choose Resume File
                   </div>
                 </label>
+                <div className="mt-5 border-t border-white/30 pt-4 text-left">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h4 className="font-semibold text-white">Profile picture</h4>
+                      <p className="text-xs text-blue-100">JPEG, PNG, WEBP, or GIF | Max size: 5MB</p>
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                      />
+                      Choose Photo
+                    </label>
+                  </div>
+                  {profileImageFile && (
+                    <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/40 bg-white/10 p-2">
+                      <img src={profileImagePreviewUrl} alt="Profile preview" className="h-14 w-14 rounded-full object-cover" />
+                      <p className="min-w-0 flex-1 truncate text-sm text-white">{profileImageFile.name}</p>
+                      <button
+                        type="button"
+                        onClick={clearProfileImageSelection}
+                        className="text-xs font-medium text-red-100 hover:text-white"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

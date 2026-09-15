@@ -63,6 +63,25 @@ async function copyResumeForApplication(key, userId, filename) {
   return snapshotKey;
 }
 
+async function copyProfileImageForApplication(key, userId, filename) {
+  if (!hasR2Config || !s3Client || !key) {
+    return null;
+  }
+
+  const safeName = (filename || "profile-image").replace(/[^a-zA-Z0-9._-]/g, "-");
+  const snapshotKey = `application-profile-images/${userId}/${Date.now()}-${safeName}`;
+
+  await s3Client.send(
+    new CopyObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      CopySource: `${process.env.R2_BUCKET_NAME}/${key}`,
+      Key: snapshotKey,
+    })
+  );
+
+  return snapshotKey;
+}
+
 async function uploadResumeToR2(file, userId) {
   if (!file) {
     return null;
@@ -99,9 +118,56 @@ async function uploadResumeToR2(file, userId) {
   };
 }
 
+async function uploadProfileImageToR2(file, userId) {
+  if (!file) {
+    return null;
+  }
+
+  if (!hasR2Config || !s3Client) {
+    throw new Error('Cloudflare R2 is not configured. Add R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME.');
+  }
+
+  const safeName = file.originalname
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9._-]/g, '-');
+  const key = `profile-images/${userId}/${Date.now()}-${safeName}`;
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      Metadata: {
+        originalName: safeName,
+      },
+    })
+  );
+
+  return {
+    url: null,
+    key,
+    filename: safeName,
+    size: file.size,
+    contentType: file.mimetype,
+  };
+}
+
+async function getPrivateProfileImageUrl(key, expiresInSeconds = 300) {
+  return getPrivateResumeUrl(key, expiresInSeconds);
+}
+
+async function deleteProfileImageFromR2(key) {
+  return deleteResumeFromR2(key);
+}
+
 module.exports = {
   uploadResumeToR2,
   getPrivateResumeUrl,
   deleteResumeFromR2,
+  uploadProfileImageToR2,
+  getPrivateProfileImageUrl,
+  deleteProfileImageFromR2,
   copyResumeForApplication,
+  copyProfileImageForApplication,
 };

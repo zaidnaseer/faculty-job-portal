@@ -29,6 +29,7 @@ const ApplicantProfilePage = () => {
   const [originalProfile, setOriginalProfile] = useState(null);
   const [resumeUrl, setResumeUrl] = useState("");
   const [resumeName, setResumeName] = useState("resume.pdf");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -171,6 +172,38 @@ const ApplicantProfilePage = () => {
     };
   }, [backendUrl, profile?._id, user?.token]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProfileImage = async () => {
+      if (!backendUrl || !profile?._id || !user?.token) {
+        if (isMounted) setProfileImageUrl("");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${backendUrl}/api/faculty/profile-image/${profile._id}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        if (!response.ok) {
+          if (response.status !== 404) throw new Error("Profile image not available.");
+          if (isMounted) setProfileImageUrl("");
+          return;
+        }
+        const data = await response.json();
+        if (isMounted) setProfileImageUrl(data.url || "");
+      } catch {
+        if (isMounted) setProfileImageUrl("");
+      }
+    };
+
+    fetchProfileImage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [backendUrl, profile?._id, user?.token]);
+
   const refreshResumeUrl = async () => {
     const token = localStorage.getItem("token") || user?.token;
     if (!backendUrl || !profile?._id || !token) {
@@ -235,6 +268,62 @@ const ApplicantProfilePage = () => {
     setProfile((prev) => ({ ...prev, resumeFile: data.resumeFile }));
     setResumeName(data.resumeFile?.filename || file.name);
     await refreshResumeUrl();
+  };
+
+  const refreshProfileImageUrl = async () => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      return null;
+    }
+
+    const response = await fetch(`${backendUrl}/api/faculty/profile-image/${profile._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      throw new Error("Profile image is no longer available. Please try again.");
+    }
+
+    const data = await response.json();
+    setProfileImageUrl(data.url || "");
+    return data;
+  };
+
+  const uploadProfileImage = async (file) => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+    const response = await fetch(`${backendUrl}/api/faculty/profile-image/${profile._id}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to upload profile image.");
+    }
+    await refreshProfileImageUrl();
+  };
+
+  const deleteProfileImage = async () => {
+    const token = localStorage.getItem("token") || user?.token;
+    if (!backendUrl || !profile?._id || !token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const response = await fetch(`${backendUrl}/api/faculty/profile-image/${profile._id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to delete profile image.");
+    }
+    setProfileImageUrl("");
+    setProfile((prev) => ({ ...prev, profileImage: undefined }));
   };
 
   const handleCancel = () => {
@@ -341,6 +430,9 @@ const ApplicantProfilePage = () => {
           onRefreshResume={refreshResumeUrl}
           onUploadResume={uploadResume}
           onDeleteResume={deleteResume}
+          profileImageUrl={profileImageUrl}
+          onUploadProfileImage={!isHrFlow ? uploadProfileImage : undefined}
+          onDeleteProfileImage={!isHrFlow ? deleteProfileImage : undefined}
         />
       </div>
     </RippleBackground>

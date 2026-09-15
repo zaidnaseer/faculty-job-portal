@@ -5,7 +5,6 @@ const Profile = require("../models/Profile");
 // Get profile by faculty user ID
 
 router.get("/:userId", async (req, res) => {
-  console.log("Fetching profile for user:", req.params.userId);
   try {
     const profile = await Profile.findOne({ user: req.params.userId });
     if (!profile) {

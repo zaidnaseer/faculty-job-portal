@@ -2,6 +2,7 @@ import { useEffect, useState, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import RippleBackground from "../components/RippleBackground";
+import defaultProfileImage from "../../assets/default-profile.jpg";
 
 const JobApplicantsPage = () => {
     const { jobId } = useParams();
@@ -157,9 +158,11 @@ const JobApplicantsPage = () => {
                     <ul className="divide-y divide-gray-100 bg-white rounded-xl shadow p-6">
                         {sortedApplicants.map((faculty) => (
                             <li key={faculty._id} className="flex items-center py-3">
-                                <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
-                                    {faculty.name?.[0]?.toUpperCase() || "?"}
-                                </div>
+                                <img
+                                    src={faculty.profileImage || defaultProfileImage}
+                                    alt={faculty.name || "Applicant"}
+                                    className="mr-4 h-10 w-10 rounded-full object-cover"
+                                />
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 font-medium text-gray-800">
                                         {faculty.name}

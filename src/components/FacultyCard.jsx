@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom';
 import { FaEnvelope, FaPhone, FaUniversity } from 'react-icons/fa';
 import { formatFullDate } from '../utils/dateFormatting';
+import defaultProfileImage from '../../assets/default-profile.jpg';
 
 const FacultyCard = ({ faculty }) => {
   return (
     <div className="card flex flex-col md:flex-row gap-4 mb-4">
       <div className="flex-shrink-0">
-        <img 
-          src={faculty.profileImage || "/assets/default-profile.jpg"} 
+        <img
+          src={faculty.profileImage || defaultProfileImage}
           alt={faculty.name}
           className="w-24 h-24 object-cover rounded-full"
         />
       </div>
-      
+
       <div className="flex-grow">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h3 className="text-lg font-bold">{faculty.name}</h3>
@@ -20,9 +21,9 @@ const FacultyCard = ({ faculty }) => {
             Applied: {formatFullDate(faculty.appliedDate, 'Date unavailable')}
           </div>
         </div>
-        
+
         <p className="mt-1 text-primary font-medium">{faculty.specialization}</p>
-        
+
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
           <div className="flex items-center">
             <FaEnvelope className="mr-2 text-gray-400" />
@@ -37,7 +38,7 @@ const FacultyCard = ({ faculty }) => {
             <span>{faculty.currentInstitution}</span>
           </div>
         </div>
-        
+
         <div className="mt-3 flex flex-wrap gap-2">
           {faculty.skills.slice(0, 4).map((skill, index) => (
             <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
@@ -51,10 +52,10 @@ const FacultyCard = ({ faculty }) => {
           )}
         </div>
       </div>
-      
+
       <div className="flex-shrink-0 flex flex-col gap-2">
-        <Link 
-          to={`/hr/profile/${faculty.id}`} 
+        <Link
+          to={`/hr/profile/${faculty.id}`}
           className="btn btn-primary text-center whitespace-nowrap"
         >
           View Profile

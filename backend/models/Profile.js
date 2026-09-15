@@ -30,6 +30,13 @@ const profileSchema = new mongoose.Schema({
     description: String,
     link: String,
   }],
+  profileImage: {
+    url: String,
+    key: String,
+    filename: String,
+    size: Number,
+    contentType: String,
+  },
   resumeFile: {
     url: String,
     key: String,

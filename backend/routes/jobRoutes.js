@@ -2,7 +2,12 @@ const express = require("express");
 const router = express.Router();
 const Job = require("../models/Job");
 const Profile = require("../models/Profile");
-const { getPrivateResumeUrl, copyResumeForApplication } = require("../utils/r2");
+const {
+  getPrivateResumeUrl,
+  copyResumeForApplication,
+  getPrivateProfileImageUrl,
+  copyProfileImageForApplication,
+} = require("../utils/r2");
 const { requireAuth, protect } = require("../middleware/authMiddleware");
 
 const buildProfileSnapshot = (profile) => ({
@@ -113,7 +118,6 @@ router.get('/my-applications', protect(["faculty"]), async (req, res) => {
 });
 
 router.get("/my-jobs", protect(['hr']), async (req, res) => {
-  console.log("Fetching HR jobs for user:");
   try {
     const visitsByJobId = new Map(
       (req.user.applicantListVisits || []).map((visit) => [visit.job.toString(), visit.visitedAt])
@@ -183,10 +187,14 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
       withdrawn: []
     };
 
-    job.applications.forEach((entry) => {
-      if (!entry?.user) return;
+    for (const entry of job.applications) {
+      if (!entry?.user) continue;
 
       const applicant = entry.user.toObject ? entry.user.toObject() : entry.user;
+      const snapshotImage = entry.profileSnapshot?.profileImage;
+      applicant.profileImage = snapshotImage?.key
+        ? await getPrivateProfileImageUrl(snapshotImage.key, 300)
+        : "";
       applicant.isNew = Boolean(
         entry.status === "active" &&
         entry.appliedAt &&
@@ -206,7 +214,7 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
       if (entry.status === "withdrawn") {
         applicantsByStatus.withdrawn.push(applicant);
       }
-    });
+    }
 
     res.json({
       applicantsByStatus,
@@ -273,12 +281,24 @@ router.get("/:jobId/applicants/:applicantId/snapshot", protect(["hr"]), async (r
     const profileSnapshot = application.profileSnapshot
       ? { ...application.profileSnapshot, resumeFile: undefined }
       : null;
+    const profileImageSnapshot = application.profileSnapshot?.profileImage;
+    const profileImageUrl = profileImageSnapshot?.key
+      ? await getPrivateProfileImageUrl(profileImageSnapshot.key, 300)
+      : null;
+
+    if (profileSnapshot) {
+      profileSnapshot.profileImage = profileImageUrl;
+    }
 
     return res.status(200).json({
       profileSnapshot,
       resume: resumeUrl ? {
         url: resumeUrl,
         filename: resumeSnapshot.filename || "resume.pdf",
+      } : null,
+      profileImage: profileImageUrl ? {
+        url: profileImageUrl,
+        filename: profileImageSnapshot.filename || "profile-image",
       } : null,
       profileUpdatedAt: application.profileUpdatedAt || null,
       snapshotCapturedAt: application.snapshotCapturedAt || null,
@@ -447,6 +467,13 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
     }
 
     const profileSnapshot = buildProfileSnapshot(profile);
+    if (profileSnapshot.profileImage?.key) {
+      profileSnapshot.profileImage.key = await copyProfileImageForApplication(
+        profileSnapshot.profileImage.key,
+        req.user._id,
+        profileSnapshot.profileImage.filename
+      );
+    }
     if (profileSnapshot.resumeFile?.key) {
       profileSnapshot.resumeFile.key = await copyResumeForApplication(
         profileSnapshot.resumeFile.key,
