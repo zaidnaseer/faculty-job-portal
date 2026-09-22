@@ -12,8 +12,6 @@ const normalizeProfile = (data) => ({
   publications: Array.isArray(data?.publications) ? data.publications : [],
 });
 
-const cloneProfile = (data) => JSON.parse(JSON.stringify(data));
-
 const ApplicantProfilePage = () => {
   const { user } = useContext(AuthContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -26,11 +24,9 @@ const ApplicantProfilePage = () => {
   const isHrFlow = user?.role === "hr";
 
   const [profile, setProfile] = useState(null);
-  const [originalProfile, setOriginalProfile] = useState(null);
   const [resumeUrl, setResumeUrl] = useState("");
   const [resumeName, setResumeName] = useState("resume.pdf");
   const [profileImageUrl, setProfileImageUrl] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -99,7 +95,6 @@ const ApplicantProfilePage = () => {
 
         if (isMounted) {
           setProfile(normalized);
-          setOriginalProfile(cloneProfile(normalized));
         }
       } catch (fetchError) {
         if (isMounted) {
@@ -326,14 +321,7 @@ const ApplicantProfilePage = () => {
     setProfile((prev) => ({ ...prev, profileImage: undefined }));
   };
 
-  const handleCancel = () => {
-    if (originalProfile) {
-      setProfile(cloneProfile(originalProfile));
-    }
-    setIsEditing(false);
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (profileToSave = profile) => {
     if (isHrFlow || !profile?._id) {
       return;
     }
@@ -350,7 +338,7 @@ const ApplicantProfilePage = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(profileToSave),
       });
 
       if (!response.ok) {
@@ -367,8 +355,6 @@ const ApplicantProfilePage = () => {
       const updated = await response.json();
       const normalized = normalizeProfile(updated);
       setProfile(normalized);
-      setOriginalProfile(cloneProfile(normalized));
-      setIsEditing(false);
       alert("Profile updated successfully");
     } catch (saveError) {
       alert(saveError.message || "Update failed");
@@ -412,17 +398,8 @@ const ApplicantProfilePage = () => {
         <EditableProfile
           profile={profile}
           setProfile={setProfile}
-          isEditing={isEditing}
-          setIsEditing={(nextValue) => {
-            if (!nextValue) {
-              handleCancel();
-              return;
-            }
-            setIsEditing(true);
-          }}
           onSave={handleSave}
           canEdit={!isHrFlow}
-          pageTitle={isHrFlow ? "Applicant Profile" : "About"}
           showBackButton={isHrFlow}
           onBack={() => navigate(-1)}
           resumeUrl={resumeUrl}

@@ -203,12 +203,12 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
 
       if (entry.status === "active") {
         applicantsByStatus.active.push(applicant);
-        return;
+        continue;
       }
 
       if (entry.status === "rejected") {
         applicantsByStatus.rejected.push(applicant);
-        return;
+        continue;
       }
 
       if (entry.status === "withdrawn") {

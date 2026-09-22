@@ -334,11 +334,8 @@ const HRProfile = () => {
                 <EditableProfile
                     profile={displayProfile}
                     setProfile={() => { }}
-                    isEditing={false}
-                    setIsEditing={() => { }}
                     onSave={() => { }}
                     canEdit={false}
-                    pageTitle={viewMode === 'current' ? 'Current Profile' : 'Applicant Profile'}
                     showBackButton
                     onBack={() => jobId ? navigate(`/job-applicants/${jobId}`) : navigate(-1)}
                     resumeUrl={resumeUrl}

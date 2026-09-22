@@ -9,6 +9,8 @@ const profileSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
+  title: { type: String, default: "" },
+  location: { type: String, default: "" },
   skills: [String],
   summary: { type: String },
   experience: [{

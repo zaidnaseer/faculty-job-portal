@@ -158,7 +158,7 @@ const CreateJobPage = () => {
                 <li>Use 5-8 core skills to help candidates self-select.</li>
               </ul>
               <div className="mt-4 rounded-lg bg-white px-3 py-2 text-xs text-slate-500">
-                You can edit the posting later from your HR dashboard.
+                You can edit the posting later from your dashboard.
               </div>
             </div>
           </div>

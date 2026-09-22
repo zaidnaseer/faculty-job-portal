@@ -5,8 +5,8 @@ import {
     Phone,
     MapPin,
     Pencil,
-    Save,
     X,
+    Check,
     GraduationCap,
     Briefcase,
     BookOpen,
@@ -26,11 +26,8 @@ import defaultProfileImage from "../../assets/default-profile.jpg";
 const EditableProfile = ({
     profile,
     setProfile,
-    isEditing,
-    setIsEditing,
     onSave,
     canEdit,
-    pageTitle = "Profile",
     showBackButton = false,
     onBack,
     resumeUrl = "",
@@ -42,16 +39,16 @@ const EditableProfile = ({
     onUploadProfileImage,
     onDeleteProfileImage,
 }) => {
-    const [newSkill, setNewSkill] = useState("");
-    const [newEducation, setNewEducation] = useState({ degree: "", institution: "", year: "" });
-    const [newExperience, setNewExperience] = useState({
-        title: "",
-        institution: "",
-        start: "",
-        end: "",
-        description: "",
-    });
-    const [newPublication, setNewPublication] = useState({ title: "", description: "", link: "" });
+    const [activeEditor, setActiveEditor] = useState(null);
+    const [editorIndex, setEditorIndex] = useState(null);
+    const [editorForm, setEditorForm] = useState({});
+    const [editorError, setEditorError] = useState("");
+    const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
+    const [draftSkills, setDraftSkills] = useState([]);
+    const [newSkillValue, setNewSkillValue] = useState("");
+    const [editingSkillIndex, setEditingSkillIndex] = useState(null);
+    const [editingSkillValue, setEditingSkillValue] = useState("");
+    const [skillsError, setSkillsError] = useState("");
     const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
     const [activeResumeUrl, setActiveResumeUrl] = useState(resumeUrl);
     const [activeResumeName, setActiveResumeName] = useState(resumeName);
@@ -94,12 +91,6 @@ const EditableProfile = ({
         document.addEventListener("pointerdown", handleDocumentPointerDown);
         return () => document.removeEventListener("pointerdown", handleDocumentPointerDown);
     }, [isProfileImageMenuOpen]);
-
-    useEffect(() => {
-        if (!isEditing) {
-            setIsProfileImageMenuOpen(false);
-        }
-    }, [isEditing]);
 
     useEffect(() => () => {
         if (profileImageCrop?.url) {
@@ -161,70 +152,230 @@ const EditableProfile = ({
         setProfile((prev) => ({ ...prev, [name]: value }));
     };
 
-    const updateListItem = (listName, index, field, value) => {
-        setProfile((prev) => {
-            const list = Array.isArray(prev[listName]) ? [...prev[listName]] : [];
-            list[index] = { ...list[index], [field]: value };
-            return { ...prev, [listName]: list };
-        });
+    const editorDefaults = {
+        personal: {
+            name: profile?.name || "",
+            title: profile?.title || "",
+            email: profile?.email || "",
+            phone: profile?.phone || "",
+            location: profile?.location || "",
+        },
+        about: { summary: profile?.summary || "" },
+        education: { degree: "", institution: "", year: "" },
+        experience: { title: "", institution: "", start: "", end: "", description: "" },
+        publications: { title: "", description: "", link: "" },
     };
 
-    const removeListItem = (listName, index) => {
-        setProfile((prev) => ({
-            ...prev,
-            [listName]: (Array.isArray(prev[listName]) ? prev[listName] : []).filter((_, i) => i !== index),
-        }));
+    const openEditor = (type, index = null) => {
+        if (type === "personal") {
+            setActiveEditor("personal");
+            setEditorIndex(null);
+            setEditorForm({
+                name: profile?.name || "",
+                title: profile?.title || "",
+                email: profile?.email || "",
+                phone: profile?.phone || "",
+                location: profile?.location || "",
+            });
+            setEditorError("");
+            return;
+        }
+
+        const existing = index === null ? null : profile?.[type]?.[index];
+        setActiveEditor(type);
+        setEditorIndex(index);
+        setEditorForm({ ...editorDefaults[type], ...(existing || {}) });
+        setEditorError("");
+    };
+
+    const closeEditor = () => {
+        setActiveEditor(null);
+        setEditorIndex(null);
+        setEditorForm({});
+        setEditorError("");
+    };
+
+    const saveEditor = () => {
+        if (activeEditor === "personal") {
+            if (!hasText(editorForm.name)) {
+                setEditorError("Name is required.");
+                return;
+            }
+            if (!hasText(editorForm.email)) {
+                setEditorError("Email is required.");
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(editorForm.email.trim())) {
+                setEditorError("Please enter a valid email address.");
+                return;
+            }
+            if (!hasText(editorForm.phone)) {
+                setEditorError("Phone number is required.");
+                return;
+            }
+
+            const nextProfile = {
+                ...profile,
+                name: editorForm.name.trim(),
+                title: typeof editorForm.title === "string" ? editorForm.title.trim() : "",
+                email: editorForm.email.trim(),
+                phone: editorForm.phone.trim(),
+                location: typeof editorForm.location === "string" ? editorForm.location.trim() : "",
+            };
+            setProfile(nextProfile);
+            onSave(nextProfile);
+            closeEditor();
+            return;
+        }
+
+        const requiredField = activeEditor === "about" ? editorForm.summary : editorForm.degree || editorForm.title;
+        const institutionRequired = activeEditor === "education" || activeEditor === "experience";
+        if (!hasText(requiredField) || (institutionRequired && !hasText(editorForm.institution))) {
+            setEditorError(activeEditor === "about" ? "Add some content before saving." : "Complete the required fields before saving.");
+            return;
+        }
+
+        const nextProfile = activeEditor === "about"
+            ? { ...profile, summary: editorForm.summary.trim() }
+            : {
+                ...profile,
+                [activeEditor]: (() => {
+                    const list = Array.isArray(profile?.[activeEditor]) ? [...profile[activeEditor]] : [];
+                    if (editorIndex === null) list.push(editorForm);
+                    else list[editorIndex] = editorForm;
+                    return list;
+                })(),
+            };
+        setProfile(nextProfile);
+        onSave(nextProfile);
+        closeEditor();
+    };
+
+    const deleteEditorEntry = () => {
+        if (editorIndex === null || activeEditor === "about" || activeEditor === "personal") return;
+
+        const nextProfile = {
+            ...profile,
+            [activeEditor]: profile[activeEditor].filter((_, index) => index !== editorIndex),
+        };
+        setProfile(nextProfile);
+        onSave(nextProfile);
+        closeEditor();
+    };
+
+    const openSkillsModal = () => {
+        setIsSkillsModalOpen(true);
+        setDraftSkills(Array.isArray(profile?.skills) ? [...profile.skills] : []);
+        setNewSkillValue("");
+        setEditingSkillIndex(null);
+        setEditingSkillValue("");
+        setSkillsError("");
+    };
+
+    const closeSkillsModal = () => {
+        setIsSkillsModalOpen(false);
+        setDraftSkills([]);
+        setNewSkillValue("");
+        setEditingSkillIndex(null);
+        setEditingSkillValue("");
+        setSkillsError("");
+    };
+
+    const saveSkillsModal = () => {
+        let nextSkills = draftSkills;
+
+        if (editingSkillIndex !== null) {
+            const trimmed = editingSkillValue.trim();
+            if (!trimmed) {
+                setSkillsError("Skill cannot be empty.");
+                return;
+            }
+            if (nextSkills.some((skill, index) => index !== editingSkillIndex && skill.toLowerCase() === trimmed.toLowerCase())) {
+                setSkillsError("That skill has already been added.");
+                return;
+            }
+            nextSkills = [...draftSkills];
+            nextSkills[editingSkillIndex] = trimmed;
+        }
+
+        const pendingNew = newSkillValue.trim();
+        if (pendingNew) {
+            if (nextSkills.some((skill) => skill.toLowerCase() === pendingNew.toLowerCase())) {
+                setSkillsError("That skill has already been added.");
+                return;
+            }
+            nextSkills = [...nextSkills, pendingNew];
+        }
+
+        const nextProfile = { ...profile, skills: nextSkills };
+        setProfile(nextProfile);
+        onSave(nextProfile);
+        setIsSkillsModalOpen(false);
+        setDraftSkills([]);
+        setNewSkillValue("");
+        setEditingSkillIndex(null);
+        setEditingSkillValue("");
+        setSkillsError("");
     };
 
     const addSkill = () => {
-        if (!hasText(newSkill)) {
+        const trimmed = newSkillValue.trim();
+        if (!trimmed) {
+            setSkillsError("Enter a skill before adding.");
             return;
         }
 
-        setProfile((prev) => ({
-            ...prev,
-            skills: [...(Array.isArray(prev.skills) ? prev.skills : []), newSkill.trim()],
-        }));
-        setNewSkill("");
+        if (draftSkills.some((skill) => skill.toLowerCase() === trimmed.toLowerCase())) {
+            setSkillsError("That skill has already been added.");
+            return;
+        }
+
+        setDraftSkills((prev) => [...prev, trimmed]);
+        setNewSkillValue("");
+        setSkillsError("");
     };
 
-    const addEducation = () => {
-        if (!hasText(newEducation.degree) || !hasText(newEducation.institution)) {
-            return;
-        }
-
-        setProfile((prev) => ({
-            ...prev,
-            education: [...(Array.isArray(prev.education) ? prev.education : []), newEducation],
-        }));
-
-        setNewEducation({ degree: "", institution: "", year: "" });
+    const startEditSkill = (index) => {
+        setEditingSkillIndex(index);
+        setEditingSkillValue(draftSkills[index] || "");
+        setSkillsError("");
     };
 
-    const addExperience = () => {
-        if (!hasText(newExperience.title) || !hasText(newExperience.institution)) {
-            return;
-        }
-
-        setProfile((prev) => ({
-            ...prev,
-            experience: [...(Array.isArray(prev.experience) ? prev.experience : []), newExperience],
-        }));
-
-        setNewExperience({ title: "", institution: "", start: "", end: "", description: "" });
+    const cancelEditSkill = () => {
+        setEditingSkillIndex(null);
+        setEditingSkillValue("");
+        setSkillsError("");
     };
 
-    const addPublication = () => {
-        if (!hasText(newPublication.title)) {
+    const confirmEditSkill = () => {
+        const trimmed = editingSkillValue.trim();
+        if (!trimmed) {
+            setSkillsError("Skill cannot be empty.");
             return;
         }
 
-        setProfile((prev) => ({
-            ...prev,
-            publications: [...(Array.isArray(prev.publications) ? prev.publications : []), newPublication],
-        }));
+        if (draftSkills.some((skill, index) => index !== editingSkillIndex && skill.toLowerCase() === trimmed.toLowerCase())) {
+            setSkillsError("That skill has already been added.");
+            return;
+        }
 
-        setNewPublication({ title: "", description: "", link: "" });
+        setDraftSkills((prev) => {
+            const next = [...prev];
+            next[editingSkillIndex] = trimmed;
+            return next;
+        });
+        setEditingSkillIndex(null);
+        setEditingSkillValue("");
+        setSkillsError("");
+    };
+
+    const deleteSkill = (index) => {
+        setDraftSkills((prev) => prev.filter((_, i) => i !== index));
+        if (editingSkillIndex === index) {
+            setEditingSkillIndex(null);
+            setEditingSkillValue("");
+        }
     };
 
     const getFreshResume = async () => {
@@ -459,7 +610,7 @@ const EditableProfile = ({
     };
 
     useEffect(() => {
-        if (!profileImageCrop && !isProfileImageDeleteConfirmOpen) {
+        if (!profileImageCrop && !isProfileImageDeleteConfirmOpen && !activeEditor && !isSkillsModalOpen) {
             return undefined;
         }
 
@@ -468,14 +619,18 @@ const EditableProfile = ({
 
             if (profileImageCrop) {
                 closeProfileImageCrop();
-            } else {
+            } else if (isProfileImageDeleteConfirmOpen) {
                 setIsProfileImageDeleteConfirmOpen(false);
+            } else if (activeEditor) {
+                closeEditor();
+            } else if (isSkillsModalOpen) {
+                closeSkillsModal();
             }
         };
 
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [profileImageCrop, isProfileImageDeleteConfirmOpen]);
+    }, [profileImageCrop, isProfileImageDeleteConfirmOpen, activeEditor, isSkillsModalOpen]);
 
     const confirmProfileImageCrop = async () => {
         const layout = getCropImageLayout();
@@ -567,33 +722,6 @@ const EditableProfile = ({
                 ) : (
                     <div></div>
                 )}
-
-                {canEdit && (
-                    isEditing ? (
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                className="flex items-center gap-1 text-gray-700 bg-gray-200 hover:bg-gray-300 py-2 px-4 rounded-md"
-                            >
-                                <X size={16} /> Cancel
-                            </button>
-
-                            <button
-                                onClick={onSave}
-                                className="flex items-center gap-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                            >
-                                <Save size={16} /> Save
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-1 text-white bg-blue-600 py-2 px-4 rounded-md hover:bg-blue-700"
-                        >
-                            <Pencil size={16} /> Edit
-                        </button>
-                    )
-                )}
             </div>
 
             <div className="w-full px-6">
@@ -602,7 +730,18 @@ const EditableProfile = ({
 
             <div className="max-w-6xl mx-auto px-6 pb-10">
                 <div className={`flex flex-col md:flex-row gap-6 -mt-20`}>
-                    <div className="w-full md:w-1/3 bg-white rounded-xl shadow p-6 text-center">
+                    <div className="relative w-full md:w-1/3 bg-white rounded-xl shadow p-6 text-center">
+                        {canEdit && (
+                            <button
+                                type="button"
+                                onClick={() => openEditor("personal")}
+                                aria-label="Edit personal details"
+                                title="Edit personal details"
+                                className="absolute right-4 top-4 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                                <Pencil size={18} />
+                            </button>
+                        )}
                         <div ref={profileImageMenuRef} className="group relative mx-auto h-32 w-32">
                             <img
                                 src={profileImageUrl || defaultProfileImage}
@@ -610,7 +749,7 @@ const EditableProfile = ({
                                 className="h-32 w-32 rounded-full border-4 border-white object-cover"
                             />
 
-                            {isEditing && onUploadProfileImage && (
+                            {canEdit && onUploadProfileImage && (
                                 <>
                                     <button
                                         type="button"
@@ -660,29 +799,10 @@ const EditableProfile = ({
                             )}
                         </div>
 
-                        {isEditing ? (
-                            <div className="space-y-2 mt-4 text-left">
-                                <input
-                                    value={profile?.name || ""}
-                                    onChange={(e) => updateProfileField("name", e.target.value)}
-                                    className="border p-2 w-full rounded"
-                                    placeholder="Full name"
-                                />
-                                <input
-                                    value={profile?.title || ""}
-                                    onChange={(e) => updateProfileField("title", e.target.value)}
-                                    className="border p-2 w-full rounded"
-                                    placeholder="Title"
-                                />
-                            </div>
-                        ) : (
-                            <>
-                                <h2 className="text-xl font-bold mt-4">
-                                    {hasText(profile?.name) ? profile.name : "Name not added"}
-                                </h2>
-                                <p className="text-gray-600">{hasText(profile?.title) ? profile.title : "Title not added"}</p>
-                            </>
-                        )}
+                        <h2 className="text-xl font-bold mt-2">
+                            {hasText(profile?.name) ? profile.name : "Name not added"}
+                        </h2>
+                        {hasText(profile?.title) && <p className="text-gray-600">{profile.title}</p>}
 
                         {isProfileImageActionLoading && <p className="mt-3 text-xs text-gray-500">Updating profile picture...</p>}
                         {profileImageError && <p className="mt-3 text-xs text-red-600">{profileImageError}</p>}
@@ -875,69 +995,39 @@ const EditableProfile = ({
                         <div className="mt-6 text-left space-y-2 text-sm">
                             <div className="flex items-center gap-2">
                                 <Mail size={16} />
-                                {isEditing ? (
-                                    <input
-                                        value={profile?.email || ""}
-                                        onChange={(e) => updateProfileField("email", e.target.value)}
-                                        className="border p-2 w-full rounded"
-                                        placeholder="Email"
-                                    />
-                                ) : (
-                                    <span>{hasText(profile?.email) ? profile.email : "Email not added"}</span>
-                                )}
+                                <span>{hasText(profile?.email) ? profile.email : "Email not added"}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Phone size={16} />
-                                {isEditing ? (
-                                    <input
-                                        value={profile?.phone || ""}
-                                        onChange={(e) => updateProfileField("phone", e.target.value)}
-                                        className="border p-2 w-full rounded"
-                                        placeholder="Phone"
-                                    />
-                                ) : (
-                                    <span>{hasText(profile?.phone) ? profile.phone : "Phone not added"}</span>
-                                )}
+                                <span>{hasText(profile?.phone) ? profile.phone : "Phone not added"}</span>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <MapPin size={16} />
-                                {isEditing ? (
-                                    <input
-                                        value={profile?.location || ""}
-                                        onChange={(e) => updateProfileField("location", e.target.value)}
-                                        className="border p-2 w-full rounded"
-                                        placeholder="Location"
-                                    />
-                                ) : (
-                                    <span>{hasText(profile?.location) ? profile.location : "Location not added"}</span>
-                                )}
-                            </div>
+                            {hasText(profile?.location) && (
+                                <div className="flex items-center gap-2">
+                                    <MapPin size={16} />
+                                    <span>{profile.location}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-6 text-left">
-                            <h3 className="flex items-center gap-2 font-semibold mb-2">
-                                <Award size={18} /> Skills
-                            </h3>
-
-                            {isEditing && (
-                                <div className="flex gap-2 mb-3">
-                                    <input
-                                        value={newSkill}
-                                        onChange={(e) => setNewSkill(e.target.value)}
-                                        className="border p-2 flex-1 rounded"
-                                        placeholder="Add skill"
-                                    />
-
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                                <h3 className="flex items-center gap-2 font-semibold">
+                                    <Award size={18} /> Skills
+                                </h3>
+                                {canEdit && (
                                     <button
-                                        onClick={addSkill}
-                                        className="bg-blue-600 text-white px-3 rounded flex items-center gap-1"
+                                        type="button"
+                                        onClick={openSkillsModal}
+                                        aria-label="Edit skills"
+                                        title="Edit skills"
+                                        className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"
                                     >
-                                        <Plus size={14} /> Add
+                                        <Pencil size={16} />
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             <div className="flex flex-wrap gap-2">
                                 {Array.isArray(profile?.skills) && profile.skills.length > 0 ? (
@@ -948,11 +1038,6 @@ const EditableProfile = ({
                                         >
                                             {skill}
 
-                                            {isEditing && (
-                                                <button onClick={() => removeListItem("skills", index)}>
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            )}
                                         </span>
                                     ))
                                 ) : (
@@ -964,22 +1049,19 @@ const EditableProfile = ({
 
                     <div className="flex-1 space-y-6">
                         <div className="bg-white p-6 rounded-xl shadow">
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-3">
-                                <User size={18} /> {pageTitle}
-                            </h3>
-
-                            {isEditing ? (
-                                <textarea
-                                    value={profile?.summary || ""}
-                                    onChange={(e) => updateProfileField("summary", e.target.value)}
-                                    className="w-full border p-3 rounded"
-                                    placeholder="Write a short summary"
-                                />
-                            ) : (
-                                <p className="text-gray-700">
-                                    {hasText(profile?.summary) ? profile.summary : "No summary added yet."}
-                                </p>
-                            )}
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h3 className="flex items-center gap-2 text-lg font-bold">
+                                    <User size={18} /> About
+                                </h3>
+                                {canEdit && (
+                                    <button type="button" onClick={() => openEditor("about")} aria-label="Edit about" title="Edit about" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
+                                        <Pencil size={17} />
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-gray-700">
+                                {hasText(profile?.summary) ? profile.summary : "No summary added yet."}
+                            </p>
                         </div>
 
                         {!resumeUrl && canEdit && onUploadResume && (
@@ -1103,75 +1185,32 @@ const EditableProfile = ({
                         )}
 
                         <div className="bg-white p-6 rounded-xl shadow">
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-4">
-                                <GraduationCap size={18} /> Education
-                            </h3>
-
-                            {isEditing && (
-                                <div className="space-y-2 mb-4">
-                                    <input
-                                        value={newEducation.degree}
-                                        onChange={(e) => setNewEducation((prev) => ({ ...prev, degree: e.target.value }))}
-                                        placeholder="Degree"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        value={newEducation.institution}
-                                        onChange={(e) => setNewEducation((prev) => ({ ...prev, institution: e.target.value }))}
-                                        placeholder="Institution"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        value={newEducation.year}
-                                        onChange={(e) => setNewEducation((prev) => ({ ...prev, year: e.target.value }))}
-                                        placeholder="Year"
-                                        className="border p-2 w-full rounded"
-                                    />
-
-                                    <button onClick={addEducation} className="bg-blue-600 text-white px-4 py-2 rounded">
-                                        Add Education
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h3 className="flex items-center gap-2 text-lg font-bold">
+                                    <GraduationCap size={18} /> Education
+                                </h3>
+                                {canEdit && (
+                                    <button type="button" onClick={() => openEditor("education")} aria-label="Add education" title="Add education" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
+                                        <Plus size={19} />
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             {Array.isArray(profile?.education) && profile.education.length > 0 ? (
                                 profile.education.map((edu, index) => (
-                                    <div key={index} className="border-l-4 border-indigo-500 pl-4 mb-4 flex justify-between gap-2">
-                                        {isEditing ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
-                                                <input
-                                                    value={edu?.degree || ""}
-                                                    onChange={(e) => updateListItem("education", index, "degree", e.target.value)}
-                                                    className="border p-2 rounded"
-                                                    placeholder="Degree"
-                                                />
-                                                <input
-                                                    value={edu?.institution || ""}
-                                                    onChange={(e) => updateListItem("education", index, "institution", e.target.value)}
-                                                    className="border p-2 rounded"
-                                                    placeholder="Institution"
-                                                />
-                                                <input
-                                                    value={edu?.year || ""}
-                                                    onChange={(e) => updateListItem("education", index, "year", e.target.value)}
-                                                    className="border p-2 rounded"
-                                                    placeholder="Year"
-                                                />
+                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <h4 className="font-semibold text-slate-900">{hasText(edu?.degree) ? edu.degree : "Degree not added"}</h4>
+                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                                    {formatMonthYear(edu?.year, "Year not added")}
+                                                </span>
                                             </div>
-                                        ) : (
-                                            <div>
-                                                <h4 className="font-semibold">{hasText(edu?.degree) ? edu.degree : "Degree not added"}</h4>
-                                                <p className="text-gray-600">{hasText(edu?.institution) ? edu.institution : "Institution not added"}</p>
-                                                <p className="text-sm text-gray-500">{formatMonthYear(edu?.year, "Year not added")}</p>
-                                            </div>
-                                        )}
-
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => removeListItem("education", index)}
-                                                className="text-red-500"
-                                            >
-                                                <Trash2 size={16} />
+                                            <p className="mt-1 text-sm text-slate-600">{hasText(edu?.institution) ? edu.institution : "Institution not added"}</p>
+                                        </div>
+                                        {canEdit && (
+                                            <button type="button" onClick={() => openEditor("education", index)} aria-label={`Edit education ${index + 1}`} title="Edit education" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
+                                                <Pencil size={16} />
                                             </button>
                                         )}
                                     </div>
@@ -1182,111 +1221,30 @@ const EditableProfile = ({
                         </div>
 
                         <div className="bg-white p-6 rounded-xl shadow">
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-4">
-                                <Briefcase size={18} /> Experience
-                            </h3>
-
-                            {isEditing && (
-                                <div className="space-y-2 mb-4">
-                                    <input
-                                        value={newExperience.title}
-                                        onChange={(e) => setNewExperience((prev) => ({ ...prev, title: e.target.value }))}
-                                        placeholder="Job title"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        value={newExperience.institution}
-                                        onChange={(e) => setNewExperience((prev) => ({ ...prev, institution: e.target.value }))}
-                                        placeholder="Institution"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        <input
-                                            value={newExperience.start}
-                                            onChange={(e) => setNewExperience((prev) => ({ ...prev, start: e.target.value }))}
-                                            placeholder="Start"
-                                            className="border p-2 w-full rounded"
-                                        />
-                                        <input
-                                            value={newExperience.end}
-                                            onChange={(e) => setNewExperience((prev) => ({ ...prev, end: e.target.value }))}
-                                            placeholder="End"
-                                            className="border p-2 w-full rounded"
-                                        />
-                                    </div>
-                                    <textarea
-                                        value={newExperience.description}
-                                        onChange={(e) => setNewExperience((prev) => ({ ...prev, description: e.target.value }))}
-                                        placeholder="Description"
-                                        className="border p-2 w-full rounded"
-                                    />
-
-                                    <button onClick={addExperience} className="bg-blue-600 text-white px-4 py-2 rounded">
-                                        Add Experience
-                                    </button>
-                                </div>
-                            )}
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h3 className="flex items-center gap-2 text-lg font-bold"><Briefcase size={18} /> Experience</h3>
+                                {canEdit && <button type="button" onClick={() => openEditor("experience")} aria-label="Add experience" title="Add experience" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Plus size={19} /></button>}
+                            </div>
 
                             {Array.isArray(profile?.experience) && profile.experience.length > 0 ? (
                                 profile.experience.map((exp, index) => (
-                                    <div key={index} className="border-l-4 border-indigo-500 pl-4 mb-4 flex justify-between gap-2">
-                                        {isEditing ? (
-                                            <div className="space-y-2 w-full">
-                                                <input
-                                                    value={exp?.title || ""}
-                                                    onChange={(e) => updateListItem("experience", index, "title", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Job title"
-                                                />
-                                                <input
-                                                    value={exp?.institution || ""}
-                                                    onChange={(e) => updateListItem("experience", index, "institution", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Institution"
-                                                />
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                    <input
-                                                        value={exp?.start || ""}
-                                                        onChange={(e) => updateListItem("experience", index, "start", e.target.value)}
-                                                        className="border p-2 w-full rounded"
-                                                        placeholder="Start"
-                                                    />
-                                                    <input
-                                                        value={exp?.end || ""}
-                                                        onChange={(e) => updateListItem("experience", index, "end", e.target.value)}
-                                                        className="border p-2 w-full rounded"
-                                                        placeholder="End"
-                                                    />
-                                                </div>
-                                                <textarea
-                                                    value={exp?.description || ""}
-                                                    onChange={(e) => updateListItem("experience", index, "description", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Description"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <h4 className="font-semibold">{hasText(exp?.title) ? exp.title : "Role not added"}</h4>
-                                                <p className="text-gray-600">{hasText(exp?.institution) ? exp.institution : "Organization not added"}</p>
-                                                <p className="text-sm text-gray-500">
+                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <h4 className="font-semibold text-slate-900">{hasText(exp?.title) ? exp.title : "Role not added"}</h4>
+                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                                                     {formatMonthYear(exp?.start, "Start not added")} - {exp?.current ? "Present" : formatMonthYear(exp?.end, "Present")}
-                                                    {formatExperienceDuration(exp?.start, exp?.end, exp?.current) && (
-                                                        <> · {formatExperienceDuration(exp?.start, exp?.end, exp?.current)}</>
-                                                    )}
-                                                </p>
-                                                <p className="text-gray-700 mt-1">{hasText(exp?.description) ? exp.description : ""}</p>
+                                                </span>
                                             </div>
-                                        )}
-
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => removeListItem("experience", index)}
-                                                className="text-red-500 flex items-center gap-1"
-                                            >
-                                                <Trash2 size={14} /> Remove
-                                            </button>
-                                        )}
+                                            <p className="mt-1 text-sm text-slate-600">{hasText(exp?.institution) ? exp.institution : "Organization not added"}</p>
+                                            {formatExperienceDuration(exp?.start, exp?.end, exp?.current) && (
+                                                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                    {formatExperienceDuration(exp?.start, exp?.end, exp?.current)}
+                                                </p>
+                                            )}
+                                            {hasText(exp?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{exp.description}</p>}
+                                        </div>
+                                        {canEdit && <button type="button" onClick={() => openEditor("experience", index)} aria-label={`Edit experience ${index + 1}`} title="Edit experience" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={16} /></button>}
                                     </div>
                                 ))
                             ) : (
@@ -1295,87 +1253,30 @@ const EditableProfile = ({
                         </div>
 
                         <div className="bg-white p-6 rounded-xl shadow">
-                            <h3 className="flex items-center gap-2 text-lg font-bold mb-4">
-                                <BookOpen size={18} /> Publications
-                            </h3>
-
-                            {isEditing && (
-                                <div className="space-y-2 mb-4">
-                                    <input
-                                        value={newPublication.title}
-                                        onChange={(e) => setNewPublication((prev) => ({ ...prev, title: e.target.value }))}
-                                        placeholder="Title"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        value={newPublication.description}
-                                        onChange={(e) => setNewPublication((prev) => ({ ...prev, description: e.target.value }))}
-                                        placeholder="Description"
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        value={newPublication.link}
-                                        onChange={(e) => setNewPublication((prev) => ({ ...prev, link: e.target.value }))}
-                                        placeholder="Link"
-                                        className="border p-2 w-full rounded"
-                                    />
-
-                                    <button onClick={addPublication} className="bg-blue-600 text-white px-4 py-2 rounded">
-                                        Add Publication
-                                    </button>
-                                </div>
-                            )}
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <h3 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={18} /> Publications</h3>
+                                {canEdit && <button type="button" onClick={() => openEditor("publications")} aria-label="Add publication" title="Add publication" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Plus size={19} /></button>}
+                            </div>
 
                             {Array.isArray(profile?.publications) && profile.publications.length > 0 ? (
                                 profile.publications.map((pub, index) => (
-                                    <div key={index} className="border p-4 rounded mb-3 flex justify-between gap-2">
-                                        {isEditing ? (
-                                            <div className="space-y-2 w-full">
-                                                <input
-                                                    value={pub?.title || ""}
-                                                    onChange={(e) => updateListItem("publications", index, "title", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Title"
-                                                />
-                                                <input
-                                                    value={pub?.description || ""}
-                                                    onChange={(e) => updateListItem("publications", index, "description", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Description"
-                                                />
-                                                <input
-                                                    value={pub?.link || ""}
-                                                    onChange={(e) => updateListItem("publications", index, "link", e.target.value)}
-                                                    className="border p-2 w-full rounded"
-                                                    placeholder="Link"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <h4 className="font-semibold">{hasText(pub?.title) ? pub.title : "Untitled publication"}</h4>
-                                                <p className="text-gray-600">{hasText(pub?.description) ? pub.description : ""}</p>
+                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
+                                        <div className="min-w-0">
+                                            <h4 className="font-semibold text-slate-900">{hasText(pub?.title) ? pub.title : "Untitled publication"}</h4>
+                                            {hasText(pub?.description) && <p className="mt-2 text-sm leading-6 text-slate-700">{pub.description}</p>}
 
-                                                {hasText(pub?.link) && (
-                                                    <a
-                                                        href={pub.link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 flex items-center gap-1 text-sm"
-                                                    >
-                                                        <LinkIcon size={14} /> Visit
-                                                    </a>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => removeListItem("publications", index)}
-                                                className="text-red-500"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
+                                            {hasText(pub?.link) && (
+                                                <a
+                                                    href={pub.link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
+                                                >
+                                                    <LinkIcon size={14} /> View publication
+                                                </a>
+                                            )}
+                                        </div>
+                                        {canEdit && <button type="button" onClick={() => openEditor("publications", index)} aria-label={`Edit publication ${index + 1}`} title="Edit publication" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={16} /></button>}
                                     </div>
                                 ))
                             ) : (
@@ -1385,6 +1286,258 @@ const EditableProfile = ({
                     </div>
                 </div>
             </div>
+
+            {isSkillsModalOpen && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="presentation">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="skills-editor-title">
+                        <div className="flex items-center justify-between gap-4">
+                            <h2 id="skills-editor-title" className="text-xl font-bold text-gray-900">
+                                Edit Skills
+                            </h2>
+                            <button type="button" onClick={closeSkillsModal} aria-label="Close dialog" title="Close" className="rounded-md p-2 text-gray-500 hover:bg-gray-100">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="mt-5 flex gap-2">
+                            <input
+                                type="text"
+                                value={newSkillValue}
+                                onChange={(event) => setNewSkillValue(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                        event.preventDefault();
+                                        addSkill();
+                                    }
+                                }}
+                                placeholder="Add a new skill"
+                                className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                            <button
+                                type="button"
+                                onClick={addSkill}
+                                className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            >
+                                <Plus size={16} /> Add
+                            </button>
+                        </div>
+
+                        {skillsError && <p className="mt-2 text-sm text-red-600">{skillsError}</p>}
+
+                        <div className="mt-5 max-h-72 space-y-2 overflow-y-auto">
+                            {draftSkills.length > 0 ? (
+                                draftSkills.map((skill, index) => (
+                                    <div key={index} className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                                        {editingSkillIndex === index ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    autoFocus
+                                                    value={editingSkillValue}
+                                                    onChange={(event) => setEditingSkillValue(event.target.value)}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter") {
+                                                            event.preventDefault();
+                                                            confirmEditSkill();
+                                                        } else if (event.key === "Escape") {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            cancelEditSkill();
+                                                        }
+                                                    }}
+                                                    className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={confirmEditSkill}
+                                                    aria-label={`Save skill ${skill}`}
+                                                    title="Save"
+                                                    className="rounded-md p-1.5 text-green-600 hover:bg-green-50"
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelEditSkill}
+                                                    aria-label="Cancel editing skill"
+                                                    title="Cancel"
+                                                    className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="flex-1 truncate text-sm text-gray-800">{skill}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEditSkill(index)}
+                                                    aria-label={`Edit skill ${skill}`}
+                                                    title="Edit"
+                                                    className="rounded-md p-1.5 text-gray-500 hover:bg-blue-50 hover:text-blue-700"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteSkill(index)}
+                                                    aria-label={`Delete skill ${skill}`}
+                                                    title="Delete"
+                                                    className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500">No skills added yet.</p>
+                            )}
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={closeSkillsModal}
+                                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={saveSkillsModal}
+                                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeEditor && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="presentation">
+                    <div className="w-full max-w-xl rounded-xl bg-white p-6 text-left shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="profile-section-editor-title">
+                        <div className="flex items-center justify-between gap-4">
+                            <h2 id="profile-section-editor-title" className="text-xl font-bold text-gray-900">
+                                {activeEditor === "personal"
+                                    ? "Edit Personal Details"
+                                    : activeEditor === "about"
+                                        ? "Edit About"
+                                        : editorIndex === null
+                                            ? `Add ${activeEditor === "publications" ? "Publication" : activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)}`
+                                            : `Change ${activeEditor === "publications" ? "Publication" : activeEditor.charAt(0).toUpperCase() + activeEditor.slice(1)}`}
+                            </h2>
+                            <button type="button" onClick={closeEditor} aria-label="Close dialog" title="Close" className="rounded-md p-2 text-gray-500 hover:bg-gray-100"><X size={18} /></button>
+                        </div>
+
+                        <div className="mt-5 space-y-4">
+                            {activeEditor === "personal" && (
+                                <>
+                                    <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                        Name
+                                        <input
+                                            type="text"
+                                            value={editorForm.name || ""}
+                                            onChange={(event) => setEditorForm((prev) => ({ ...prev, name: event.target.value }))}
+                                            placeholder="e.g. Dr. Jane Doe"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </label>
+                                    <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                        Title
+                                        <input
+                                            type="text"
+                                            value={editorForm.title || ""}
+                                            onChange={(event) => setEditorForm((prev) => ({ ...prev, title: event.target.value }))}
+                                            placeholder="e.g. Associate Professor of Computer Science"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </label>
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                            Email
+                                            <input
+                                                type="email"
+                                                value={editorForm.email || ""}
+                                                onChange={(event) => setEditorForm((prev) => ({ ...prev, email: event.target.value }))}
+                                                placeholder="e.g. jane.doe@university.edu"
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                            />
+                                        </label>
+                                        <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                            Phone
+                                            <input
+                                                type="tel"
+                                                value={editorForm.phone || ""}
+                                                onChange={(event) => setEditorForm((prev) => ({ ...prev, phone: event.target.value }))}
+                                                placeholder="e.g. +1 555-0199"
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                            />
+                                        </label>
+                                    </div>
+                                    <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                        Location
+                                        <input
+                                            type="text"
+                                            value={editorForm.location || ""}
+                                            onChange={(event) => setEditorForm((prev) => ({ ...prev, location: event.target.value }))}
+                                            placeholder="e.g. Boston, MA"
+                                            className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </label>
+                                </>
+                            )}
+
+                            {activeEditor === "about" && (
+                                <label className="block space-y-1 text-sm font-medium text-gray-700">
+                                    About
+                                    <textarea value={editorForm.summary || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, summary: event.target.value }))} rows={5} placeholder="Write a short summary" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                                </label>
+                            )}
+
+                            {(activeEditor === "education" || activeEditor === "experience" || activeEditor === "publications") && (
+                                <>
+                                    {activeEditor === "education" && (
+                                        <>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Degree or qualification<input value={editorForm.degree || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, degree: event.target.value }))} placeholder="e.g. Ph.D. in Physics" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Institution<input value={editorForm.institution || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, institution: event.target.value }))} placeholder="University or college" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Graduation year<input value={editorForm.year || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, year: event.target.value }))} placeholder="YYYY-MM" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                        </>
+                                    )}
+                                    {activeEditor === "experience" && (
+                                        <>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Role or job title<input value={editorForm.title || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="e.g. Assistant Professor" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Institution<input value={editorForm.institution || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, institution: event.target.value }))} placeholder="University or organization" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><label className="block space-y-1 text-sm font-medium text-gray-700">Start date<input value={editorForm.start || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, start: event.target.value }))} placeholder="YYYY-MM" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label><label className="block space-y-1 text-sm font-medium text-gray-700">End date<input value={editorForm.end || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, end: event.target.value }))} placeholder="YYYY-MM or Present" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label></div>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Description<textarea value={editorForm.description || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, description: event.target.value }))} rows={4} placeholder="Summarize your responsibilities or achievements" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                        </>
+                                    )}
+                                    {activeEditor === "publications" && (
+                                        <>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Publication title<input value={editorForm.title || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Title of your paper or work" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Link<input type="url" value={editorForm.link || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, link: event.target.value }))} placeholder="https://doi.org/..." className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                            <label className="block space-y-1 text-sm font-medium text-gray-700">Description<textarea value={editorForm.description || ""} onChange={(event) => setEditorForm((prev) => ({ ...prev, description: event.target.value }))} rows={4} placeholder="Add a short description or abstract" className="w-full rounded-lg border border-gray-200 px-3 py-2.5 font-normal text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {editorError && <p className="mt-3 text-sm text-red-600">{editorError}</p>}
+                        <div className="mt-6 flex items-center justify-between gap-2">
+                            {editorIndex !== null && activeEditor !== "about" && activeEditor !== "personal" ? (
+                                <button type="button" onClick={deleteEditorEntry} className="rounded-md bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200">Delete</button>
+                            ) : <span />}
+                            <div className="flex gap-2">
+                                <button type="button" onClick={closeEditor} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Cancel</button>
+                                <button type="button" onClick={saveEditor} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

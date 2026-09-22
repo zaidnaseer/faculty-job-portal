@@ -52,10 +52,10 @@ const LandingPage = () => {
               Connecting exceptional faculty talent with leading academic institutions
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
-              <Link to="/register" className="btn bg-white text-blue-800 hover:bg-blue-50 px-8 py-3 rounded-full font-medium text-lg">
+              <Link to="/register" className="btn inline-flex items-center justify-center bg-white text-blue-800 hover:bg-blue-50 px-8 py-3 rounded-full font-medium text-lg">
                 Get Started
               </Link>
-              <Link to="/login" className="btn border-2 border-white text-white hover:bg-white hover:text-blue-800 px-8 py-3 rounded-full font-medium text-lg">
+              <Link to="/login" className="btn inline-flex items-center justify-center border-2 border-white text-white hover:bg-white hover:text-blue-800 px-8 py-3 rounded-full font-medium text-lg">
                 Sign In
               </Link>
             </div>

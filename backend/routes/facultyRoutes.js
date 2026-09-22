@@ -282,7 +282,7 @@ router.post('/add', protect(['faculty']), profileCreationUpload.fields([
   { name: 'profileImage', maxCount: 1 },
 ]), async (req, res) => {
   try {
-    const { name, email, phone, skills, summary, experience, education, publications } = req.body;
+    const { name, email, phone, title, location, skills, summary, experience, education, publications } = req.body;
 
     // ✅ Check if the user already has a profile
 
@@ -303,6 +303,8 @@ router.post('/add', protect(['faculty']), profileCreationUpload.fields([
       name,
       email,
       phone,
+      title: title || '',
+      location: location || '',
       skills: parsedSkills,
       summary,
       experience: parsedExperience,
