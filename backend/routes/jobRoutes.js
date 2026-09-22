@@ -226,6 +226,7 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
     res.json({
       applicantsByStatus,
       jobTitle: job.title,
+      job,
       retentionMonths: APPLICATION_RETENTION_MONTHS
     });
   } catch (error) {

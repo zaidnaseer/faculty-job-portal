@@ -3,6 +3,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Copy, MoreVertical, Pencil, Plus, RotateCcw, Sparkles, Trash2, UserRound, X } from "lucide-react";
 import RippleBackground from "../components/RippleBackground";
+import { getJobStatusClasses, getRelativeAge } from "../utils/jobDisplay";
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -89,29 +90,6 @@ const HRDashboard = () => {
     }
   };
 
-  const getRelativeAge = (date) => {
-    const postedAt = new Date(date).getTime();
-    if (!date || Number.isNaN(postedAt)) return "recently";
-
-    const days = Math.max(0, Math.floor((Date.now() - postedAt) / 86400000));
-    if (days === 0) return "today";
-    if (days === 1) return "yesterday";
-    if (days < 30) return `${days} days ago`;
-
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
-
-    const years = Math.floor(days / 365);
-    return `${years} year${years === 1 ? "" : "s"} ago`;
-  };
-
-  const getStatusClasses = (status) => ({
-    Active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    Draft: "bg-amber-50 text-amber-700 ring-amber-200",
-    Closed: "bg-slate-100 text-slate-600 ring-slate-200",
-    Deleted: "bg-rose-50 text-rose-700 ring-rose-200",
-  }[status] || "bg-emerald-50 text-emerald-700 ring-emerald-200");
-
   if (loading) {
     return <p className="text-center text-gray-600">Loading jobs...</p>;
   }
@@ -147,7 +125,7 @@ const HRDashboard = () => {
                 <div className="relative flex items-start justify-between gap-3">
                   <h3 className="min-w-0 truncate text-lg font-bold text-slate-900" title={job.title || "Untitled draft"}>{job.title || "Untitled draft"}</h3>
                   <div data-job-menu className="relative flex shrink-0 items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${getStatusClasses(job.status || "Active")}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${getJobStatusClasses(job.status || "Active")}`}>
                       {job.status || "Active"}
                     </span>
                     <button
