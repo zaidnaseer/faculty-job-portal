@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import RippleBackground from "../components/RippleBackground";
 import defaultProfileImage from "../../assets/default-profile.jpg";
-import { Copy, Pencil, RotateCcw, Sparkles, Trash2, UserRound, X } from "lucide-react";
+import { Copy, Pencil, RotateCcw, Sparkles, Star, Trash2, UserRound, X } from "lucide-react";
 import { getJobStatusClasses, getRelativeAge } from "../utils/jobDisplay";
 
 const JobApplicantsPage = () => {
@@ -195,6 +195,9 @@ const JobApplicantsPage = () => {
     const shortlistedApplicants = (applicantsByStatus.active || []).filter(
         (faculty) => faculty.shortlisted
     );
+    const newApplicantsCount = (applicantsByStatus.active || []).filter(
+        (faculty) => faculty.isNew
+    ).length;
     const pendingApplicants = (applicantsByStatus.active || []).filter(
         (faculty) => !faculty.shortlisted
     );
@@ -261,6 +264,10 @@ const JobApplicantsPage = () => {
                                     </span>
                                     <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
                                         <Sparkles size={16} className="text-emerald-500" />
+                                        {newApplicantsCount} New
+                                    </span>
+                                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+                                        <Star size={16} className="text-amber-500" />
                                         {shortlistedApplicants.length} Shortlisted
                                     </span>
                                 </div>
