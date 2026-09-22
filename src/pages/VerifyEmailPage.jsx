@@ -54,7 +54,7 @@ const VerifyEmailPage = () => {
       }
       await auth.currentUser.reload();
       if (!auth.currentUser.emailVerified) {
-        setMessage("Your email isn't verified yet. Please click the link in the email we sent you.");
+        setError("Your email isn't verified yet. Please click the link in the email we sent you.");
         return;
       }
 
