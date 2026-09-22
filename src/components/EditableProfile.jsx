@@ -64,6 +64,12 @@ const OPTIONAL_SECTIONS = {
     },
 };
 
+const CORE_LIST_SECTIONS = {
+    education: { label: "Education", singular: "Education", icon: GraduationCap },
+    experience: { label: "Experience", singular: "Experience", icon: Briefcase },
+    publications: { label: "Publications", singular: "Publication", icon: BookOpen },
+};
+
 const EditableProfile = ({
     profile,
     setProfile,
@@ -106,6 +112,8 @@ const EditableProfile = ({
     const [isProfileImageCropResizing, setIsProfileImageCropResizing] = useState(false);
     const [isSectionPickerOpen, setIsSectionPickerOpen] = useState(false);
     const [sectionPickerExpandedArea, setSectionPickerExpandedArea] = useState("sidebar");
+    const [sectionListId, setSectionListId] = useState(null);
+    const [sectionDeleteConfirmId, setSectionDeleteConfirmId] = useState(null);
     const profileImageMenuRef = useRef(null);
     const profileImageCropDragRef = useRef(null);
     const profileImageCropResizeRef = useRef(null);
@@ -240,14 +248,21 @@ const EditableProfile = ({
 
     const selectSectionToAdd = (sectionId) => {
         setIsSectionPickerOpen(false);
+        setSectionListId(sectionId);
         openEditor(sectionId);
     };
 
-    const removeOptionalSection = (sectionId) => {
-        const label = OPTIONAL_SECTIONS[sectionId]?.label || "this section";
-        if (!window.confirm(`Remove the ${label} section? Its entries will be deleted.`)) {
-            return;
-        }
+    const requestRemoveOptionalSection = (sectionId) => {
+        setSectionDeleteConfirmId(sectionId);
+    };
+
+    const cancelRemoveOptionalSection = () => {
+        setSectionDeleteConfirmId(null);
+    };
+
+    const confirmRemoveOptionalSection = () => {
+        const sectionId = sectionDeleteConfirmId;
+        if (!sectionId) return;
 
         const nextProfile = {
             ...profile,
@@ -256,6 +271,146 @@ const EditableProfile = ({
         };
         setProfile(nextProfile);
         onSave(nextProfile);
+        setSectionDeleteConfirmId(null);
+        setSectionListId(null);
+    };
+
+    const openSectionList = (sectionId) => {
+        setSectionListId(sectionId);
+    };
+
+    const closeSectionList = () => {
+        setSectionListId(null);
+    };
+
+    const deleteListEntry = (sectionId, index) => {
+        const nextProfile = {
+            ...profile,
+            [sectionId]: (Array.isArray(profile?.[sectionId]) ? profile[sectionId] : []).filter((_, i) => i !== index),
+        };
+        setProfile(nextProfile);
+        onSave(nextProfile);
+    };
+
+    const renderEntryDetails = (sectionId, entry) => {
+        switch (sectionId) {
+            case "education":
+                return (
+                    <>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <h4 className="font-semibold text-slate-900">{hasText(entry?.degree) ? entry.degree : "Degree not added"}</h4>
+                            <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                {formatMonthYear(entry?.year, "Year not added")}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-600">{hasText(entry?.institution) ? entry.institution : "Institution not added"}</p>
+                    </>
+                );
+            case "experience":
+                return (
+                    <>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Role not added"}</h4>
+                            <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                {formatMonthYear(entry?.start, "Start not added")} - {entry?.current ? "Present" : formatMonthYear(entry?.end, "Present")}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-600">{hasText(entry?.institution) ? entry.institution : "Organization not added"}</p>
+                        {formatExperienceDuration(entry?.start, entry?.end, entry?.current) && (
+                            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {formatExperienceDuration(entry?.start, entry?.end, entry?.current)}
+                            </p>
+                        )}
+                        {hasText(entry?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{entry.description}</p>}
+                    </>
+                );
+            case "publications":
+                return (
+                    <>
+                        <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Untitled publication"}</h4>
+                        {hasText(entry?.description) && <p className="mt-2 text-sm leading-6 text-slate-700">{entry.description}</p>}
+                        {hasText(entry?.link) && (
+                            <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900">
+                                <LinkIcon size={14} /> View publication
+                            </a>
+                        )}
+                    </>
+                );
+            case "languages":
+                return (
+                    <>
+                        <p className="font-semibold text-slate-900">{hasText(entry?.name) ? entry.name : "Language not added"}</p>
+                        {hasText(entry?.proficiency) && <p className="text-xs text-slate-600">{entry.proficiency}</p>}
+                    </>
+                );
+            case "certifications":
+                return (
+                    <>
+                        <p className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Certification not added"}</p>
+                        {hasText(entry?.issuer) && <p className="text-xs text-slate-600">{entry.issuer}</p>}
+                        {hasText(entry?.year) && <p className="text-xs text-slate-500">{formatMonthYear(entry.year, "")}</p>}
+                        {hasText(entry?.link) && (
+                            <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">
+                                <LinkIcon size={12} /> View
+                            </a>
+                        )}
+                    </>
+                );
+            case "awards":
+                return (
+                    <>
+                        <p className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Award not added"}</p>
+                        {hasText(entry?.issuer) && <p className="text-xs text-slate-600">{entry.issuer}</p>}
+                        {hasText(entry?.year) && <p className="text-xs text-slate-500">{formatMonthYear(entry.year, "")}</p>}
+                        {hasText(entry?.link) && (
+                            <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">
+                                <LinkIcon size={12} /> View
+                            </a>
+                        )}
+                    </>
+                );
+            case "projects":
+                return (
+                    <>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Project not added"}</h4>
+                            {(hasText(entry?.start) || hasText(entry?.end)) && (
+                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                    {formatMonthYear(entry?.start, "Start not added")} - {formatMonthYear(entry?.end, "Present")}
+                                </span>
+                            )}
+                        </div>
+                        {hasText(entry?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{entry.description}</p>}
+                        {hasText(entry?.link) && (
+                            <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900">
+                                <LinkIcon size={14} /> View project
+                            </a>
+                        )}
+                    </>
+                );
+            case "patents":
+                return (
+                    <>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Patent not added"}</h4>
+                            {hasText(entry?.status) && (
+                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                    {entry.status}
+                                </span>
+                            )}
+                        </div>
+                        {hasText(entry?.patentNumber) && <p className="mt-1 text-sm text-slate-600">{entry.patentNumber}</p>}
+                        {hasText(entry?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{entry.description}</p>}
+                        {hasText(entry?.link) && (
+                            <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900">
+                                <LinkIcon size={14} /> View patent
+                            </a>
+                        )}
+                    </>
+                );
+            default:
+                return null;
+        }
     };
 
     const openEditor = (type, index = null) => {
@@ -716,7 +871,7 @@ const EditableProfile = ({
     };
 
     useEffect(() => {
-        if (!profileImageCrop && !isProfileImageDeleteConfirmOpen && !activeEditor && !isSkillsModalOpen && !isSectionPickerOpen) {
+        if (!profileImageCrop && !isProfileImageDeleteConfirmOpen && !sectionDeleteConfirmId && !activeEditor && !isSkillsModalOpen && !sectionListId && !isSectionPickerOpen) {
             return undefined;
         }
 
@@ -727,10 +882,14 @@ const EditableProfile = ({
                 closeProfileImageCrop();
             } else if (isProfileImageDeleteConfirmOpen) {
                 setIsProfileImageDeleteConfirmOpen(false);
+            } else if (sectionDeleteConfirmId) {
+                cancelRemoveOptionalSection();
             } else if (activeEditor) {
                 closeEditor();
             } else if (isSkillsModalOpen) {
                 closeSkillsModal();
+            } else if (sectionListId) {
+                closeSectionList();
             } else if (isSectionPickerOpen) {
                 closeSectionPicker();
             }
@@ -738,7 +897,7 @@ const EditableProfile = ({
 
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [profileImageCrop, isProfileImageDeleteConfirmOpen, activeEditor, isSkillsModalOpen, isSectionPickerOpen]);
+    }, [profileImageCrop, isProfileImageDeleteConfirmOpen, sectionDeleteConfirmId, activeEditor, isSkillsModalOpen, sectionListId, isSectionPickerOpen]);
 
     const confirmProfileImageCrop = async () => {
         const layout = getCropImageLayout();
@@ -1157,68 +1316,23 @@ const EditableProfile = ({
                                                 <Icon size={18} /> {config.label}
                                             </h3>
                                             {canEdit && (
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openEditor(sectionId)}
-                                                        aria-label={`Add ${config.singular}`}
-                                                        title={`Add ${config.singular}`}
-                                                        className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"
-                                                    >
-                                                        <Plus size={16} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeOptionalSection(sectionId)}
-                                                        aria-label={`Remove ${config.label} section`}
-                                                        title={`Remove ${config.label} section`}
-                                                        className="rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openSectionList(sectionId)}
+                                                    aria-label={`Edit ${config.label}`}
+                                                    title={`Edit ${config.label}`}
+                                                    className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
                                             )}
                                         </div>
 
                                         {entries.length > 0 ? (
                                             <div className="space-y-2">
                                                 {entries.map((entry, index) => (
-                                                    <div key={index} className={`relative rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm shadow-sm${canEdit ? " pr-9" : ""}`}>
-                                                        {sectionId === "languages" && (
-                                                            <>
-                                                                <p className="font-semibold text-slate-900">{hasText(entry?.name) ? entry.name : "Language not added"}</p>
-                                                                {hasText(entry?.proficiency) && <p className="text-xs text-slate-600">{entry.proficiency}</p>}
-                                                            </>
-                                                        )}
-                                                        {sectionId === "certifications" && (
-                                                            <>
-                                                                <p className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Certification not added"}</p>
-                                                                {hasText(entry?.issuer) && <p className="text-xs text-slate-600">{entry.issuer}</p>}
-                                                                {hasText(entry?.year) && <p className="text-xs text-slate-500">{formatMonthYear(entry.year, "")}</p>}
-                                                                {hasText(entry?.link) && (
-                                                                    <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">
-                                                                        <LinkIcon size={12} /> View
-                                                                    </a>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        {sectionId === "awards" && (
-                                                            <>
-                                                                <p className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Award not added"}</p>
-                                                                {hasText(entry?.issuer) && <p className="text-xs text-slate-600">{entry.issuer}</p>}
-                                                                {hasText(entry?.year) && <p className="text-xs text-slate-500">{formatMonthYear(entry.year, "")}</p>}
-                                                                {hasText(entry?.link) && (
-                                                                    <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">
-                                                                        <LinkIcon size={12} /> View
-                                                                    </a>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        {canEdit && (
-                                                            <button type="button" onClick={() => openEditor(sectionId, index)} aria-label={`Edit ${config.singular} ${index + 1}`} title={`Edit ${config.singular}`} className="absolute right-2 top-2 rounded-md p-1.5 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
-                                                                <Pencil size={14} />
-                                                            </button>
-                                                        )}
+                                                    <div key={index} className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm shadow-sm">
+                                                        {renderEntryDetails(sectionId, entry)}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1384,29 +1498,16 @@ const EditableProfile = ({
                                     <GraduationCap size={18} /> Education
                                 </h3>
                                 {canEdit && (
-                                    <button type="button" onClick={() => openEditor("education")} aria-label="Add education" title="Add education" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
-                                        <Plus size={19} />
+                                    <button type="button" onClick={() => openSectionList("education")} aria-label="Edit Education" title="Edit Education" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
+                                        <Pencil size={17} />
                                     </button>
                                 )}
                             </div>
 
                             {Array.isArray(profile?.education) && profile.education.length > 0 ? (
                                 profile.education.map((edu, index) => (
-                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <h4 className="font-semibold text-slate-900">{hasText(edu?.degree) ? edu.degree : "Degree not added"}</h4>
-                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                    {formatMonthYear(edu?.year, "Year not added")}
-                                                </span>
-                                            </div>
-                                            <p className="mt-1 text-sm text-slate-600">{hasText(edu?.institution) ? edu.institution : "Institution not added"}</p>
-                                        </div>
-                                        {canEdit && (
-                                            <button type="button" onClick={() => openEditor("education", index)} aria-label={`Edit education ${index + 1}`} title="Edit education" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
-                                                <Pencil size={16} />
-                                            </button>
-                                        )}
+                                    <div key={index} className="mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                                        <div className="min-w-0">{renderEntryDetails("education", edu)}</div>
                                     </div>
                                 ))
                             ) : (
@@ -1417,28 +1518,13 @@ const EditableProfile = ({
                         <div className="bg-white p-6 rounded-xl shadow">
                             <div className="mb-4 flex items-center justify-between gap-3">
                                 <h3 className="flex items-center gap-2 text-lg font-bold"><Briefcase size={18} /> Experience</h3>
-                                {canEdit && <button type="button" onClick={() => openEditor("experience")} aria-label="Add experience" title="Add experience" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Plus size={19} /></button>}
+                                {canEdit && <button type="button" onClick={() => openSectionList("experience")} aria-label="Edit Experience" title="Edit Experience" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={17} /></button>}
                             </div>
 
                             {Array.isArray(profile?.experience) && profile.experience.length > 0 ? (
                                 profile.experience.map((exp, index) => (
-                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <h4 className="font-semibold text-slate-900">{hasText(exp?.title) ? exp.title : "Role not added"}</h4>
-                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                    {formatMonthYear(exp?.start, "Start not added")} - {exp?.current ? "Present" : formatMonthYear(exp?.end, "Present")}
-                                                </span>
-                                            </div>
-                                            <p className="mt-1 text-sm text-slate-600">{hasText(exp?.institution) ? exp.institution : "Organization not added"}</p>
-                                            {formatExperienceDuration(exp?.start, exp?.end, exp?.current) && (
-                                                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                                                    {formatExperienceDuration(exp?.start, exp?.end, exp?.current)}
-                                                </p>
-                                            )}
-                                            {hasText(exp?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{exp.description}</p>}
-                                        </div>
-                                        {canEdit && <button type="button" onClick={() => openEditor("experience", index)} aria-label={`Edit experience ${index + 1}`} title="Edit experience" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={16} /></button>}
+                                    <div key={index} className="mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                                        <div className="min-w-0">{renderEntryDetails("experience", exp)}</div>
                                     </div>
                                 ))
                             ) : (
@@ -1449,28 +1535,13 @@ const EditableProfile = ({
                         <div className="bg-white p-6 rounded-xl shadow">
                             <div className="mb-4 flex items-center justify-between gap-3">
                                 <h3 className="flex items-center gap-2 text-lg font-bold"><BookOpen size={18} /> Publications</h3>
-                                {canEdit && <button type="button" onClick={() => openEditor("publications")} aria-label="Add publication" title="Add publication" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Plus size={19} /></button>}
+                                {canEdit && <button type="button" onClick={() => openSectionList("publications")} aria-label="Edit Publications" title="Edit Publications" className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={17} /></button>}
                             </div>
 
                             {Array.isArray(profile?.publications) && profile.publications.length > 0 ? (
                                 profile.publications.map((pub, index) => (
-                                    <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
-                                        <div className="min-w-0">
-                                            <h4 className="font-semibold text-slate-900">{hasText(pub?.title) ? pub.title : "Untitled publication"}</h4>
-                                            {hasText(pub?.description) && <p className="mt-2 text-sm leading-6 text-slate-700">{pub.description}</p>}
-
-                                            {hasText(pub?.link) && (
-                                                <a
-                                                    href={pub.link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900"
-                                                >
-                                                    <LinkIcon size={14} /> View publication
-                                                </a>
-                                            )}
-                                        </div>
-                                        {canEdit && <button type="button" onClick={() => openEditor("publications", index)} aria-label={`Edit publication ${index + 1}`} title="Edit publication" className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700"><Pencil size={16} /></button>}
+                                    <div key={index} className="mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                                        <div className="min-w-0">{renderEntryDetails("publications", pub)}</div>
                                     </div>
                                 ))
                             ) : (
@@ -1491,64 +1562,16 @@ const EditableProfile = ({
                                                 <Icon size={18} /> {config.label}
                                             </h3>
                                             {canEdit && (
-                                                <div className="flex items-center gap-1">
-                                                    <button type="button" onClick={() => openEditor(sectionId)} aria-label={`Add ${config.singular}`} title={`Add ${config.singular}`} className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
-                                                        <Plus size={19} />
-                                                    </button>
-                                                    <button type="button" onClick={() => removeOptionalSection(sectionId)} aria-label={`Remove ${config.label} section`} title={`Remove ${config.label} section`} className="rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
-                                                        <X size={18} />
-                                                    </button>
-                                                </div>
+                                                <button type="button" onClick={() => openSectionList(sectionId)} aria-label={`Edit ${config.label}`} title={`Edit ${config.label}`} className="rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
+                                                    <Pencil size={17} />
+                                                </button>
                                             )}
                                         </div>
 
                                         {entries.length > 0 ? (
                                             entries.map((entry, index) => (
-                                                <div key={index} className={`relative mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm${canEdit ? " pr-12" : ""}`}>
-                                                    <div className="min-w-0">
-                                                        {sectionId === "projects" && (
-                                                            <>
-                                                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                                                    <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Project not added"}</h4>
-                                                                    {(hasText(entry?.start) || hasText(entry?.end)) && (
-                                                                        <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                                            {formatMonthYear(entry?.start, "Start not added")} - {formatMonthYear(entry?.end, "Present")}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                {hasText(entry?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{entry.description}</p>}
-                                                                {hasText(entry?.link) && (
-                                                                    <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900">
-                                                                        <LinkIcon size={14} /> View project
-                                                                    </a>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        {sectionId === "patents" && (
-                                                            <>
-                                                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                                                    <h4 className="font-semibold text-slate-900">{hasText(entry?.title) ? entry.title : "Patent not added"}</h4>
-                                                                    {hasText(entry?.status) && (
-                                                                        <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                                                            {entry.status}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                {hasText(entry?.patentNumber) && <p className="mt-1 text-sm text-slate-600">{entry.patentNumber}</p>}
-                                                                {hasText(entry?.description) && <p className="mt-3 text-sm leading-6 text-slate-700">{entry.description}</p>}
-                                                                {hasText(entry?.link) && (
-                                                                    <a href={entry.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-900">
-                                                                        <LinkIcon size={14} /> View patent
-                                                                    </a>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                    {canEdit && (
-                                                        <button type="button" onClick={() => openEditor(sectionId, index)} aria-label={`Edit ${config.singular} ${index + 1}`} title={`Edit ${config.singular}`} className="absolute right-3 top-3 rounded-md p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-700">
-                                                            <Pencil size={16} />
-                                                        </button>
-                                                    )}
+                                                <div key={index} className="mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+                                                    <div className="min-w-0">{renderEntryDetails(sectionId, entry)}</div>
                                                 </div>
                                             ))
                                         ) : (
@@ -1874,6 +1897,121 @@ const EditableProfile = ({
                                 <button type="button" onClick={closeEditor} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Cancel</button>
                                 <button type="button" onClick={saveEditor} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {sectionListId && !activeEditor && (() => {
+                const sectionConfig = CORE_LIST_SECTIONS[sectionListId] || OPTIONAL_SECTIONS[sectionListId];
+                const entries = Array.isArray(profile?.[sectionListId]) ? profile[sectionListId] : [];
+                const isOptional = Boolean(OPTIONAL_SECTIONS[sectionListId]);
+                return (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="presentation">
+                        <div className="w-full max-w-lg rounded-xl bg-white p-6 text-left shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="section-list-title">
+                            <div className="flex items-center justify-between gap-4">
+                                <h2 id="section-list-title" className="text-xl font-bold text-gray-900">
+                                    Edit {sectionConfig?.label || sectionListId}
+                                </h2>
+                                <button type="button" onClick={closeSectionList} aria-label="Close dialog" title="Close" className="rounded-md p-2 text-gray-500 hover:bg-gray-100">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="mt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => openEditor(sectionListId)}
+                                    className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                >
+                                    <Plus size={16} /> Add {sectionConfig?.singular || "entry"}
+                                </button>
+                            </div>
+
+                            <div className="mt-5 max-h-96 space-y-2 overflow-y-auto">
+                                {entries.length > 0 ? (
+                                    entries.map((entry, index) => (
+                                        <div key={index} className="flex items-start gap-2 rounded-lg border border-gray-200 p-3">
+                                            <div className="min-w-0 flex-1 text-sm">{renderEntryDetails(sectionListId, entry)}</div>
+                                            <div className="flex shrink-0 items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditor(sectionListId, index)}
+                                                    aria-label={`Edit ${sectionConfig?.singular || "entry"} ${index + 1}`}
+                                                    title="Edit"
+                                                    className="rounded-md p-1.5 text-gray-500 hover:bg-blue-50 hover:text-blue-700"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteListEntry(sectionListId, index)}
+                                                    aria-label={`Delete ${sectionConfig?.singular || "entry"} ${index + 1}`}
+                                                    title="Delete"
+                                                    className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500">No entries added yet.</p>
+                                )}
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-between gap-2">
+                                {isOptional ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => requestRemoveOptionalSection(sectionListId)}
+                                        className="rounded-md bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200"
+                                    >
+                                        Delete section
+                                    </button>
+                                ) : <span />}
+                                <button
+                                    type="button"
+                                    onClick={closeSectionList}
+                                    className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {sectionDeleteConfirmId && (
+                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4" role="presentation">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-section-title"
+                        className="w-full max-w-sm rounded-xl bg-white p-6 text-left shadow-2xl"
+                    >
+                        <h3 id="delete-section-title" className="text-lg font-bold text-gray-900">
+                            Remove {OPTIONAL_SECTIONS[sectionDeleteConfirmId]?.label || "this section"}?
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-600">
+                            This will permanently delete the {OPTIONAL_SECTIONS[sectionDeleteConfirmId]?.label || "section"} section and all of its entries. This cannot be undone.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={cancelRemoveOptionalSection}
+                                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmRemoveOptionalSection}
+                                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                            >
+                                Delete section
+                            </button>
                         </div>
                     </div>
                 </div>
