@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import RippleBackground from "../components/RippleBackground";
 import defaultProfileImage from "../../assets/default-profile.jpg";
-import { Copy, Pencil, RotateCcw, Sparkles, UserRound, X } from "lucide-react";
+import { Copy, Pencil, RotateCcw, Sparkles, Trash2, UserRound, X } from "lucide-react";
 import { getJobStatusClasses, getRelativeAge } from "../utils/jobDisplay";
 
 const JobApplicantsPage = () => {
@@ -20,6 +20,7 @@ const JobApplicantsPage = () => {
     const [rejectingId, setRejectingId] = useState(null);
     const [shortlistingId, setShortlistingId] = useState(null);
     const [statusUpdating, setStatusUpdating] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [activeTab, setActiveTab] = useState("active");
     const [retentionMonths, setRetentionMonths] = useState(12);
     const hasFetchedApplicants = useRef(false);
@@ -171,6 +172,26 @@ const JobApplicantsPage = () => {
         }
     };
 
+    const handlePermanentDelete = async () => {
+        if (!job) return;
+        if (!window.confirm("Permanently delete this stopped job and all of its application data? This cannot be undone.")) return;
+
+        setDeleting(true);
+        try {
+            const response = await fetch(`${backendUrl}/api/jobs/${job._id}/permanent`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${user.token}` },
+            });
+
+            if (!response.ok) throw new Error("Failed to permanently delete job");
+            navigate("/hr");
+        } catch (error) {
+            alert("Failed to permanently delete job. Please try again.");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const shortlistedApplicants = (applicantsByStatus.active || []).filter(
         (faculty) => faculty.shortlisted
     );
@@ -247,17 +268,19 @@ const JobApplicantsPage = () => {
                             <div className="flex shrink-0 flex-wrap gap-2">
                                 <button
                                     onClick={() => navigate("/create-job", { state: { job, mode: "edit" } })}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                    disabled={job.status === "Deleted"}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Pencil size={15} /> Edit Posting
                                 </button>
                                 <button
                                     onClick={() => navigate("/create-job", { state: { job: { ...job, _id: undefined }, mode: "duplicate" } })}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                    disabled={job.status === "Deleted"}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Copy size={15} /> Duplicate
                                 </button>
-                                {job.status === "Closed" ? (
+                                {job.status === "Closed" && (
                                     <button
                                         onClick={handleStatusChange}
                                         disabled={statusUpdating}
@@ -265,13 +288,23 @@ const JobApplicantsPage = () => {
                                     >
                                         <RotateCcw size={15} /> {statusUpdating ? "Updating..." : "Resume Hiring"}
                                     </button>
-                                ) : (
+                                )}
+                                {job.status === "Active" && (
                                     <button
                                         onClick={handleStatusChange}
                                         disabled={statusUpdating}
                                         className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
                                     >
                                         <X size={15} /> {statusUpdating ? "Updating..." : "Stop Hiring"}
+                                    </button>
+                                )}
+                                {job.status === "Closed" && (
+                                    <button
+                                        onClick={handlePermanentDelete}
+                                        disabled={deleting}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
+                                    >
+                                        <Trash2 size={15} /> {deleting ? "Deleting..." : "Delete Permanently"}
                                     </button>
                                 )}
                             </div>
