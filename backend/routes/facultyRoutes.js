@@ -282,7 +282,10 @@ router.post('/add', protect(['faculty']), profileCreationUpload.fields([
   { name: 'profileImage', maxCount: 1 },
 ]), async (req, res) => {
   try {
-    const { name, email, phone, title, location, skills, summary, experience, education, publications } = req.body;
+    const {
+      name, email, phone, title, location, skills, summary, experience, education, publications,
+      languages, certifications, projects, awards, patents, enabledSections,
+    } = req.body;
 
     // ✅ Check if the user already has a profile
 
@@ -296,6 +299,12 @@ router.post('/add', protect(['faculty']), profileCreationUpload.fields([
     const parsedExperience = experience ? JSON.parse(experience) : [];
     const parsedEducation = education ? JSON.parse(education) : [];
     const parsedPublications = publications ? JSON.parse(publications) : [];
+    const parsedLanguages = languages ? JSON.parse(languages) : [];
+    const parsedCertifications = certifications ? JSON.parse(certifications) : [];
+    const parsedProjects = projects ? JSON.parse(projects) : [];
+    const parsedAwards = awards ? JSON.parse(awards) : [];
+    const parsedPatents = patents ? JSON.parse(patents) : [];
+    const parsedEnabledSections = enabledSections ? JSON.parse(enabledSections) : [];
 
     // ✅ Create new profile linked to user
     const newProfile = new Profile({
@@ -309,7 +318,13 @@ router.post('/add', protect(['faculty']), profileCreationUpload.fields([
       summary,
       experience: parsedExperience,
       education: parsedEducation,
-      publications: parsedPublications
+      publications: parsedPublications,
+      languages: parsedLanguages,
+      certifications: parsedCertifications,
+      projects: parsedProjects,
+      awards: parsedAwards,
+      patents: parsedPatents,
+      enabledSections: parsedEnabledSections,
     });
 
     // ✅ Upload resume to Cloudflare R2 and store the object URL

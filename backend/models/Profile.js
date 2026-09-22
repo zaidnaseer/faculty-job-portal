@@ -32,6 +32,38 @@ const profileSchema = new mongoose.Schema({
     description: String,
     link: String,
   }],
+  languages: [{
+    name: String,
+    proficiency: String,
+  }],
+  certifications: [{
+    title: String,
+    issuer: String,
+    year: String,
+    link: String,
+  }],
+  projects: [{
+    title: String,
+    description: String,
+    link: String,
+    start: String,
+    end: String,
+    current: { type: Boolean, default: false },
+  }],
+  awards: [{
+    title: String,
+    issuer: String,
+    year: String,
+    link: String,
+  }],
+  patents: [{
+    title: String,
+    patentNumber: String,
+    status: String,
+    link: String,
+    description: String,
+  }],
+  enabledSections: { type: [String], default: [] },
   profileImage: {
     url: String,
     key: String,

@@ -22,6 +22,12 @@ const buildProfileSnapshot = (profile) => ({
   experience: Array.isArray(profile?.experience) ? profile.experience : [],
   education: Array.isArray(profile?.education) ? profile.education : [],
   publications: Array.isArray(profile?.publications) ? profile.publications : [],
+  languages: Array.isArray(profile?.languages) ? profile.languages : [],
+  certifications: Array.isArray(profile?.certifications) ? profile.certifications : [],
+  projects: Array.isArray(profile?.projects) ? profile.projects : [],
+  awards: Array.isArray(profile?.awards) ? profile.awards : [],
+  patents: Array.isArray(profile?.patents) ? profile.patents : [],
+  enabledSections: Array.isArray(profile?.enabledSections) ? profile.enabledSections : [],
   profileImage: profile?.profileImage || "",
   resumeFile: profile?.resumeFile?.key ? {
     key: profile.resumeFile.key,

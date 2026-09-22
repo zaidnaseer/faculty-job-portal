@@ -10,6 +10,12 @@ const normalizeProfile = (data) => ({
   experience: Array.isArray(data?.experience) ? data.experience : [],
   skills: Array.isArray(data?.skills) ? data.skills : [],
   publications: Array.isArray(data?.publications) ? data.publications : [],
+  languages: Array.isArray(data?.languages) ? data.languages : [],
+  certifications: Array.isArray(data?.certifications) ? data.certifications : [],
+  projects: Array.isArray(data?.projects) ? data.projects : [],
+  awards: Array.isArray(data?.awards) ? data.awards : [],
+  patents: Array.isArray(data?.patents) ? data.patents : [],
+  enabledSections: Array.isArray(data?.enabledSections) ? data.enabledSections : [],
 });
 
 const ApplicantProfilePage = () => {

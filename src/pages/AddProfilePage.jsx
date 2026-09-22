@@ -2,6 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RippleBackground from "../components/RippleBackground";
 import { formatMonthYear } from "../utils/dateFormatting";
+import {
+  Languages as LanguagesIcon,
+  BadgeCheck,
+  FolderKanban,
+  Trophy,
+  Lightbulb,
+  Check,
+} from "lucide-react";
 
 const WORD_FILE_TYPES = [
   "application/msword",
@@ -22,6 +30,134 @@ const initialPreviewState = {
   fileName: "",
 };
 
+const ExternalLinkArrow = () => (
+  <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+  </svg>
+);
+
+const OPTIONAL_SECTION_CONFIG = {
+  languages: {
+    label: "Languages",
+    singular: "Language",
+    icon: LanguagesIcon,
+    fields: [
+      { name: "name", label: "Language", required: true, placeholder: "e.g. French" },
+      { name: "proficiency", label: "Proficiency", type: "select", options: ["Basic", "Intermediate", "Fluent", "Native"], defaultValue: "Intermediate" },
+    ],
+    renderEntry: (entry) => (
+      <>
+        <h4 className="font-semibold text-gray-800 text-lg">{entry.name}</h4>
+        {entry.proficiency && <p className="text-blue-600 font-medium">{entry.proficiency}</p>}
+      </>
+    ),
+  },
+  certifications: {
+    label: "Certifications & Courses",
+    singular: "Certification",
+    icon: BadgeCheck,
+    fields: [
+      { name: "title", label: "Title", required: true, placeholder: "e.g. AWS Certified Solutions Architect" },
+      { name: "issuer", label: "Issuing Organization", placeholder: "e.g. Amazon Web Services" },
+      { name: "year", label: "Year", placeholder: "YYYY-MM" },
+      { name: "link", label: "Link", type: "url", placeholder: "https://..." },
+    ],
+    renderEntry: (entry) => (
+      <>
+        <h4 className="font-semibold text-gray-800 text-lg">{entry.title}</h4>
+        {entry.issuer && <p className="text-blue-600 font-medium">{entry.issuer}</p>}
+        {entry.year && <p className="text-gray-500 text-sm mt-1">{formatMonthYear(entry.year)}</p>}
+        {entry.link && (
+          <a href={entry.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+            View <ExternalLinkArrow />
+          </a>
+        )}
+      </>
+    ),
+  },
+  projects: {
+    label: "Projects",
+    singular: "Project",
+    icon: FolderKanban,
+    fields: [
+      { name: "title", label: "Project Title", required: true, placeholder: "e.g. Campus Attendance System" },
+      { name: "link", label: "Link", type: "url", placeholder: "https://..." },
+      { name: "start", label: "Start Date", placeholder: "YYYY-MM" },
+      { name: "end", label: "End Date", placeholder: "YYYY-MM or Present" },
+      { name: "description", label: "Description", type: "textarea", placeholder: "What did you build and what was your role?" },
+    ],
+    renderEntry: (entry) => (
+      <>
+        <h4 className="font-semibold text-gray-800 text-lg">{entry.title}</h4>
+        {(entry.start || entry.end) && (
+          <p className="text-gray-500 text-sm mt-1">
+            {formatMonthYear(entry.start)}
+            {' - '}
+            {entry.end ? formatMonthYear(entry.end) : "Present"}
+          </p>
+        )}
+        {entry.description && <p className="text-gray-600 text-sm mt-2">{entry.description}</p>}
+        {entry.link && (
+          <a href={entry.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+            View Project <ExternalLinkArrow />
+          </a>
+        )}
+      </>
+    ),
+  },
+  awards: {
+    label: "Awards & Honors",
+    singular: "Award",
+    icon: Trophy,
+    fields: [
+      { name: "title", label: "Award or Honor", required: true, placeholder: "e.g. Best Researcher Award" },
+      { name: "issuer", label: "Issuing Organization", placeholder: "e.g. National Science Foundation" },
+      { name: "year", label: "Year", placeholder: "YYYY-MM" },
+      { name: "link", label: "Link", type: "url", placeholder: "https://..." },
+    ],
+    renderEntry: (entry) => (
+      <>
+        <h4 className="font-semibold text-gray-800 text-lg">{entry.title}</h4>
+        {entry.issuer && <p className="text-blue-600 font-medium">{entry.issuer}</p>}
+        {entry.year && <p className="text-gray-500 text-sm mt-1">{formatMonthYear(entry.year)}</p>}
+        {entry.link && (
+          <a href={entry.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+            View <ExternalLinkArrow />
+          </a>
+        )}
+      </>
+    ),
+  },
+  patents: {
+    label: "Patents",
+    singular: "Patent",
+    icon: Lightbulb,
+    fields: [
+      { name: "title", label: "Patent Title", required: true, placeholder: "e.g. Method for Adaptive Signal Filtering" },
+      { name: "patentNumber", label: "Patent Number", placeholder: "e.g. US10,123,456" },
+      { name: "status", label: "Status", type: "select", options: ["Filed", "Pending", "Granted"], defaultValue: "Filed" },
+      { name: "link", label: "Link", type: "url", placeholder: "https://..." },
+      { name: "description", label: "Description", type: "textarea", placeholder: "Briefly describe the invention" },
+    ],
+    renderEntry: (entry) => (
+      <>
+        <h4 className="font-semibold text-gray-800 text-lg">{entry.title}</h4>
+        {entry.patentNumber && <p className="text-blue-600 font-medium">{entry.patentNumber}</p>}
+        {entry.status && <p className="text-gray-500 text-sm mt-1">{entry.status}</p>}
+        {entry.description && <p className="text-gray-600 text-sm mt-2">{entry.description}</p>}
+        {entry.link && (
+          <a href={entry.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+            View Patent <ExternalLinkArrow />
+          </a>
+        )}
+      </>
+    ),
+  },
+};
+
+const OPTIONAL_SECTION_ORDER = ["languages", "certifications", "projects", "awards", "patents"];
+
 const AddProfilePage = () => {
   const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -34,6 +170,11 @@ const AddProfilePage = () => {
     experience: [],
     education: [],
     publications: [],
+    languages: [],
+    certifications: [],
+    projects: [],
+    awards: [],
+    patents: [],
   });
 
   const [newSkill, setNewSkill] = useState("");
@@ -51,6 +192,11 @@ const AddProfilePage = () => {
   const [previewState, setPreviewState] = useState(initialPreviewState);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fileError, setFileError] = useState("");
+
+  const [step, setStep] = useState("form"); // "form" | "choose" | "entries"
+  const [selectedOptionalSections, setSelectedOptionalSections] = useState([]);
+  const [optionalDrafts, setOptionalDrafts] = useState({});
+  const [optionalFormOpen, setOptionalFormOpen] = useState({});
 
   useEffect(() => {
     return () => {
@@ -211,9 +357,65 @@ const AddProfilePage = () => {
     setFormData(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== index) }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const getDefaultOptionalDraft = (sectionId) => {
+    const draft = {};
+    OPTIONAL_SECTION_CONFIG[sectionId].fields.forEach((field) => {
+      draft[field.name] = field.defaultValue || "";
+    });
+    return draft;
+  };
 
+  const getOptionalDraft = (sectionId) => optionalDrafts[sectionId] || getDefaultOptionalDraft(sectionId);
+
+  const updateOptionalDraft = (sectionId, fieldName, value) => {
+    setOptionalDrafts((prev) => ({
+      ...prev,
+      [sectionId]: { ...getOptionalDraft(sectionId), [fieldName]: value },
+    }));
+  };
+
+  const openOptionalForm = (sectionId) => {
+    setOptionalDrafts((prev) => ({ ...prev, [sectionId]: getDefaultOptionalDraft(sectionId) }));
+    setOptionalFormOpen((prev) => ({ ...prev, [sectionId]: true }));
+  };
+
+  const cancelOptionalForm = (sectionId) => {
+    setOptionalFormOpen((prev) => ({ ...prev, [sectionId]: false }));
+    setOptionalDrafts((prev) => ({ ...prev, [sectionId]: getDefaultOptionalDraft(sectionId) }));
+  };
+
+  const addOptionalEntry = (sectionId) => {
+    const config = OPTIONAL_SECTION_CONFIG[sectionId];
+    const draft = getOptionalDraft(sectionId);
+    const missingRequired = config.fields.some((field) => field.required && !String(draft[field.name] || "").trim());
+    if (missingRequired) return;
+
+    setFormData((prev) => ({ ...prev, [sectionId]: [...(prev[sectionId] || []), draft] }));
+    cancelOptionalForm(sectionId);
+  };
+
+  const removeOptionalEntry = (sectionId, index) => {
+    setFormData((prev) => ({ ...prev, [sectionId]: prev[sectionId].filter((_, i) => i !== index) }));
+  };
+
+  const toggleOptionalSection = (sectionId) => {
+    setSelectedOptionalSections((prev) =>
+      prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]
+    );
+  };
+
+  const goToOptionalEntries = () => {
+    setOptionalFormOpen((prev) => {
+      const next = { ...prev };
+      selectedOptionalSections.forEach((sectionId) => {
+        next[sectionId] = true;
+      });
+      return next;
+    });
+    setStep("entries");
+  };
+
+  const submitProfile = async () => {
     try {
       const formDataToSend = new FormData();
 
@@ -226,6 +428,12 @@ const AddProfilePage = () => {
       formDataToSend.append('experience', JSON.stringify(formData.experience));
       formDataToSend.append('education', JSON.stringify(formData.education));
       formDataToSend.append('publications', JSON.stringify(formData.publications));
+      formDataToSend.append('languages', JSON.stringify(formData.languages));
+      formDataToSend.append('certifications', JSON.stringify(formData.certifications));
+      formDataToSend.append('projects', JSON.stringify(formData.projects));
+      formDataToSend.append('awards', JSON.stringify(formData.awards));
+      formDataToSend.append('patents', JSON.stringify(formData.patents));
+      formDataToSend.append('enabledSections', JSON.stringify(selectedOptionalSections));
 
       // Add resume file if uploaded
       if (resumeFile) {
@@ -251,6 +459,17 @@ const AddProfilePage = () => {
     } catch (error) {
       console.error("Error adding profile:", error);
     }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+
+    if (step === "form") {
+      setStep("choose");
+      return;
+    }
+
+    submitProfile();
   };
 
   const handleSkillInputChange = (e) => setNewSkill(e.target.value);
@@ -319,637 +538,850 @@ const AddProfilePage = () => {
   const hasPublicationContent = showPublicationForm || formData.publications.length > 0;
   const hasEducationContent = showEducationForm || formData.education.length > 0;
 
+  const renderOptionalField = (sectionId, field) => {
+    const draft = getOptionalDraft(sectionId);
+    const value = draft[field.name] ?? "";
+    const baseClass = "border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none";
+
+    return (
+      <div key={field.name} className={field.type === "textarea" ? "md:col-span-2" : undefined}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {field.label}
+          {field.required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        {field.type === "select" ? (
+          <select
+            value={value}
+            onChange={(e) => updateOptionalDraft(sectionId, field.name, e.target.value)}
+            className={baseClass}
+          >
+            {field.options.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        ) : field.type === "textarea" ? (
+          <textarea
+            value={value}
+            onChange={(e) => updateOptionalDraft(sectionId, field.name, e.target.value)}
+            rows="3"
+            placeholder={field.placeholder}
+            className={`${baseClass} resize-none`}
+          />
+        ) : (
+          <input
+            type={field.type || "text"}
+            value={value}
+            onChange={(e) => updateOptionalDraft(sectionId, field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={baseClass}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderOptionalSectionCard = (sectionId, stepNumber) => {
+    const config = OPTIONAL_SECTION_CONFIG[sectionId];
+    const Icon = config.icon;
+    const entries = formData[sectionId] || [];
+    const isFormOpen = !!optionalFormOpen[sectionId];
+    const hasContent = isFormOpen || entries.length > 0;
+
+    return (
+      <div
+        key={sectionId}
+        className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}
+      >
+        <div className={`${hasContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
+          <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+            <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">{stepNumber}</span>
+            <Icon size={22} className="mr-2 text-blue-500" />
+            {config.label}
+          </h2>
+          <div className="flex gap-3 md:justify-end">
+            <button
+              type="button"
+              onClick={() => openOptionalForm(sectionId)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+            >
+              Add {config.singular}
+            </button>
+            {isFormOpen && (
+              <button
+                type="button"
+                onClick={() => cancelOptionalForm(sectionId)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isFormOpen && (
+          <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              {config.fields.map((field) => renderOptionalField(sectionId, field))}
+            </div>
+            <button
+              type="button"
+              onClick={() => addOptionalEntry(sectionId)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+            >
+              + Add {config.singular}
+            </button>
+          </div>
+        )}
+
+        {entries.length > 0 && (
+          <div className="space-y-3">
+            {entries.map((entry, index) => (
+              <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">{config.renderEntry(entry)}</div>
+                  <button
+                    type="button"
+                    onClick={() => removeOptionalEntry(sectionId, index)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <RippleBackground>
       <div className="min-h-screen py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">Create Your Profile</h1>
-            <p className="text-gray-600">Fill in your professional details to build your profile</p>
-            <p className="text-sm text-gray-500 mt-2">
-              <span className="text-red-500 font-semibold">*</span> indicates required fields
+            <p className="text-gray-600">
+              {step === "form" && "Fill in your professional details to build your profile"}
+              {step === "choose" && "Optionally add a few more sections to stand out"}
+              {step === "entries" && "Add entries for the sections you selected"}
             </p>
+            {step === "form" && (
+              <p className="text-sm text-gray-500 mt-2">
+                <span className="text-red-500 font-semibold">*</span> indicates required fields
+              </p>
+            )}
           </div>
 
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 md:p-8 mb-6 border border-blue-400">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                  </svg>
+          {step === "form" && (
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 md:p-8 mb-6 border border-blue-400">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-bold text-white mb-2">Upload Resume</h3>
-                <p className="text-blue-100 text-sm mb-2">Upload your resume to include with your profile</p>
-                <p className="text-blue-200 text-xs mb-4">Accepted formats: PDF, DOC, DOCX, TXT, RTF | Max size: 5MB</p>
-                {resumeFile && (
-                  <div className="mb-4 rounded-xl border border-white/40 bg-white/10 p-3 text-left text-white">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{resumeFile.name}</p>
-                        <p className="text-xs text-blue-100">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-bold text-white mb-2">Upload Resume</h3>
+                  <p className="text-blue-100 text-sm mb-2">Upload your resume to include with your profile</p>
+                  <p className="text-blue-200 text-xs mb-4">Accepted formats: PDF, DOC, DOCX, TXT, RTF | Max size: 5MB</p>
+                  {resumeFile && (
+                    <div className="mb-4 rounded-xl border border-white/40 bg-white/10 p-3 text-left text-white">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{resumeFile.name}</p>
+                          <p className="text-xs text-blue-100">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsPreviewOpen(true)}
+                            disabled={previewState.status === 'uploading' || !resumePreviewUrl}
+                            className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Preview
+                          </button>
+                          <a
+                            href={resumeDownloadUrl || '#'}
+                            download={resumeFile.name}
+                            className="rounded-md bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-50"
+                          >
+                            Download
+                          </a>
+                          <button
+                            type="button"
+                            onClick={clearResumeSelection}
+                            className="rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
+                      {previewState.status === 'uploading' && (
+                        <div className="mt-3 flex items-center gap-2 text-xs text-blue-100">
+                          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          Converting document to PDF preview...
+                        </div>
+                      )}
+                      {previewState.status === 'error' && (
+                        <div className="mt-3 rounded-lg border border-red-200 bg-red-500/20 px-3 py-2 text-xs text-red-100">
+                          {previewState.error}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {fileError && <p className="text-red-200 bg-red-500/30 px-3 py-2 rounded-lg text-xs mb-4">{fileError}</p>}
+
+                  {isPreviewOpen && resumePreviewUrl && (
+                    <div className="fixed inset-x-0 bottom-0 top-16 z-[60] flex items-center justify-center bg-black/80 p-4 sm:p-6">
+                      <div className="flex h-full max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+                          <div className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{resumeFile?.name || 'Resume preview'}</div>
+                          <div className="ml-4 flex items-center gap-2">
+                            <a
+                              href={resumePreviewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                            >
+                              Open in new tab
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => setIsPreviewOpen(false)}
+                              className="rounded-md bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-300"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                        <iframe
+                          title="Resume preview overlay"
+                          src={resumePreviewUrl}
+                          className="h-full w-full bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <label className="relative inline-flex items-center cursor-pointer group">
+                    <input
+                      id="resume-upload-input"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/rtf,text/rtf"
+                      onChange={handleResumeUpload}
+                      className="hidden"
+                    />
+                    <div className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      Choose Resume File
+                    </div>
+                  </label>
+                  <div className="mt-5 border-t border-white/30 pt-4 text-left">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h4 className="font-semibold text-white">Profile picture</h4>
+                        <p className="text-xs text-blue-100">JPEG, PNG, WEBP, or GIF | Max size: 5MB</p>
+                      </div>
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          onChange={handleProfileImageUpload}
+                          className="hidden"
+                        />
+                        Choose Photo
+                      </label>
+                    </div>
+                    {profileImageFile && (
+                      <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/40 bg-white/10 p-2">
+                        <img src={profileImagePreviewUrl} alt="Profile preview" className="h-14 w-14 rounded-full object-cover" />
+                        <p className="min-w-0 flex-1 truncate text-sm text-white">{profileImageFile.name}</p>
                         <button
                           type="button"
-                          onClick={() => setIsPreviewOpen(true)}
-                          disabled={previewState.status === 'uploading' || !resumePreviewUrl}
-                          className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Preview
-                        </button>
-                        <a
-                          href={resumeDownloadUrl || '#'}
-                          download={resumeFile.name}
-                          className="rounded-md bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-50"
-                        >
-                          Download
-                        </a>
-                        <button
-                          type="button"
-                          onClick={clearResumeSelection}
-                          className="rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                          onClick={clearProfileImageSelection}
+                          className="text-xs font-medium text-red-100 hover:text-white"
                         >
                           Delete
                         </button>
                       </div>
-                    </div>
-
-                    {previewState.status === 'uploading' && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-blue-100">
-                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        Converting document to PDF preview...
-                      </div>
-                    )}
-                    {previewState.status === 'error' && (
-                      <div className="mt-3 rounded-lg border border-red-200 bg-red-500/20 px-3 py-2 text-xs text-red-100">
-                        {previewState.error}
-                      </div>
                     )}
                   </div>
-                )}
-                {fileError && <p className="text-red-200 bg-red-500/30 px-3 py-2 rounded-lg text-xs mb-4">{fileError}</p>}
-
-                {isPreviewOpen && resumePreviewUrl && (
-                  <div className="fixed inset-x-0 bottom-0 top-16 z-[60] flex items-center justify-center bg-black/80 p-4 sm:p-6">
-                    <div className="flex h-full max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                        <div className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{resumeFile?.name || 'Resume preview'}</div>
-                        <div className="ml-4 flex items-center gap-2">
-                          <a
-                            href={resumePreviewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
-                          >
-                            Open in new tab
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => setIsPreviewOpen(false)}
-                            className="rounded-md bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-300"
-                          >
-                            Close
-                          </button>
-                        </div>
-                      </div>
-                      <iframe
-                        title="Resume preview overlay"
-                        src={resumePreviewUrl}
-                        className="h-full w-full bg-white"
-                      />
-                    </div>
-                  </div>
-                )}
-                <label className="relative inline-flex items-center cursor-pointer group">
-                  <input
-                    id="resume-upload-input"
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/rtf,text/rtf"
-                    onChange={handleResumeUpload}
-                    className="hidden"
-                  />
-                  <div className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Choose Resume File
-                  </div>
-                </label>
-                <div className="mt-5 border-t border-white/30 pt-4 text-left">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h4 className="font-semibold text-white">Profile picture</h4>
-                      <p className="text-xs text-blue-100">JPEG, PNG, WEBP, or GIF | Max size: 5MB</p>
-                    </div>
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        onChange={handleProfileImageUpload}
-                        className="hidden"
-                      />
-                      Choose Photo
-                    </label>
-                  </div>
-                  {profileImageFile && (
-                    <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/40 bg-white/10 p-2">
-                      <img src={profileImagePreviewUrl} alt="Profile preview" className="h-14 w-14 rounded-full object-cover" />
-                      <p className="min-w-0 flex-1 truncate text-sm text-white">{profileImageFile.name}</p>
-                      <button
-                        type="button"
-                        onClick={clearProfileImageSelection}
-                        className="text-xs font-medium text-red-100 hover:text-white"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-                <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">1</span>
-                Personal Information
-              </h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    placeholder="John Doe"
-                    onChange={handleChange}
-                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    placeholder="john.doe@email.com"
-                    onChange={handleChange}
-                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  placeholder="+1 555 123 4567"
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  required
-                />
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
-                <textarea
-                  name="summary"
-                  value={formData.summary}
-                  placeholder="Experienced faculty member with 8+ years of teaching and research expertise"
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-                  rows="4"
-                />
-              </div>
-            </div>
-
-            <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasExperienceContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
-              <div className={`${hasExperienceContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                  <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">2</span>
-                  Work Experience
-                </h2>
-                <div className="flex gap-3 md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowExperienceForm(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    Add Experience
-                  </button>
-                  {showExperienceForm && (
-                    <button
-                      type="button"
-                      onClick={handleCancelExperience}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-              {showExperienceForm && (
-                <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Job Title
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={newExperience.title}
-                        placeholder="Assistant Professor"
-                        onChange={handleExperienceInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Company/Institution
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="institution"
-                        value={newExperience.institution}
-                        placeholder="ABC University"
-                        onChange={handleExperienceInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                      <input
-                        type="month"
-                        name="start"
-                        value={newExperience.start}
-                        onChange={handleExperienceInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                      <input
-                        type="month"
-                        name="end"
-                        value={newExperience.end}
-                        onChange={handleExperienceInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
-                        disabled={newExperience.current}
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="current"
-                        checked={newExperience.current}
-                        onChange={handleExperienceInputChange}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-gray-700">I currently work here</span>
-                    </label>
-                  </div>
-                  <textarea
-                    name="description"
-                    value={newExperience.description}
-                    placeholder="Led curriculum design, published 3 papers, and mentored 40+ students"
-                    onChange={handleExperienceInputChange}
-                    className="border border-gray-300 rounded-lg p-3 w-full mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-                    rows="3"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddExperience}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    + Add Experience
-                  </button>
-                </div>
-              )}
-              {formData.experience.length > 0 && (
-                <div className="space-y-3">
-                  {formData.experience.map((exp, index) => (
-                    <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800 text-lg">{exp.title}</h4>
-                          <p className="text-blue-600 font-medium">{exp.institution}</p>
-                          <p className="text-gray-500 text-sm mt-1">
-                            {formatMonthYear(exp.start)}
-                            {' - '}
-                            {exp.current ? 'Present' : formatMonthYear(exp.end)}
-                          </p>
-                          {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExperience(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasPublicationContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
-              <div className={`${hasPublicationContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                  <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">3</span>
-                  Publications & Research
-                </h2>
-                <div className="flex gap-3 md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowPublicationForm(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    Add Publication
-                  </button>
-                  {showPublicationForm && (
-                    <button
-                      type="button"
-                      onClick={handleCancelPublication}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-              {showPublicationForm && (
-                <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
-                  <div className="grid gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Publication Title
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={newPublication.title}
-                        onChange={handlePublicationInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                        placeholder="AI in Higher Education"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Key Details
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="description"
-                        value={newPublication.description}
-                        onChange={handlePublicationInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                        placeholder="Published in IEEE, 2025"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Publication Link</label>
-                      <input
-                        type="url"
-                        name="link"
-                        value={newPublication.link}
-                        onChange={handlePublicationInputChange}
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                        placeholder="https://example.com/publication"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddPublication}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    + Add Publication
-                  </button>
-                </div>
-              )}
-              {formData.publications.length > 0 && (
-                <div className="space-y-3">
-                  {formData.publications.map((pub, index) => (
-                    <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800">{pub.title}</h4>
-                          {pub.description && <p className="text-gray-600 text-sm mt-1">{pub.description}</p>}
-                          {pub.link && (
-                            <a href={pub.link} target="_blank" rel=" noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
-                              View Publication
-                              <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
-                                <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
-                              </svg>
-                            </a>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePublication(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasEducationContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
-              <div className={`${hasEducationContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                  <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">4</span>
-                  Education
-                </h2>
-                <div className="flex gap-3 md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowEducationForm(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    Add Education
-                  </button>
-                  {showEducationForm && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEducation}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-              {showEducationForm && (
-                <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {step === "form" && (
+              <>
+                <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">1</span>
+                    Personal Information
+                  </h2>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Degree
+                        Full Name
                         <span className="text-red-500 ml-1">*</span>
                       </label>
                       <input
                         type="text"
-                        name="degree"
-                        value={newEducation.degree}
-                        onChange={handleEducationInputChange}
-                        placeholder="Bachelor of Science"
+                        name="name"
+                        value={formData.name}
+                        placeholder="John Doe"
+                        onChange={handleChange}
                         className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Field of Study</label>
-                      <input
-                        type="text"
-                        name="field"
-                        value={newEducation.field}
-                        onChange={handleEducationInputChange}
-                        placeholder="Computer Science"
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Institution Name
+                        Email
                         <span className="text-red-500 ml-1">*</span>
                       </label>
                       <input
-                        type="text"
-                        name="institution"
-                        value={newEducation.institution}
-                        onChange={handleEducationInputChange}
-                        placeholder="XYZ University"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        placeholder="john.doe@email.com"
+                        onChange={handleChange}
                         className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                      <input
-                        type="text"
-                        name="year"
-                        value={newEducation.year}
-                        onChange={handleEducationInputChange}
-                        placeholder="2024"
-                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                        required
                       />
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddEducation}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full mt-4 font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                  >
-                    + Add Education
-                  </button>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      placeholder="+1 555 123 4567"
+                      onChange={handleChange}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                      required
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
+                    <textarea
+                      name="summary"
+                      value={formData.summary}
+                      placeholder="Experienced faculty member with 8+ years of teaching and research expertise"
+                      onChange={handleChange}
+                      className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+                      rows="4"
+                    />
+                  </div>
                 </div>
-              )}
-              {formData.education.length > 0 && (
-                <div className="space-y-3">
-                  {formData.education.map((edu, index) => (
-                    <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800 text-lg">{edu.degree}{edu.field && ` in ${edu.field}`}</h4>
-                          <p className="text-blue-600 font-medium">{edu.institution}</p>
-                          {edu.year && <p className="text-gray-500 text-sm mt-1">{formatMonthYear(edu.year)}</p>}
-                        </div>
+
+                <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasExperienceContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
+                  <div className={`${hasExperienceContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
+                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                      <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">2</span>
+                      Work Experience
+                    </h2>
+                    <div className="flex gap-3 md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowExperienceForm(true)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        Add Experience
+                      </button>
+                      {showExperienceForm && (
                         <button
                           type="button"
-                          onClick={() => handleRemoveEducation(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                          onClick={handleCancelExperience}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
                         >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                          </svg>
+                          Cancel
                         </button>
-                      </div>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                  {showExperienceForm && (
+                    <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Job Title
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="title"
+                            value={newExperience.title}
+                            placeholder="Assistant Professor"
+                            onChange={handleExperienceInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Company/Institution
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="institution"
+                            value={newExperience.institution}
+                            placeholder="ABC University"
+                            onChange={handleExperienceInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                          <input
+                            type="month"
+                            name="start"
+                            value={newExperience.start}
+                            onChange={handleExperienceInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                          <input
+                            type="month"
+                            name="end"
+                            value={newExperience.end}
+                            onChange={handleExperienceInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+                            disabled={newExperience.current}
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="current"
+                            checked={newExperience.current}
+                            onChange={handleExperienceInputChange}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-gray-700">I currently work here</span>
+                        </label>
+                      </div>
+                      <textarea
+                        name="description"
+                        value={newExperience.description}
+                        placeholder="Led curriculum design, published 3 papers, and mentored 40+ students"
+                        onChange={handleExperienceInputChange}
+                        className="border border-gray-300 rounded-lg p-3 w-full mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+                        rows="3"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddExperience}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        + Add Experience
+                      </button>
+                    </div>
+                  )}
+                  {formData.experience.length > 0 && (
+                    <div className="space-y-3">
+                      {formData.experience.map((exp, index) => (
+                        <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800 text-lg">{exp.title}</h4>
+                              <p className="text-blue-600 font-medium">{exp.institution}</p>
+                              <p className="text-gray-500 text-sm mt-1">
+                                {formatMonthYear(exp.start)}
+                                {' - '}
+                                {exp.current ? 'Present' : formatMonthYear(exp.end)}
+                              </p>
+                              {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExperience(index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                            >
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-                <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">5</span>
-                Skills & Expertise
-              </h2>
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Skill</label>
-                  <input
-                    type="text"
-                    value={newSkill}
-                    onChange={handleSkillInputChange}
-                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    placeholder="e.g., React, Python, Leadership"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-                  />
+                <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasPublicationContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
+                  <div className={`${hasPublicationContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
+                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                      <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">3</span>
+                      Publications & Research
+                    </h2>
+                    <div className="flex gap-3 md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowPublicationForm(true)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        Add Publication
+                      </button>
+                      {showPublicationForm && (
+                        <button
+                          type="button"
+                          onClick={handleCancelPublication}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {showPublicationForm && (
+                    <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+                      <div className="grid gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Publication Title
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="title"
+                            value={newPublication.title}
+                            onChange={handlePublicationInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                            placeholder="AI in Higher Education"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Key Details
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="description"
+                            value={newPublication.description}
+                            onChange={handlePublicationInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                            placeholder="Published in IEEE, 2025"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Publication Link</label>
+                          <input
+                            type="url"
+                            name="link"
+                            value={newPublication.link}
+                            onChange={handlePublicationInputChange}
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                            placeholder="https://example.com/publication"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddPublication}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        + Add Publication
+                      </button>
+                    </div>
+                  )}
+                  {formData.publications.length > 0 && (
+                    <div className="space-y-3">
+                      {formData.publications.map((pub, index) => (
+                        <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800">{pub.title}</h4>
+                              {pub.description && <p className="text-gray-600 text-sm mt-1">{pub.description}</p>}
+                              {pub.link && (
+                                <a href={pub.link} target="_blank" rel=" noopener noreferrer" className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                  View Publication
+                                  <ExternalLinkArrow />
+                                </a>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePublication(index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                            >
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddSkill}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md self-end"
-                >
-                  Add
-                </button>
+
+                <div className={`bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 ${hasEducationContent ? "p-6 md:p-8" : "p-4 md:p-5"}`}>
+                  <div className={`${hasEducationContent ? "mb-6" : "mb-0"} flex flex-col gap-3 md:flex-row md:items-center md:justify-between`}>
+                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                      <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">4</span>
+                      Education
+                    </h2>
+                    <div className="flex gap-3 md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowEducationForm(true)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        Add Education
+                      </button>
+                      {showEducationForm && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEducation}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {showEducationForm && (
+                    <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-4 border border-gray-200">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Degree
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="degree"
+                            value={newEducation.degree}
+                            onChange={handleEducationInputChange}
+                            placeholder="Bachelor of Science"
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Field of Study</label>
+                          <input
+                            type="text"
+                            name="field"
+                            value={newEducation.field}
+                            onChange={handleEducationInputChange}
+                            placeholder="Computer Science"
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Institution Name
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="institution"
+                            value={newEducation.institution}
+                            onChange={handleEducationInputChange}
+                            placeholder="XYZ University"
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                          <input
+                            type="text"
+                            name="year"
+                            value={newEducation.year}
+                            onChange={handleEducationInputChange}
+                            placeholder="2024"
+                            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddEducation}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg w-full mt-4 font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                      >
+                        + Add Education
+                      </button>
+                    </div>
+                  )}
+                  {formData.education.length > 0 && (
+                    <div className="space-y-3">
+                      {formData.education.map((edu, index) => (
+                        <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-blue-100 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800 text-lg">{edu.degree}{edu.field && ` in ${edu.field}`}</h4>
+                              <p className="text-blue-600 font-medium">{edu.institution}</p>
+                              {edu.year && <p className="text-gray-500 text-sm mt-1">{formatMonthYear(edu.year)}</p>}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEducation(index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition-colors ml-4"
+                            >
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">5</span>
+                    Skills & Expertise
+                  </h2>
+                  <div className="flex gap-2 mb-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Skill</label>
+                      <input
+                        type="text"
+                        value={newSkill}
+                        onChange={handleSkillInputChange}
+                        className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                        placeholder="e.g., React, Python, Leadership"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddSkill}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md self-end"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {formData.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.skills.map((skill, index) => (
+                        <span key={index} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm flex items-center shadow-sm hover:shadow-md transition-shadow">
+                          {skill}
+                          <button type="button" onClick={() => handleRemoveSkill(index)} className="ml-2 hover:bg-white hover:text-blue-600 rounded-full w-5 h-5 flex items-center justify-center transition-colors">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-8 text-center">
+                  <button
+                    type="submit"
+                    className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 rounded-lg font-bold text-lg w-full md:w-auto md:min-w-[300px] transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    Next
+                  </button>
+                  <p className="text-blue-100 text-sm mt-4">Next, you can add optional sections like languages, projects, and awards</p>
+                </div>
+              </>
+            )}
+
+            {step === "choose" && (
+              <div className="bg-white rounded-xl shadow-md p-6 md:p-8 border border-gray-100">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Add optional sections?</h2>
+                <p className="text-gray-600 mb-6">
+                  Choose any sections you&apos;d like to add to your profile. You can always add or remove these later from your profile page.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                  {OPTIONAL_SECTION_ORDER.map((sectionId) => {
+                    const config = OPTIONAL_SECTION_CONFIG[sectionId];
+                    const Icon = config.icon;
+                    const isSelected = selectedOptionalSections.includes(sectionId);
+                    return (
+                      <button
+                        key={sectionId}
+                        type="button"
+                        onClick={() => toggleOptionalSection(sectionId)}
+                        aria-pressed={isSelected}
+                        className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-colors ${isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"}`}
+                      >
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isSelected ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-500"}`}>
+                          <Icon size={18} />
+                        </span>
+                        <span className="flex-1 font-medium text-gray-800">{config.label}</span>
+                        {isSelected && <Check size={18} className="text-blue-600" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setStep("form")}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
+                  >
+                    Back
+                  </button>
+                  <div className="flex gap-3">
+                    {selectedOptionalSections.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={submitProfile}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg font-medium transition-colors duration-200"
+                      >
+                        Skip, create profile now
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => (selectedOptionalSections.length > 0 ? goToOptionalEntries() : submitProfile())}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {selectedOptionalSections.length > 0 ? "Continue" : "Create Profile"}
+                    </button>
+                  </div>
+                </div>
               </div>
-              {formData.skills.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.skills.map((skill, index) => (
-                    <span key={index} className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm flex items-center shadow-sm hover:shadow-md transition-shadow">
-                      {skill}
-                      <button type="button" onClick={() => handleRemoveSkill(index)} className="ml-2 hover:bg-white hover:text-blue-600 rounded-full w-5 h-5 flex items-center justify-center transition-colors">&times;</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
 
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-8 text-center">
-              <button
-                type="submit"
-                className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 rounded-lg font-bold text-lg w-full md:w-auto md:min-w-[300px] transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                Save Profile
-              </button>
-              <p className="text-blue-100 text-sm mt-4">Click to save your resume and create your profile</p>
-            </div>
+            {step === "entries" && (
+              <>
+                {OPTIONAL_SECTION_ORDER
+                  .filter((sectionId) => selectedOptionalSections.includes(sectionId))
+                  .map((sectionId, index) => renderOptionalSectionCard(sectionId, index + 1))}
+
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-8 text-center">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep("choose")}
+                      className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-bold text-lg w-full sm:w-auto sm:min-w-[240px] transition-colors duration-200"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-white text-blue-600 hover:bg-gray-50 px-6 py-3 rounded-lg font-bold text-lg w-full sm:w-auto sm:min-w-[240px] transition-all duration-200 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      Create Profile
+                    </button>
+                  </div>
+                  <p className="text-blue-100 text-sm mt-4">Click to save your resume and create your profile</p>
+                </div>
+              </>
+            )}
           </form>
         </div>
       </div>
