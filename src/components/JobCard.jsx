@@ -26,10 +26,13 @@ const JobCard = ({
   isSelected = false,
   detailView = false,
   listView = false,
+  requireEmailVerification = false,
+  isEmailVerified = true,
 }) => {
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,6 +99,8 @@ const JobCard = ({
         setApplied(true);
         onApplySuccess?.(jobId);
         alert("Successfully applied for the job");
+      } else if (data.code === "EMAIL_NOT_VERIFIED") {
+        setShowVerifyModal(true);
       } else {
         alert(data.message || "Failed to apply for job");
       }
@@ -105,6 +110,11 @@ const JobCard = ({
   };
 
   const handleApplyClick = async () => {
+    if (requireEmailVerification && !isEmailVerified) {
+      setShowVerifyModal(true);
+      return;
+    }
+
     try {
       const profileResponse = await fetch(`/api/profile/${userId}`, {
         headers: {
@@ -278,6 +288,37 @@ const JobCard = ({
                 className="btn btn-primary"
               >
                 Create Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Email Verification Required</h3>
+            <p className="text-gray-600 mb-6">
+              You cannot apply for a job until you verify your email address. You can verify now,
+              or cancel and keep browsing.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowVerifyModal(false)}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVerifyModal(false);
+                  navigate("/verify-email");
+                }}
+                className="btn btn-primary"
+              >
+                Verify Email
               </button>
             </div>
           </div>

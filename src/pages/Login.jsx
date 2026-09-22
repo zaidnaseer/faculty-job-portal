@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaSignInAlt, FaGoogle } from "react-icons/fa";
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 
@@ -18,6 +18,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeAuthMethod, setActiveAuthMethod] = useState(null);
+  const [unverifiedFirebaseUser, setUnverifiedFirebaseUser] = useState(null);
+  const [resendMessage, setResendMessage] = useState("");
 
   const completeAppLogin = useCallback(async (firebaseUser) => {
     const idToken = await firebaseUser.getIdToken();
@@ -30,10 +32,12 @@ const Login = () => {
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || "Login failed");
+      const loginError = new Error(data.message || "Login failed");
+      loginError.code = data.code;
+      throw loginError;
     }
 
-    await login(data.user, data.token);
+    await login(data.user, data.token, data.emailVerificationRequired);
 
     const role = data.user?.role || data.role;
     if (role === "faculty") {
@@ -124,6 +128,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setResendMessage("");
+    setUnverifiedFirebaseUser(null);
     setIsLoading(true);
     setActiveAuthMethod("email");
 
@@ -132,11 +138,25 @@ const Login = () => {
       const firebaseCredential = await signInWithEmailAndPassword(auth, email, password);
       await completeAppLogin(firebaseCredential.user);
     } catch (err) {
+      if (err.code === "EMAIL_NOT_VERIFIED") {
+        setUnverifiedFirebaseUser(auth.currentUser);
+      }
       setError(err.message || "Failed to sign in. Please check your credentials or report if error persists.");
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);
       setActiveAuthMethod(null);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedFirebaseUser) return;
+    setResendMessage("");
+    try {
+      await sendEmailVerification(unverifiedFirebaseUser);
+      setResendMessage(`Verification email sent to ${unverifiedFirebaseUser.email}. Please check your inbox.`);
+    } catch (err) {
+      setResendMessage(err.message || "Could not resend verification email.");
     }
   };
 
@@ -175,6 +195,24 @@ const Login = () => {
               className="bg-red-50 text-red-800 p-4 rounded-md text-sm"
             >
               {error}
+            </motion.div>
+          )}
+
+          {unverifiedFirebaseUser && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-50 text-amber-800 p-4 rounded-md text-sm space-y-2"
+            >
+              <p>Employer accounts must verify their email before signing in.</p>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Resend verification email
+              </button>
+              {resendMessage && <p>{resendMessage}</p>}
             </motion.div>
           )}
 

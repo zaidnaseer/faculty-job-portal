@@ -35,6 +35,8 @@ export const AuthProvider = ({ children }) => {
             name: data.name,
             email: data.email,
             role: decoded.role, // ✅ Ensure role is extracted
+            isEmailVerified: !!data.isEmailVerified,
+            emailVerificationRequired: !!data.emailVerificationRequired,
             token,
           };
 
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  const login = (userData, token) => {
+  const login = (userData, token, emailVerificationRequired = false) => {
     // ✅ Decode token to extract user ID and role
     const decoded = jwtDecode(token);
 
@@ -65,6 +67,8 @@ export const AuthProvider = ({ children }) => {
       ...userData,
       id: decoded.id, // ✅ Extract id from token
       role: decoded.role, // ✅ Extract role from token
+      isEmailVerified: !!userData?.isEmailVerified,
+      emailVerificationRequired: !!emailVerificationRequired,
       token,
     };
 

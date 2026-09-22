@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock, FaUserTie, FaUniversity, FaGoogle } from "react-icons/fa";
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase";
 import RippleBackground from "../components/RippleBackground";
 import { AuthContext } from "../context/AuthContext";
@@ -51,16 +51,19 @@ const RegisterPage = () => {
       throw new Error(data.message || "Registration failed");
     }
 
-    await login(data.user, data.token);
+    await login(data.user, data.token, data.emailVerificationRequired);
 
     const userRole = data.user?.role || data.role;
-    if (userRole === "faculty") {
-      navigate("/profile");
-    } else if (userRole === "hr") {
-      navigate("/hr");
-    } else {
+    if (!["faculty", "hr"].includes(userRole)) {
       throw new Error("Invalid role. Please contact support.");
     }
+
+    if (data.emailVerificationRequired && !data.user?.isEmailVerified) {
+      navigate("/verify-email");
+      return;
+    }
+
+    navigate(userRole === "faculty" ? "/profile" : "/hr");
   }, [login, navigate]);
 
   useEffect(() => {
@@ -157,6 +160,9 @@ const RegisterPage = () => {
       const { email, password, name, role, university } = formData;
       const firebaseCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(firebaseCredential.user, { displayName: name });
+      if (!firebaseCredential.user.emailVerified) {
+        await sendEmailVerification(firebaseCredential.user);
+      }
       await completeAppRegistration(firebaseCredential.user, { name, role, university });
 
     } catch (err) {

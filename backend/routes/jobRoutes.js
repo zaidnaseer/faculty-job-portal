@@ -8,7 +8,7 @@ const {
   getPrivateProfileImageUrl,
   copyProfileImageForApplication,
 } = require("../utils/r2");
-const { requireAuth, protect } = require("../middleware/authMiddleware");
+const { requireAuth, protect, requireVerifiedEmail } = require("../middleware/authMiddleware");
 
 const buildProfileSnapshot = (profile) => ({
   _id: profile?._id,
@@ -503,7 +503,7 @@ router.patch("/:jobId/applicants/:applicantId/shortlist", protect(["hr"]), async
 });
 
 // ✅ Apply for a job (by Faculty)
-router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
+router.post("/apply/:id", protect(["faculty"]), requireVerifiedEmail, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
 

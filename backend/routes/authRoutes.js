@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const admin = require('../utils/firebaseAdmin');
+const { isEmailVerificationRequired } = require('../config/featureFlags');
 
 const router = express.Router();
 
@@ -43,7 +44,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Build user object
-    const userData = { name, email, role, firebaseUid };
+    const userData = { name, email, role, firebaseUid, isEmailVerified: !!decodedToken.email_verified };
     if (role === 'hr' && university) {
       userData.university = university;
     }
@@ -64,7 +65,9 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
       },
+      emailVerificationRequired: isEmailVerificationRequired(),
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -90,6 +93,22 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ message: 'No profile found. Please complete registration first.' });
     }
 
+    // Keep our record of verification status in sync with Firebase.
+    const isEmailVerified = !!decodedToken.email_verified;
+    if (user.isEmailVerified !== isEmailVerified) {
+      user.isEmailVerified = isEmailVerified;
+      await user.save();
+    }
+
+    // Verification is mandatory for HR accounts; faculty can browse unverified
+    // and are only blocked when they try to apply for a job.
+    if (isEmailVerificationRequired() && user.role === 'hr' && !user.isEmailVerified) {
+      return res.status(403).json({
+        message: 'Please verify your email address before logging in.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30h' });
 
     res.json({
@@ -99,6 +118,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
       },
       role: user.role,
       name: user.name,
@@ -128,7 +148,7 @@ router.get("/user", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(user);
+    res.json({ ...user.toObject(), emailVerificationRequired: isEmailVerificationRequired() });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(401).json({ message: "Invalid token" });

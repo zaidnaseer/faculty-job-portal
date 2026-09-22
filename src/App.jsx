@@ -6,6 +6,7 @@ import HRProfile from "./pages/HRProfile";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import AddProfilePage from "./pages/AddProfilePage";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
@@ -20,6 +21,12 @@ const ProtectedRoute = ({ element, allowedRoles }) => {
 
   if (!user) {
     return <Navigate to="/login" />;
+  }
+
+  // Verification is mandatory for HR accounts; faculty can use the site
+  // unverified and are only blocked from applying to jobs.
+  if (user.role === "hr" && user.emailVerificationRequired && !user.isEmailVerified) {
+    return <Navigate to="/verify-email" />;
   }
 
   if (!allowedRoles.includes(user.role)) {
@@ -43,6 +50,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           {/* Faculty-only routes */}
           <Route

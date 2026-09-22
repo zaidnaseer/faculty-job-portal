@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   firebaseUid: { type: String, unique: true, sparse: true },
   role: { type: String, required: true }, // faculty or hr
   university: { type: String }, // ✅ Only applicable for HR users
+  isEmailVerified: { type: Boolean, default: false },
   applicantListVisits: { type: [applicantListVisitSchema], default: [] }
 });
 

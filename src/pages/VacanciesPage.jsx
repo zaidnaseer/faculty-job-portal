@@ -390,6 +390,8 @@ const VacanciesPage = () => {
                       applicationStatus={applicationStatusByJobId[selectedJob._id]}
                       reapplyEligibleAt={reapplyEligibleAtByJobId[selectedJob._id]}
                       onApplySuccess={handleApplySuccess}
+                      requireEmailVerification={!!user.emailVerificationRequired}
+                      isEmailVerified={!!user.isEmailVerified}
                     />
                   </div>
                 )}
