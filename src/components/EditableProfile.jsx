@@ -1065,29 +1065,28 @@ const EditableProfile = ({
                         </div>
 
                         {!resumeUrl && canEdit && onUploadResume && (
-                            <div className="bg-white p-6 rounded-xl shadow border border-blue-100">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <h3 className="flex items-center gap-2 text-lg font-bold text-gray-800">
-                                            <FileText size={18} /> Upload your resume
-                                        </h3>
-                                        <p className="mt-1 text-sm text-gray-600">Add a resume so employers can learn more about your experience.</p>
-                                    </div>
-                                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                                        <Upload size={16} />
-                                        {isResumeActionLoading ? "Uploading..." : "Choose file"}
-                                        <input
-                                            type="file"
-                                            accept=".pdf,.doc,.docx,.txt,.rtf"
-                                            onChange={handleUploadResume}
-                                            disabled={isResumeActionLoading}
-                                            className="sr-only"
-                                        />
-                                    </label>
+                            <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                                <div className="rounded-full bg-gray-200 p-3 text-gray-500">
+                                    <FileText size={22} />
                                 </div>
-                                <p className="mt-3 text-xs text-gray-500">PDF, Word, TXT, or RTF. Maximum size: 5MB.</p>
-                                {resumeUploadError && <p className="mt-2 text-sm text-red-600">{resumeUploadError}</p>}
-                            </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-700">Upload your resume</h3>
+                                    <p className="mt-1 text-sm text-gray-500">Add a resume so employers can learn more about your experience.</p>
+                                </div>
+                                <span className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100">
+                                    <Upload size={16} />
+                                    {isResumeActionLoading ? "Uploading..." : "Choose file"}
+                                </span>
+                                <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.txt,.rtf"
+                                    onChange={handleUploadResume}
+                                    disabled={isResumeActionLoading}
+                                    className="sr-only"
+                                />
+                                <p className="text-xs text-gray-400">PDF, Word, TXT, or RTF. Maximum size: 5MB.</p>
+                                {resumeUploadError && <p className="text-sm text-red-600">{resumeUploadError}</p>}
+                            </label>
                         )}
 
                         {resumeUrl && (
