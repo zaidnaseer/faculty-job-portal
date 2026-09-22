@@ -18,6 +18,7 @@ const applicationSchema = new mongoose.Schema(
       enum: ['active', 'withdrawn', 'rejected'],
       default: 'active'
     },
+    shortlisted: { type: Boolean, default: false },
     appliedAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
   },

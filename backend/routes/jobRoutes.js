@@ -206,6 +206,7 @@ router.get("/:jobId/applicants", protect(["hr"]), async (req, res) => {
         entry.appliedAt &&
         (!lastVisitedAt || entry.appliedAt > lastVisitedAt)
       );
+      applicant.shortlisted = Boolean(entry.shortlisted);
 
       if (entry.status === "active") {
         applicantsByStatus.active.push(applicant);
@@ -449,12 +450,54 @@ router.patch("/:jobId/applicants/:applicantId/reject", protect(["hr"]), async (r
     }
 
     application.status = "rejected";
+    application.shortlisted = false;
     application.updatedAt = new Date();
     await job.save();
 
     return res.status(200).json({ message: "Application rejected" });
   } catch (error) {
     res.status(500).json({ error: "Failed to reject application" });
+  }
+});
+
+// ✅ Shortlist / unshortlist an applicant for a job (by HR)
+router.patch("/:jobId/applicants/:applicantId/shortlist", protect(["hr"]), async (req, res) => {
+  try {
+    const { jobId, applicantId } = req.params;
+    const job = await Job.findById(jobId);
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    if (job.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this job" });
+    }
+
+    const application = job.applications.find(
+      (entry) => entry.user.toString() === applicantId.toString()
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (application.status !== "active") {
+      return res.status(400).json({ message: "Only active applications can be shortlisted" });
+    }
+
+    const shortlisted = typeof req.body?.shortlisted === "boolean"
+      ? req.body.shortlisted
+      : !application.shortlisted;
+
+    application.shortlisted = shortlisted;
+    application.updatedAt = new Date();
+    await job.save();
+
+    return res.status(200).json({
+      message: shortlisted ? "Applicant shortlisted" : "Applicant removed from shortlist",
+      shortlisted
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update shortlist status" });
   }
 });
 
@@ -515,6 +558,7 @@ router.post("/apply/:id", protect(["faculty"]), async (req, res) => {
       }
 
       existingApplication.status = "active";
+      existingApplication.shortlisted = false;
       existingApplication.updatedAt = new Date();
       existingApplication.appliedAt = new Date();
       existingApplication.profileSnapshot = profileSnapshot;

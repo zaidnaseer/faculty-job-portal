@@ -16,6 +16,7 @@ const JobApplicantsPage = () => {
     const [jobTitle, setJobTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [rejectingId, setRejectingId] = useState(null);
+    const [shortlistingId, setShortlistingId] = useState(null);
     const [activeTab, setActiveTab] = useState("active");
     const [retentionMonths, setRetentionMonths] = useState(12);
     const hasFetchedApplicants = useRef(false);
@@ -107,16 +108,77 @@ const JobApplicantsPage = () => {
         }
     };
 
-    const currentApplicants = applicantsByStatus[activeTab] || [];
+    const handleToggleShortlist = async (applicantId, nextShortlisted) => {
+        setShortlistingId(applicantId);
+        try {
+            const response = await fetch(
+                `${backendUrl}/api/jobs/${jobId}/applicants/${applicantId}/shortlist`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${user.token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ shortlisted: nextShortlisted }),
+                }
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                alert(data.message || "Failed to update shortlist status");
+                return;
+            }
+
+            setApplicantsByStatus((prev) => ({
+                ...prev,
+                active: (prev.active || []).map((faculty) =>
+                    faculty._id === applicantId
+                        ? { ...faculty, shortlisted: nextShortlisted }
+                        : faculty
+                ),
+            }));
+        } catch (error) {
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setShortlistingId(null);
+        }
+    };
+
+    const shortlistedApplicants = (applicantsByStatus.active || []).filter(
+        (faculty) => faculty.shortlisted
+    );
+    const pendingApplicants = (applicantsByStatus.active || []).filter(
+        (faculty) => !faculty.shortlisted
+    );
+    const tabLabels = {
+        active: "Pending",
+        shortlisted: "Shortlisted",
+        rejected: "Rejected",
+        withdrawn: "Withdrawn",
+    };
+    const tabCounts = {
+        active: pendingApplicants.length,
+        shortlisted: shortlistedApplicants.length,
+        rejected: (applicantsByStatus.rejected || []).length,
+        withdrawn: (applicantsByStatus.withdrawn || []).length,
+    };
+    const currentApplicants =
+        activeTab === "shortlisted"
+            ? shortlistedApplicants
+            : activeTab === "active"
+                ? pendingApplicants
+                : applicantsByStatus[activeTab] || [];
     const sortedApplicants = [...currentApplicants].sort(
         (left, right) => Number(right.isNew) - Number(left.isNew)
     );
     const emptyMessage =
         activeTab === "active"
-            ? "No active applicants for this job yet."
-            : activeTab === "rejected"
-                ? "No rejected applicants to show."
-                : "No withdrawn applications to show.";
+            ? "No pending applicants for this job yet."
+            : activeTab === "shortlisted"
+                ? "No shortlisted applicants yet."
+                : activeTab === "rejected"
+                    ? "No rejected applicants to show."
+                    : "No withdrawn applications to show.";
 
     return (
         <RippleBackground>
@@ -128,22 +190,42 @@ const JobApplicantsPage = () => {
                     ← Back
                 </button>
                 <h2 className="text-2xl font-bold mb-4 text-blue-800">Applicants for: <span className="text-gray-800">{jobTitle}</span></h2>
-                <div className="mb-6 flex flex-wrap gap-2">
-                    {["active", "rejected", "withdrawn"].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${activeTab === tab
-                                ? "bg-blue-600 text-white shadow"
-                                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                                }`}
-                        >
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            <span className="ml-2 text-xs font-normal">
-                                ({(applicantsByStatus[tab] || []).length})
-                            </span>
-                        </button>
-                    ))}
+                <div className="mb-6 flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap gap-2 rounded-full bg-blue-100 p-1.5 ring-1 ring-inset ring-blue-300">
+                        {["active", "shortlisted"].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${activeTab === tab
+                                    ? "bg-blue-600 text-white shadow"
+                                    : "text-blue-900 hover:bg-white"
+                                    }`}
+                            >
+                                {tabLabels[tab]}
+                                <span className="ml-2 text-xs font-normal">
+                                    ({tabCounts[tab]})
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="h-8 w-px bg-gray-300" />
+                    <div className="flex flex-wrap gap-2 rounded-full bg-gray-100 p-1.5 ring-1 ring-inset ring-gray-300">
+                        {["rejected", "withdrawn"].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${activeTab === tab
+                                    ? "bg-gray-600 text-white shadow"
+                                    : "text-gray-700 hover:bg-white"
+                                    }`}
+                            >
+                                {tabLabels[tab]}
+                                <span className="ml-2 text-xs font-normal">
+                                    ({tabCounts[tab]})
+                                </span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 {(activeTab === "rejected" || activeTab === "withdrawn") && (
                     <p className="mb-4 text-xs text-gray-500">
@@ -174,25 +256,43 @@ const JobApplicantsPage = () => {
                                     </div>
                                     <div className="text-gray-500 text-xs">{faculty.email}</div>
                                 </div>
-                                <button
-                                    onClick={() =>
-                                        navigate(`/display-profile?facultyId=${faculty._id}&jobId=${jobId}`, {
-                                            state: { facultyId: faculty._id, jobId },
-                                        })
-                                    }
-                                    className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs transition"
-                                >
-                                    View Profile
-                                </button>
-                                {activeTab === "active" && (
+                                <div className="ml-4 flex items-center gap-2">
                                     <button
-                                        onClick={() => handleRejectApplicant(faculty._id)}
-                                        disabled={rejectingId === faculty._id}
-                                        className="ml-2 px-3 py-1 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 text-xs transition disabled:text-rose-300"
+                                        onClick={() =>
+                                            navigate(`/display-profile?facultyId=${faculty._id}&jobId=${jobId}`, {
+                                                state: { facultyId: faculty._id, jobId },
+                                            })
+                                        }
+                                        className="inline-flex items-center rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 active:bg-blue-600 active:text-white"
                                     >
-                                        {rejectingId === faculty._id ? "Rejecting..." : "Reject"}
+                                        View Profile
                                     </button>
-                                )}
+                                    {(activeTab === "active" || activeTab === "shortlisted") && (
+                                        <button
+                                            onClick={() => handleToggleShortlist(faculty._id, !faculty.shortlisted)}
+                                            disabled={shortlistingId === faculty._id}
+                                            className={`inline-flex items-center rounded-lg border px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${faculty.shortlisted
+                                                ? "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                                                : "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50 active:bg-emerald-600 active:text-white"
+                                                }`}
+                                        >
+                                            {shortlistingId === faculty._id
+                                                ? "Updating..."
+                                                : faculty.shortlisted
+                                                    ? "Unshortlist"
+                                                    : "Shortlist"}
+                                        </button>
+                                    )}
+                                    {(activeTab === "active" || activeTab === "shortlisted") && (
+                                        <button
+                                            onClick={() => handleRejectApplicant(faculty._id)}
+                                            disabled={rejectingId === faculty._id}
+                                            className="inline-flex items-center rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
+                                        >
+                                            {rejectingId === faculty._id ? "Rejecting..." : "Reject"}
+                                        </button>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>
