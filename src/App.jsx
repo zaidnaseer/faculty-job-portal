@@ -5,6 +5,7 @@ import ApplicantProfilePage from "./pages/ApplicantProfilePage";
 import HRProfile from "./pages/HRProfile";
 import Login from "./pages/Login";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AddProfilePage from "./pages/AddProfilePage";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
@@ -41,6 +42,7 @@ function App() {
           <Route path="/" element={<LandingPage />} /> {/* New landing page as root */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Faculty-only routes */}
           <Route
