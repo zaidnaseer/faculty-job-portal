@@ -241,33 +241,34 @@ const JobApplicantsPage = () => {
                     ← Back
                 </button>
                 {job && (
-                    <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)] sm:p-6">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="mb-6 rounded-2xl bg-gradient-to-r from-sky-900 via-blue-900 to-slate-900 px-6 py-8 text-white shadow-lg">
+                        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="truncate text-2xl font-bold text-slate-900" title={job.title || "Untitled"}>
+                                <p className="text-xs uppercase tracking-[0.2em] text-sky-200">HR Portal</p>
+                                <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <h2 className="truncate text-3xl font-semibold" title={job.title || "Untitled"}>
                                         {job.title || "Untitled"}
                                     </h2>
-                                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${getJobStatusClasses(job.status || "Active")}`}>
+                                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-100 ring-1 ring-inset ring-white/20">
                                         {job.status || "Active"}
                                     </span>
                                 </div>
-                                <p className="mt-2 text-sm text-slate-500">
+                                <p className="mt-2 max-w-2xl text-sm text-sky-100">
                                     {[job.department, job.location, job.type].filter(Boolean).join(" · ")}
                                     {(job.department || job.location || job.type) && " · "}
                                     Posted {getRelativeAge(job.postedDate)}
                                 </p>
-                                <div className="mt-4 flex items-center gap-5 text-sm">
-                                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
-                                        <UserRound size={17} className="text-blue-600" />
+                                <div className="mt-5 flex flex-wrap items-center gap-5 text-sm">
+                                    <span className="inline-flex items-center gap-2 font-semibold text-white">
+                                        <UserRound size={17} className="text-sky-300" />
                                         {applicantsByStatus.active?.length || 0} Applicant{(applicantsByStatus.active?.length || 0) === 1 ? "" : "s"}
                                     </span>
-                                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
-                                        <Sparkles size={16} className="text-emerald-500" />
+                                    <span className="inline-flex items-center gap-2 font-semibold text-white">
+                                        <Sparkles size={16} className="text-emerald-300" />
                                         {newApplicantsCount} New
                                     </span>
-                                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
-                                        <Star size={16} className="text-amber-500" />
+                                    <span className="inline-flex items-center gap-2 font-semibold text-white">
+                                        <Star size={16} className="text-amber-300" />
                                         {shortlistedApplicants.length} Shortlisted
                                     </span>
                                 </div>
@@ -276,14 +277,14 @@ const JobApplicantsPage = () => {
                                 <button
                                     onClick={() => navigate("/create-job", { state: { job, mode: "edit" } })}
                                     disabled={job.status === "Deleted"}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Pencil size={15} /> Edit Posting
                                 </button>
                                 <button
                                     onClick={() => navigate("/create-job", { state: { job: { ...job, _id: undefined }, mode: "duplicate" } })}
                                     disabled={job.status === "Deleted"}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Copy size={15} /> Duplicate
                                 </button>
@@ -291,7 +292,7 @@ const JobApplicantsPage = () => {
                                     <button
                                         onClick={handleStatusChange}
                                         disabled={statusUpdating}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-inset ring-emerald-300/30 transition hover:bg-emerald-400/20 disabled:opacity-50"
                                     >
                                         <RotateCcw size={15} /> {statusUpdating ? "Updating..." : "Resume Hiring"}
                                     </button>
@@ -300,7 +301,7 @@ const JobApplicantsPage = () => {
                                     <button
                                         onClick={handleStatusChange}
                                         disabled={statusUpdating}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-200 ring-1 ring-inset ring-rose-300/30 transition hover:bg-rose-400/20 disabled:opacity-50"
                                     >
                                         <X size={15} /> {statusUpdating ? "Updating..." : "Stop Hiring"}
                                     </button>
@@ -309,7 +310,7 @@ const JobApplicantsPage = () => {
                                     <button
                                         onClick={handlePermanentDelete}
                                         disabled={deleting}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-200 ring-1 ring-inset ring-rose-300/30 transition hover:bg-rose-400/20 disabled:opacity-50"
                                     >
                                         <Trash2 size={15} /> {deleting ? "Deleting..." : "Delete Permanently"}
                                     </button>
