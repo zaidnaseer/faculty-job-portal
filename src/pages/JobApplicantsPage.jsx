@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import RippleBackground from "../components/RippleBackground";
 import defaultProfileImage from "../../assets/default-profile.jpg";
-import { Copy, Pencil, RotateCcw, Sparkles, Star, Trash2, UserRound, X } from "lucide-react";
+import { Copy, Download, Pencil, RotateCcw, Sparkles, Star, Trash2, UserRound, X } from "lucide-react";
 import { getJobStatusClasses, getRelativeAge } from "../utils/jobDisplay";
+import { downloadProfilePdf } from "../utils/profilePdf";
 
 const JobApplicantsPage = () => {
     const { jobId } = useParams();
@@ -19,6 +20,7 @@ const JobApplicantsPage = () => {
     const [loading, setLoading] = useState(true);
     const [rejectingId, setRejectingId] = useState(null);
     const [shortlistingId, setShortlistingId] = useState(null);
+    const [downloadingId, setDownloadingId] = useState(null);
     const [statusUpdating, setStatusUpdating] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [activeTab, setActiveTab] = useState("active");
@@ -145,6 +147,30 @@ const JobApplicantsPage = () => {
             alert("Something went wrong. Please try again.");
         } finally {
             setShortlistingId(null);
+        }
+    };
+
+    const handleDownloadProfile = async (applicantId) => {
+        setDownloadingId(applicantId);
+        try {
+            const response = await fetch(
+                `${backendUrl}/api/jobs/${jobId}/applicants/${applicantId}/snapshot`,
+                { headers: { Authorization: `Bearer ${user.token}` } }
+            );
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.profileSnapshot) {
+                alert(data.message || "Profile is not available for download.");
+                return;
+            }
+
+            await downloadProfilePdf(data.profileSnapshot, {
+                profileImageUrl: data.profileImage?.url,
+            });
+        } catch (error) {
+            console.error("Failed to download applicant profile:", error);
+            alert("Failed to download profile. Please try again.");
+        } finally {
+            setDownloadingId(null);
         }
     };
 
@@ -395,6 +421,14 @@ const JobApplicantsPage = () => {
                                         className="inline-flex items-center rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 active:bg-blue-600 active:text-white"
                                     >
                                         View Profile
+                                    </button>
+                                    <button
+                                        onClick={() => handleDownloadProfile(faculty._id)}
+                                        disabled={downloadingId === faculty._id}
+                                        title="Download profile as PDF"
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                                    >
+                                        <Download size={15} /> {downloadingId === faculty._id ? "Preparing..." : "PDF"}
                                     </button>
                                     {(activeTab === "active" || activeTab === "shortlisted") && (
                                         <button

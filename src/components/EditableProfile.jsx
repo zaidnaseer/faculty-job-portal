@@ -29,6 +29,7 @@ import {
     PanelRight,
 } from "lucide-react";
 import { formatMonthYear } from "../utils/dateFormatting";
+import { downloadProfilePdf } from "../utils/profilePdf";
 import defaultProfileImage from "../../assets/default-profile.jpg";
 
 const OPTIONAL_SECTIONS = {
@@ -114,6 +115,7 @@ const EditableProfile = ({
     const [sectionPickerExpandedArea, setSectionPickerExpandedArea] = useState("sidebar");
     const [sectionListId, setSectionListId] = useState(null);
     const [sectionDeleteConfirmId, setSectionDeleteConfirmId] = useState(null);
+    const [isProfilePdfLoading, setIsProfilePdfLoading] = useState(false);
     const profileImageMenuRef = useRef(null);
     const profileImageCropDragRef = useRef(null);
     const profileImageCropResizeRef = useRef(null);
@@ -677,6 +679,20 @@ const EditableProfile = ({
         link.remove();
     };
 
+    const handleDownloadProfilePdf = async () => {
+        if (isProfilePdfLoading) return;
+
+        setIsProfilePdfLoading(true);
+        try {
+            await downloadProfilePdf(profile, { profileImageUrl });
+        } catch (error) {
+            console.error("Failed to generate profile PDF:", error);
+            alert("Failed to generate profile PDF. Please try again.");
+        } finally {
+            setIsProfilePdfLoading(false);
+        }
+    };
+
     const handleDeleteResume = async () => {
         if (!onDeleteResume || isResumeActionLoading) return;
 
@@ -989,6 +1005,14 @@ const EditableProfile = ({
                 ) : (
                     <div></div>
                 )}
+                <button
+                    type="button"
+                    onClick={handleDownloadProfilePdf}
+                    disabled={isProfilePdfLoading}
+                    className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-50"
+                >
+                    <Download size={16} /> {isProfilePdfLoading ? "Preparing PDF..." : "Download PDF"}
+                </button>
             </div>
 
             <div className="w-full px-6">
